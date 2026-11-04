@@ -1,0 +1,34 @@
+name: Bug report
+description: Report unexpected behavior or a visual problem.
+title: "[Bug] "
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: Omit personal ticket content and credentials.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Version and platform
+      placeholder: DayFrame version, Windows or Mint version, source or packaged build
+    validations:
+      required: true
+  - type: input
+    id: appearance
+    attributes:
+      label: Appearance and window
+      placeholder: Theme, density, text scale, window size, display scaling
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or redacted diagnostics
+      description: Use sample data or redact personal information. Do not attach a real database.

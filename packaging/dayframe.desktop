@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=DayFrame
+Comment=Personal projects, planning and time tracking
+Exec=/ABSOLUTE/INSTALL/PATH/DayFrame/DayFrame
+Icon=/ABSOLUTE/SOURCE/PATH/assets/DayFrame.png
+Terminal=false
+Categories=Office;ProjectManagement;
+StartupWMClass=DayFrame

@@ -1,0 +1,20 @@
+# Template only. Replace user and absolute paths before installing.
+[Unit]
+Description=DayFrame private LAN sync hub
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=REPLACE_WITH_SERVICE_USER
+WorkingDirectory=/ABSOLUTE/PATH/DayFrame
+EnvironmentFile=/ABSOLUTE/PRIVATE/PATH/timemanager-hub.env
+ExecStart=/ABSOLUTE/PATH/DayFrame/.venv-hub/bin/python -m dayframe.hub
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

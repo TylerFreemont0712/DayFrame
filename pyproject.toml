@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dayframe-desktop"
+version = "0.5.0"
+description = "Private native desktop planning, tickets, and time tracking"
+readme = "README.md"
+requires-python = ">=3.11,<3.15"
+dependencies = [
+    "PySide6-Essentials==6.12.0",
+    "QtAwesome==1.4.2",
+    "keyring==25.7.0",
+    "cryptography==50.0.2",
+    "tzdata==2026.6",
+]
+
+[project.scripts]
+dayframe = "dayframe.app:main"
+dayframe-hub = "dayframe.hub:main"
+
+[project.urls]
+Repository = "https://github.com/TylerFreemont0712/DayFrame"
+Issues = "https://github.com/TylerFreemont0712/DayFrame/issues"
+
+[tool.setuptools.packages.find]
+include = ["dayframe*"]
+
+[tool.setuptools.package-data]
+dayframe = ["*.json", "*.sql", "resources/*.svg", "resources/*.png"]

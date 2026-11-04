@@ -1,0 +1,197 @@
+{
+  "project": {
+    "table": "projects",
+    "fields": [
+      "name",
+      "project_key",
+      "description",
+      "archived"
+    ],
+    "defaults": {
+      "name": "",
+      "project_key": "PROJ",
+      "description": "",
+      "archived": 0
+    }
+  },
+  "ticket": {
+    "table": "tickets",
+    "fields": [
+      "project_id",
+      "title",
+      "description",
+      "status",
+      "priority",
+      "component",
+      "milestone",
+      "due_date",
+      "estimate_min",
+      "pinned",
+      "archived",
+      "checklist",
+      "labels",
+      "dependencies",
+      "parent_id"
+    ],
+    "json": [
+      "checklist"
+    ],
+    "virtual": [
+      "labels",
+      "dependencies"
+    ],
+    "defaults": {
+      "project_id": "",
+      "title": "",
+      "description": "",
+      "status": "inbox",
+      "priority": "medium",
+      "component": "",
+      "milestone": "",
+      "due_date": "",
+      "estimate_min": 0,
+      "pinned": 0,
+      "archived": 0,
+      "checklist": [],
+      "labels": [],
+      "dependencies": [],
+      "parent_id": ""
+    }
+  },
+  "event": {
+    "table": "events",
+    "fields": [
+      "title",
+      "date",
+      "start_time",
+      "end_time",
+      "major",
+      "pinned",
+      "event_type",
+      "end_date",
+      "description",
+      "location",
+      "color",
+      "recurrence",
+      "archived"
+    ],
+    "defaults": {
+      "title": "",
+      "date": "",
+      "start_time": "09:00",
+      "end_time": "10:00",
+      "major": 0,
+      "pinned": 0,
+      "event_type": "event",
+      "end_date": "",
+      "description": "",
+      "location": "",
+      "color": "",
+      "recurrence": "",
+      "archived": 0
+    }
+  },
+  "note": {
+    "table": "notes",
+    "fields": [
+      "title",
+      "body",
+      "project_id"
+    ],
+    "defaults": {
+      "title": "",
+      "body": "",
+      "project_id": ""
+    }
+  },
+  "section": {
+    "table": "map_sections",
+    "fields": [
+      "project_id",
+      "name",
+      "rule_field",
+      "rule_value",
+      "sort_order",
+      "parent_id",
+      "predecessor_ids"
+    ],
+    "defaults": {
+      "project_id": "",
+      "name": "",
+      "rule_field": "",
+      "rule_value": "",
+      "sort_order": 0,
+      "parent_id": "",
+      "predecessor_ids": []
+    },
+    "json": [
+      "predecessor_ids"
+    ]
+  },
+  "placement": {
+    "table": "map_placements",
+    "fields": [
+      "ticket_id",
+      "section_id",
+      "manual",
+      "x",
+      "y"
+    ],
+    "defaults": {
+      "ticket_id": "",
+      "section_id": "",
+      "manual": 0,
+      "x": 0,
+      "y": 0
+    }
+  },
+  "entry": {
+    "table": "time_entries",
+    "fields": [
+      "ticket_id",
+      "start_at",
+      "end_at",
+      "device_id",
+      "note"
+    ],
+    "defaults": {
+      "ticket_id": "",
+      "start_at": 0,
+      "end_at": 0,
+      "device_id": "",
+      "note": ""
+    }
+  },
+  "block": {
+    "table": "work_blocks",
+    "fields": [
+      "ticket_id",
+      "date",
+      "start_time",
+      "end_time"
+    ],
+    "defaults": {
+      "ticket_id": "",
+      "date": "",
+      "start_time": "09:00",
+      "end_time": "10:00"
+    }
+  },
+  "timer": {
+    "table": "timers",
+    "fields": [
+      "ticket_id",
+      "start_at",
+      "session_ms",
+      "paused",
+      "device_id"
+    ],
+    "defaults": {
+      "ticket_id": "",
+      "start_at": 0,
+      "session_ms": 0,
+      "paused": 0,
+      "device_id": ""
+    }
+  }
+}

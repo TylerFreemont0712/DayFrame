@@ -1,0 +1,26 @@
+name: Feature or design idea
+description: Propose an improvement for a future iteration.
+title: "[Feature] "
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What are you trying to accomplish?
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Proposed behavior
+      description: Include an example of the desired interaction or visual result.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: What observable behavior would make this complete?
+  - type: textarea
+    id: references
+    attributes:
+      label: Related specification, concept or screenshot
