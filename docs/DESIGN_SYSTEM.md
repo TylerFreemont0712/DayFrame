@@ -36,6 +36,10 @@ QtAwesome icons have names/tooltips. Personal/Team stays upper left. Future Code
 
 Kanban displays a translucent, dashed ghost card in the destination lane as soon as a ticket enters it. The ghost reserves the ticket's resulting position in the current board order; it is temporary and cannot be selected. Drop saves the status immediately with Undo. Leaving, cancellation and same-column drops do not write. Kanban does not use the Map's hold timer or relationship confirmation.
 
+Project colors appear on the project prefix in Kanban ticket keys and matching project folder icons. A lightly tinted prefix chip and colored text identify the project without tinting the ticket body or its identifier suffix. Stable project UUIDs determine hue; Paper uses a darker shade for readable contrast. Names, ticket status and project list order do not affect the color.
+
+Keep lanes at least 180px wide, increasing that minimum to fit headers and a six-character project key/identifier at the current font size. Scroll horizontally in narrow windows. Titles show complete lines within their reserved area and elide the last line; full text stays available on hover.
+
 Calendar clicks edit actual records. Map changes require a 1.5-second target hold, ghost/progress and release confirmation. Line patterns distinguish parentage, dependencies and sequence. Context menus and inspector fields offer alternatives.
 
 Preserve drafts through refresh; navigation uses Save/Discard/Cancel. Timer stays live. Theme changes must not duplicate status widgets.

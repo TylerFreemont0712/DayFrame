@@ -24,6 +24,8 @@ The workflow now reads Not Started → In Progress → Processed → Review → 
 
 Kanban shows an immediate destination ghost with no hold/confirmation. Leaving or cancelling removes it without saving; drop changes status with Undo. Same-column drops make no change. The Map still requires its 1.5-second hold and confirmation. Manual ordering within a Kanban lane remains planned.
 
+Kanban project prefixes have stable, theme-aware project colors, repeated in folder icons. The identifier suffix and card body stay neutral. Colors derive from project identity without a schema change.
+
 ## Data and compatibility
 
 Schema 4 preserves saved records/passwords; databases on versions 1–3 migrate transactionally. Import changes only the copied database. Established storage, session, keyring and sync identifiers are documented in BRANDING.md. Notes data is retained with its UI hidden.
@@ -32,7 +34,7 @@ Schema 4 preserves saved records/passwords; databases on versions 1–3 migrate 
 
 The cleanup release passed 58 Windows tests and a 19-screen packaged UI smoke check using Python 3.14. Windows and Ubuntu 24.04 CI also passed setup, tests, packaging and smoke checks for that baseline. Routine CI now runs source tests only; packaging requires an explicitly requested build. Tests never open the live profile. See RELEASES.md for the packaged baseline.
 
-The unreleased workflow/drag changes pass 65 Windows source tests, including saved-stage compatibility, shared status labels, Home grouping, immediate previews, cancellation, failed drops and Undo. They have not been packaged.
+The unreleased Kanban changes pass 69 Windows source tests, including saved-stage compatibility, shared status labels, Home grouping, immediate previews, cancellation, failed drops, Undo, prefix-only color rendering, contrast, project rename/restart and title containment. Source previews were checked across all four themes at 1280×800 and at the 980×640 minimum. They have not been packaged.
 
 The Windows installer is unsigned. Ubuntu CI does not verify the owner's exact Linux Mint installation. No hub/service/firewall or external integration is installed by source setup.
 

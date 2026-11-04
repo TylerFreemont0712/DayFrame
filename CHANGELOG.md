@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Highlight Kanban project-key prefixes with stable project colors and matching folder icons; keep ticket bodies neutral.
 - Show an immediate destination ghost while dragging Kanban tickets, with clean cancellation and status Undo.
 - Rename workflow stages to Not Started, In Progress, Processed, Review and Complete while preserving saved ticket stages and sync history.
 - Document natural commit/comment wording and frequent, focused commits.

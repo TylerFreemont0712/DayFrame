@@ -1,6 +1,8 @@
 """Ticket lanes with an immediate, temporary destination preview."""
+import hashlib
+
 from PySide6.QtCore import Qt, QMimeData, QSize, QRectF, QPointF
-from PySide6.QtGui import QColor, QPainter, QPen, QDrag, QFont
+from PySide6.QtGui import QColor, QPainter, QPen, QDrag, QFont, QTextLayout, QTextOption
 from PySide6.QtWidgets import (
     QApplication, QStyledItemDelegate, QListWidget, QListWidgetItem,
     QAbstractItemView,
@@ -14,8 +16,68 @@ TICKET_MIME = 'application/x-timemanager-ticket'
 PREVIEW_ROLE = Qt.UserRole + 2
 
 
+def project_color(project_id):
+    hue = int(hashlib.sha256(project_id.encode('utf-8')).hexdigest()[:8], 16) % 360
+    light = QColor(C['raised']).lightnessF() > .6
+    return QColor.fromHsl(hue, 150, 55 if light else 180)
+
+
+def paint_project_key(p, rect, project_id, prefix, suffix):
+    p.save()
+    metrics = p.fontMetrics()
+    tail = ' · ' + suffix
+    width = min(metrics.horizontalAdvance(prefix) + 10,
+                max(16, rect.width() - metrics.horizontalAdvance(tail) - 3))
+    badge = QRectF(rect.left(), rect.top(), width, min(rect.height(), metrics.height() + 2))
+    color = project_color(project_id)
+    tint = QColor(color)
+    tint.setAlpha(35)
+    p.setBrush(tint)
+    p.setPen(Qt.NoPen)
+    radius = min(C.get('radius', 3), badge.height() / 2)
+    p.drawRoundedRect(badge, radius, radius)
+    p.setPen(color)
+    p.drawText(badge.adjusted(5, 0, -5, 0), Qt.AlignVCenter | Qt.AlignLeft,
+               metrics.elidedText(prefix, Qt.ElideRight, int(width - 10)))
+    remaining = QRectF(badge.right() + 3, rect.top(), max(0, rect.right() - badge.right() - 3), badge.height())
+    p.setPen(QColor(C['muted']))
+    p.drawText(remaining, Qt.AlignVCenter | Qt.AlignLeft,
+               metrics.elidedText(tail, Qt.ElideRight, int(remaining.width())))
+    p.restore()
+
+
 def card_size(ticket):
     return QSize(140, (120 if ticket['due_date'] else 105) + (20 if ticket['labels'] else 0))
+
+
+def paint_title(p, rect, title):
+    metrics = p.fontMetrics()
+    line_spacing = metrics.height() + 3
+    layout = QTextLayout(title, p.font())
+    option = QTextOption()
+    option.setWrapMode(QTextOption.WrapAtWordBoundaryOrAnywhere)
+    layout.setTextOption(option)
+    lines = []
+    layout.beginLayout()
+    for _ in range(max(1, int((rect.height() + 3) // line_spacing))):
+        line = layout.createLine()
+        if not line.isValid():
+            break
+        line.setLineWidth(rect.width())
+        lines.append(line)
+    layout.endLayout()
+    p.save()
+    p.setClipRect(rect, Qt.IntersectClip)
+    for i, line in enumerate(lines):
+        origin = QPointF(rect.left(), rect.top() + i * line_spacing)
+        if i == len(lines) - 1:
+            # Qt positions count UTF-16 units, including emoji surrogate pairs.
+            remaining = title.encode('utf-16-le')[line.textStart() * 2:].decode('utf-16-le')
+            p.drawText(origin + QPointF(0, metrics.ascent()),
+                       metrics.elidedText(remaining, Qt.ElideRight, int(rect.width())))
+        else:
+            line.draw(p, origin)
+    p.restore()
 
 
 class BoardDelegate(QStyledItemDelegate):
@@ -43,8 +105,9 @@ class BoardDelegate(QStyledItemDelegate):
         font = QFont(QApplication.font())
         font.setPointSizeF(max(7.5, font.pointSizeF() - .5))
         p.setFont(font)
-        p.setPen(QColor(C['muted']))
-        p.drawText(rect.adjusted(8, 6, -9, -6), Qt.AlignTop, self.window.ticket_key(ticket))
+        project = next((x for x in self.window.data['project'] if x['id'] == ticket['project_id']), {})
+        paint_project_key(p, QRectF(rect.left() + 8, rect.top() + 5, rect.width() - 27, 18),
+                          ticket['project_id'], project.get('project_key', 'T'), ticket['id'][:6].upper())
         color = {'urgent': '#ee797e', 'high': '#e1b65d', 'medium': '#83c98d', 'low': '#8da4b3'}[ticket['priority']]
         p.setBrush(QColor(color))
         p.setPen(Qt.NoPen)
@@ -52,14 +115,12 @@ class BoardDelegate(QStyledItemDelegate):
         font.setBold(True)
         p.setFont(font)
         p.setPen(QColor(C['text']))
-        p.drawText(QRectF(rect.left() + 8, rect.top() + 25, rect.width() - 15, 32), Qt.TextWordWrap | Qt.AlignTop, ticket['title'])
+        paint_title(p, QRectF(rect.left() + 8, rect.top() + 25, rect.width() - 16, 32), ticket['title'])
         font.setBold(False)
         p.setFont(font)
         project = self.window.project_name(ticket['project_id'])
         badge = QRectF(rect.left() + 8, rect.top() + 60, min(rect.width() - 16, p.fontMetrics().horizontalAdvance(project) + 12), 16)
-        tint = QColor(C['accent'])
-        tint.setAlpha(30)
-        p.setBrush(tint)
+        p.setBrush(QColor(C['panel']))
         p.setPen(Qt.NoPen)
         p.drawRoundedRect(badge, 3, 3)
         p.setPen(QColor(C['text']))

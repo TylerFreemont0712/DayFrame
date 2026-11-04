@@ -120,6 +120,8 @@ Current inspector tabs are Details and Time. Notes is hidden; activity, files an
 
 Dragging across status columns immediately shows a translucent ghost plate in the destination, with no hold timer or confirmation. The preview occupies the position the ticket will have in the existing board order. Leaving the lane or cancelling removes it without saving. Drop updates the shared ticket status with Undo; a same-column drop makes no change. Map hold/confirmation behavior stays separate. Filters must not cause hidden items to be deleted or statuses to change. Ticket selection remains stable after unrelated updates. Manual within-column ordering remains planned.
 
+On Kanban cards, highlight only the project prefix of the ticket key with its project color; the ticket suffix and card body remain neutral. Project folder icons repeat that color. Assign hues deterministically from the stable project identity, matching across devices and surviving project renames; adapt brightness to the theme for contrast. This does not add a database field or change identifiers.
+
 ### TKT-06: project and ticket lifecycle
 
 Support create, edit, archive, restore, and recoverable deletion. Project archive hides it from default active views without removing its tickets or history. Moving a ticket to a different project must preview the impact on identifier, map placement, and project-specific metadata; define the precise identifier policy before implementing project moves.

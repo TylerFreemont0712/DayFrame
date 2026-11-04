@@ -15,7 +15,7 @@ from .widgets import label,button,column,row,panel,scroll,combo,error,FormDialog
 from .dialogs import AddDialog,SectionDialog,ConflictDialog
 from .project_map import ProjectMap
 from .labels import LabelsEditor,label_choices,paint_label_pills
-from .kanban import BoardDelegate,TicketList,card_size
+from .kanban import BoardDelegate,TicketList,card_size,project_color
 from .calendar_views import MiniMonth,UpcomingPanel,WeekCalendar,paint_item,readable
 from .sync import Sync
 
@@ -337,7 +337,7 @@ class DayFrame(QMainWindow):
         tree=QTreeWidget();tree.setHeaderHidden(True);tree.setIndentation(12);tree.setObjectName("projectTree");tree.setRootIsDecorated(True)
         for p in self.data["project"]:
             if p["archived"]:continue
-            item=QTreeWidgetItem([p["name"]]);item.setIcon(0,icon("folder"));item.setData(0,Qt.UserRole,("project",p["id"]));tree.addTopLevelItem(item)
+            item=QTreeWidgetItem([p["name"]]);item.setIcon(0,icon("folder",project_color(p["id"]).name()));item.setData(0,Qt.UserRole,("project",p["id"]));tree.addTopLevelItem(item)
             for kind,name,glyph in (("project","Overview","th-large"),("milestones","Milestones","flag"),("code","Code","code")):
                 child=QTreeWidgetItem([name]);child.setIcon(0,icon(glyph));child.setData(0,Qt.UserRole,(kind,p["id"]));item.addChild(child)
             item.setExpanded(p["id"]==self.project_id)
@@ -405,7 +405,8 @@ class DayFrame(QMainWindow):
             for status in D.STATUSES:
                 col,cl=column(spacing=3);group=[t for t in tickets if t["status"]==status]
                 header=row(label(D.STATUS_NAMES[status],"section"),label(str(len(group)),"count"),None);cl.addWidget(header)
-                lst=TicketList(self,status);lst.setMinimumWidth(max(138,header.sizeHint().width()))
+                lst=TicketList(self,status)
+                lst.setMinimumWidth(max(180,header.sizeHint().width(),lst.fontMetrics().horizontalAdvance("NEWPRO · FFFFFF")+55))
                 for t in group:
                     item=QListWidgetItem(t["title"]);item.setData(Qt.UserRole,t["id"]);item.setData(Qt.UserRole+1,t)
                     item.setToolTip(t["title"]);item.setSizeHint(card_size(t));lst.addItem(item)

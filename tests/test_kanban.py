@@ -4,15 +4,16 @@ import uuid
 from pathlib import Path
 from unittest.mock import patch
 
-from PySide6.QtCore import Qt, QMimeData, QPoint, QPointF
-from PySide6.QtGui import QDragEnterEvent, QDragMoveEvent, QDragLeaveEvent, QDropEvent
-from PySide6.QtWidgets import QApplication, QComboBox, QLabel
+from PySide6.QtCore import Qt, QMimeData, QPoint, QPointF, QRect
+from PySide6.QtGui import QDragEnterEvent, QDragMoveEvent, QDragLeaveEvent, QDropEvent, QImage, QPainter, QColor
+from PySide6.QtWidgets import QApplication, QComboBox, QLabel, QStyleOptionViewItem
 
 from dayframe import domain as D, planning as P
 from dayframe.dialogs import AddDialog
 from dayframe.store import Store
 from dayframe.ui import DayFrame, TicketList
-from dayframe.kanban import TICKET_MIME
+from dayframe.kanban import TICKET_MIME, project_color
+from dayframe.theme import apply_theme, CURRENT
 
 APP = QApplication.instance() or QApplication([])
 
@@ -21,7 +22,7 @@ class KanbanTests(unittest.TestCase):
     def setUp(self):
         self.store = Store(Path('build/test-data') / uuid.uuid4().hex)
         self.store.register('kanban', 'tyler')
-        self.project = self.store.command('project.save', {'name': 'Calendar', 'project_key': 'CAL'})
+        self.project = self.store.command('project.save', {'id': 'kanban-project', 'name': 'Calendar', 'project_key': 'CAL'})
         self.window = None
 
     def tearDown(self):
@@ -178,3 +179,87 @@ class KanbanTests(unittest.TestCase):
         self.assertIsNone(lanes['ready'].preview_item)
         self.assertIs(self.window.undo_action, previous_undo)
         self.assertEqual(self.store.read('ticket', ticket['id'])['status'], 'inbox')
+
+    def test_project_color_only_changes_the_prefix_and_has_contrast_in_each_theme(self):
+        ticket = self.ticket()
+        other = self.store.command('project.save', {'id': 'other-project', 'name': 'Calendar', 'project_key': 'CAL'})
+        lanes = self.board()
+        lane = lanes['inbox']
+        item = lane.item(0)
+        option = QStyleOptionViewItem()
+        option.rect = QRect(0, 0, 240, 105)
+
+        def render(project_id):
+            item.setData(Qt.UserRole + 1, {**ticket, 'project_id': project_id})
+            image = QImage(240, 105, QImage.Format_ARGB32)
+            image.fill(QColor(CURRENT['panel']))
+            painter = QPainter(image)
+            lane.itemDelegate().paint(painter, option, lane.model().index(0, 0))
+            painter.end()
+            return image
+
+        def luminance(rgb):
+            values = [v / 255 for v in rgb]
+            linear = [v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4 for v in values]
+            return sum(v * w for v, w in zip(linear, (.2126, .7152, .0722)))
+
+        for theme in ('graphite', 'amber', 'light', 'studio'):
+            apply_theme({'theme': theme})
+            first, second = render(self.project['id']), render(other['id'])
+            self.assertNotEqual(first, second, theme)
+            changed = [(x, y) for y in range(105) for x in range(240) if first.pixel(x, y) != second.pixel(x, y)]
+            self.assertTrue(all(9 <= x < 65 and 6 <= y < 26 for x, y in changed), theme)
+            for project_id in (self.project['id'], other['id']):
+                color = project_color(project_id)
+                foreground = (color.red(), color.green(), color.blue())
+                base = QColor(CURRENT['raised'])
+                background = tuple(f * 35 / 255 + b * 220 / 255 for f, b in zip(foreground, (base.red(), base.green(), base.blue())))
+                a, b = sorted((luminance(foreground), luminance(background)))
+                self.assertGreaterEqual((b + .05) / (a + .05), 4.5, (theme, project_id))
+        item.setData(Qt.UserRole + 1, ticket)
+
+    def test_project_hue_survives_rename_and_restart(self):
+        before = project_color(self.project['id']).hue()
+        self.store.command('project.save', {'id': self.project['id'], 'name': 'Renamed project', 'project_key': 'NEWPRO'})
+        root = self.store.root
+        self.store.close()
+        self.store = Store(root)
+        self.assertTrue(self.store.restore_session())
+        saved = self.store.read('project', self.project['id'])
+        self.assertEqual(project_color(saved['id']).hue(), before)
+        self.assertEqual(saved['project_key'], 'NEWPRO')
+
+    def test_column_headers_fit_at_small_window_size_with_larger_text(self):
+        self.ticket()
+        self.board()
+        for theme in ('graphite', 'amber', 'light', 'studio'):
+            apply_theme({'theme': theme, 'textScale': 125})
+            self.window.build_shell()
+            self.window.navigate('Projects')
+            self.window.resize(980, 640)
+            APP.processEvents()
+            headers = [label for label in self.window.workspace.findChildren(QLabel) if label.text() in D.STATUS_NAMES.values()]
+            self.assertEqual(len(headers), 5)
+            for header in headers:
+                self.assertGreaterEqual(header.width(), header.fontMetrics().horizontalAdvance(header.text()), (theme, header.text()))
+
+    def test_long_titles_do_not_paint_over_the_project_badge_or_metadata(self):
+        ticket = self.ticket(title='Calendar 🗓️ work with a long description that needs more than two lines')
+        lanes = self.board()
+        lane, option = lanes['inbox'], QStyleOptionViewItem()
+        item = lane.item(0)
+        option.rect = QRect(0, 0, 180, 105)
+        for theme in ('graphite', 'amber', 'light', 'studio'):
+            apply_theme({'theme': theme, 'textScale': 125})
+            images = []
+            for title in ('', ticket['title']):
+                item.setData(Qt.UserRole + 1, {**ticket, 'title': title})
+                image = QImage(180, 105, QImage.Format_ARGB32)
+                image.fill(QColor(CURRENT['panel']))
+                painter = QPainter(image)
+                lane.itemDelegate().paint(painter, option, lane.model().index(0, 0))
+                painter.end()
+                images.append(image)
+            self.assertNotEqual(images[0], images[1], theme)
+            self.assertEqual(images[0].copy(0, 60, 180, 45), images[1].copy(0, 60, 180, 45), theme)
+        item.setData(Qt.UserRole + 1, ticket)
