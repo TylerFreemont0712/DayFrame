@@ -1,5 +1,14 @@
 name: Native desktop checks
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      build_packages:
+        description: Build and verify portable packages (only when requested)
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -42,8 +51,10 @@ jobs:
       - name: Run database, sync and native UI tests
         run: python -m unittest discover -s tests -v
       - name: Build standalone desktop
+        if: github.event_name == 'workflow_dispatch' && inputs.build_packages
         run: python -m PyInstaller DayFrame.spec --noconfirm
       - name: Verify packaged app with isolated profile
+        if: github.event_name == 'workflow_dispatch' && inputs.build_packages
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
@@ -53,6 +64,7 @@ jobs:
           fi
           python -c "import json; from pathlib import Path; report=json.loads(Path('build/ci-screenshots/smoke-report.json').read_text()); assert report['ok'] and len(report['screenshots']) >= 19"
       - name: Upload portable bundle
+        if: github.event_name == 'workflow_dispatch' && inputs.build_packages
         uses: actions/upload-artifact@v7
         with:
           name: DayFrame-${{ runner.os }}-${{ github.sha }}
@@ -60,7 +72,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Upload UI smoke evidence
-        if: always()
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.build_packages
         uses: actions/upload-artifact@v7
         with:
           name: DayFrame-ui-${{ runner.os }}-${{ github.sha }}

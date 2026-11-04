@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Document natural commit/comment wording and frequent, focused commits.
+- Keep routine CI to source tests; make packaging opt-in for requested release waves or validation builds.
+- Record the packaged baseline and when to suggest the next release.
+
 ## 0.5.1 — 2026-11-04
 
 - Remove superseded implementations, old application marks, obsolete launch/build files, design mockups and outdated screenshots/documentation.

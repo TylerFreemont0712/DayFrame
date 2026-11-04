@@ -112,3 +112,9 @@ D-058: Establish TylerFreemont0712/DayFrame as a private source repository by de
 D-059: Standardize desktop packaging/CI on Python 3.14 after the Linux 3.11.17 Qt binding crash; require Python 3.12–3.14 in source setup. Keep the application/schema/sync unchanged. The exact Mint installation still needs its own live verification.
 
 D-060: The owner requested removal of obsolete implementations, source/version archives, concepts, old logos and unused references. Retain the current native source, current branding, current release, active environment and useful current documentation. Established account/storage/sync identifiers remain stable.
+
+## Writing, history and release cadence — 2026-11-04
+
+D-061: Use natural, concrete language in commits and comments, with no unnecessary assistant/tool attribution or automatic generation trailers. Preserve required third-party attribution. Commit regularly in small, complete units with one purpose so earlier behavior is easy to trace and recover; preserve shared history.
+
+D-062: Ship releases in deliberate waves only on the owner's instruction. Routine source commits and CI do not rebuild packages, replace the current release or bump versions. Suggest a release at task completion for significant unreleased changes, or after 14 days with source changes waiting; documentation/comment-only work does not trigger a suggestion. Ask once, respect a deferral and wait for explicit authorization. The 14-day threshold is the initial project default for "a while". Track the actual packaged baseline in RELEASES.md.

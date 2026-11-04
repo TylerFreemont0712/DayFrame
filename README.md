@@ -56,10 +56,9 @@ To restore a database backup, import a consistent snapshot into an unconfigured 
 ```powershell
 .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .venv\Scripts\python.exe -m unittest discover -s tests -v
-.venv\Scripts\python.exe -m PyInstaller DayFrame.spec --noconfirm
 ```
 
-Use .venv/bin/python on Linux. Build on each target OS. [CONTRIBUTING.md](CONTRIBUTING.md) covers branches, checks, isolated profiles and releases. GitHub Actions runs Windows/Linux tests, packaging and packaged smoke checks.
+Use .venv/bin/python on Linux. Preview changes with app.py; the regular launcher may open the last packaged version. [CONTRIBUTING.md](CONTRIBUTING.md) covers branches, checks and isolated profiles. Routine GitHub Actions runs test Windows/Linux source. Packaging is opt-in for an explicitly requested release or validation build. Releases ship in waves; see [the release policy](docs/RELEASES.md).
 
 ## Project guide
 
@@ -74,6 +73,7 @@ Use .venv/bin/python on Linux. Build on each target OS. [CONTRIBUTING.md](CONTRI
 | [docs/QUICK_ADD_AND_LABELS.md](docs/QUICK_ADD_AND_LABELS.md) | Capture, labels and frame styling |
 | [docs/ACCOUNTS_AND_SYNC.md](docs/ACCOUNTS_AND_SYNC.md) | Account/sync and recovery design |
 | [docs/OPERATIONS.md](docs/OPERATIONS.md) | Run, build, backup and LAN hub instructions |
+| [docs/RELEASES.md](docs/RELEASES.md) | Release cadence, approval, checks and last packaged baseline |
 | [docs/CURRENT_STATUS.md](docs/CURRENT_STATUS.md) | Delivered scope and known gaps |
 | [docs/BRANDING.md](docs/BRANDING.md) | Logo/icon source, prompts and rename compatibility |
 | [CHANGELOG.md](CHANGELOG.md) | Version history |

@@ -14,7 +14,8 @@ For source work, install Python 3.12+ (3.14 recommended) and run:
     .venv\Scripts\python.exe app.py
     .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
     .venv\Scripts\python.exe -m unittest discover -s tests -v
-    .venv\Scripts\python.exe -m PyInstaller DayFrame.spec --noconfirm
+
+Run app.py directly to preview source changes; the regular launcher prefers the current packaged release. Development commits do not replace it. Build only for an explicitly requested release or validation build; see [release policy](RELEASES.md) and [packaging commands](../CONTRIBUTING.md#version-and-release).
 
 Source desktop dependencies are pinned in requirements.txt. requirements-windows.lock.txt captures the tested environment; do not use its Windows-only packages as a Linux lock.
 
@@ -29,13 +30,12 @@ Copy/extract source to a user-owned directory. Create a fresh Linux virtual envi
 
 These package names apply to contemporary Ubuntu-based Mint; verify availability against the actual release. No sudo action was run here. Older distributions may not meet the bundled Qt wheel's glibc/platform requirements.
 
-Build on Linux:
+For Linux source checks:
 
     .venv/bin/python -m pip install -r requirements-dev.txt
     QT_QPA_PLATFORM=offscreen .venv/bin/python -m unittest discover -s tests -v
-    .venv/bin/python -m PyInstaller DayFrame.spec --noconfirm
 
-The folder dist/DayFrame is the Linux bundle. Use packaging/dayframe.desktop as a launcher template, replacing its executable/icon paths with absolute installation paths. A tested Mint installer/AppImage is still pending; a Windows executable cannot be used as a native Linux build.
+When a Linux build is explicitly requested, follow [the packaging commands](../CONTRIBUTING.md#version-and-release). The folder dist/DayFrame is the Linux bundle. Use packaging/dayframe.desktop as a launcher template, replacing its executable/icon paths with absolute installation paths. A tested Mint installer/AppImage is still pending; a Windows executable cannot be used as a native Linux build.
 
 References: [Qt Linux requirements](https://doc.qt.io/qt-6/linux-requirements.html), [Qt for Python deployment](https://doc.qt.io/qtforpython-6/deployment/index.html).
 

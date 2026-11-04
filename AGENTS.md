@@ -13,6 +13,14 @@ Commit regularly as coherent pieces of work become complete and checked. Each co
 
 Follow existing session authorization for committing and pushing. These conventions do not grant new permission to publish or contact others.
 
+## Release cadence
+
+Ordinary development changes source only. Keep useful Unreleased changelog notes, but do not bump versions, build installers/portable bundles, replace the current release, tag or publish unless the owner explicitly requests that action. Ship releases in deliberate waves. See docs/RELEASES.md for the current packaged baseline and release checklist.
+
+At a natural completion point, suggest a release if significant unreleased work is ready, or if the last package is at least 14 calendar days old and source changes are waiting. Summarize the changes and validation first, then ask whether to prepare a release. Documentation/comment-only work does not need a release suggestion. Ask once per task; respect a deferral and wait for an explicit answer. Age or significance is a reason to ask, never permission to build. This is a check during active work, not a background reminder.
+
+Routine CI runs source tests only. Package builds and packaged smoke checks require an explicitly requested release or validation build; manual CI packaging is opt-in and must not be dispatched without that request. Keep validation builds separate from the current release. If packaging/resource changes need a packaged check, report that verification as pending until authorized rather than rebuilding automatically. Preview source changes through the source entry point; the regular launcher may still open the last packaged version.
+
 ## Application rules
 
 Default Graphite/Cyan uses the compact dashboard layout in a compact 1280x800 resizable window, minimum980x640. 1920x1200 is the owner's display size, not the application size. Themes, density, font scale and panel
@@ -26,8 +34,9 @@ Database imports must preserve the original and must not overwrite a configured 
 Run .venv/Scripts/python.exe -m unittest discover -s tests -v on Windows, or
 .venv/bin/python -m unittest discover -s tests -v on Linux, after functional changes.
 Use isolated build/test-data for tests; never use the real profile as a fixture.
-Run the packaged smoke check when changing packaging/resources. A Windows pass does not
-verify Linux Mint. Keep docs honest about delivered features and tested platforms.
+Packaging/resource changes require a packaged smoke check before release; follow the
+release authorization rules above. A Windows pass does not verify Linux Mint. Keep docs
+honest about delivered features and tested platforms.
 
 Keep the checkout focused on the current native app, current branding and useful documentation. Do not retain superseded implementations, mockups, logos or version archives. Runtime data belongs outside
 the checkout. No remote deployment, publication, firewall or background-service install is
