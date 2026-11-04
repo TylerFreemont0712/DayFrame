@@ -34,6 +34,8 @@ Use installed fonts with Qt fallback, no runtime downloads. Theme tokens live in
 
 QtAwesome icons have names/tooltips. Personal/Team stays upper left. Future Code/Team explain their status.
 
+Kanban displays a translucent, dashed ghost card in the destination lane as soon as a ticket enters it. The ghost reserves the ticket's resulting position in the current board order; it is temporary and cannot be selected. Drop saves the status immediately with Undo. Leaving, cancellation and same-column drops do not write. Kanban does not use the Map's hold timer or relationship confirmation.
+
 Calendar clicks edit actual records. Map changes require a 1.5-second target hold, ghost/progress and release confirmation. Line patterns distinguish parentage, dependencies and sequence. Context menus and inspector fields offer alternatives.
 
 Preserve drafts through refresh; navigation uses Save/Discard/Cancel. Timer stays live. Theme changes must not duplicate status widgets.

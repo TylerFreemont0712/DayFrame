@@ -15,6 +15,7 @@ from .widgets import label,button,column,row,panel,scroll,combo,error,FormDialog
 from .dialogs import AddDialog,SectionDialog,ConflictDialog
 from .project_map import ProjectMap
 from .labels import LabelsEditor,label_choices,paint_label_pills
+from .kanban import BoardDelegate,TicketList,card_size
 from .calendar_views import MiniMonth,UpcomingPanel,WeekCalendar,paint_item,readable
 from .sync import Sync
 
@@ -58,59 +59,6 @@ class Agenda(QWidget):
         self.setCursor(Qt.PointingHandCursor if item else Qt.ArrowCursor)
         self.setToolTip((item["title"]+"\n"+readable(item)).replace("<","‹").replace(">","›") if item else "")
 
-
-class BoardDelegate(QStyledItemDelegate):
-    def __init__(self,window,parent=None):super().__init__(parent);self.window=window
-    def paint(self,p,option,index):
-        ticket=index.data(Qt.UserRole+1)
-        if not ticket:return
-        p.save();p.setRenderHint(QPainter.Antialiasing)
-        rect=QRectF(option.rect).adjusted(2,2,-2,-2)
-        selected=ticket["id"]==self.window.selected
-        p.setPen(QPen(QColor(C["accent"] if selected else C["line"]),1.4 if selected else .8))
-        p.setBrush(QColor(C["raised"]));p.drawRoundedRect(rect,C.get('radius',4),C.get('radius',4))
-        font=QFont(QApplication.font());font.setPointSizeF(max(7.5,font.pointSizeF()-.5));p.setFont(font)
-        p.setPen(QColor(C["muted"]));p.drawText(rect.adjusted(8,6,-9,-6),Qt.AlignTop,self.window.ticket_key(ticket))
-        color={"urgent":"#ee797e","high":"#e1b65d","medium":"#83c98d","low":"#8da4b3"}[ticket["priority"]]
-        p.setBrush(QColor(color));p.setPen(Qt.NoPen);p.drawEllipse(QPointF(rect.right()-10,rect.top()+12),3,3)
-        font.setBold(True);p.setFont(font);p.setPen(QColor(C["text"]))
-        p.drawText(QRectF(rect.left()+8,rect.top()+25,rect.width()-15,32),Qt.TextWordWrap|Qt.AlignTop,ticket["title"])
-        font.setBold(False);p.setFont(font)
-        project=self.window.project_name(ticket["project_id"])
-        badge=QRectF(rect.left()+8,rect.top()+60,min(rect.width()-16,p.fontMetrics().horizontalAdvance(project)+12),16)
-        tint=QColor(C["accent"]);tint.setAlpha(30);p.setBrush(tint);p.setPen(Qt.NoPen);p.drawRoundedRect(badge,3,3)
-        p.setPen(QColor(C["text"]));p.drawText(badge,Qt.AlignCenter,p.fontMetrics().elidedText(project,Qt.ElideRight,int(badge.width()-6)))
-        tracked=self.window.tracked_ms(ticket["id"])
-        text=D.short_time(ticket["estimate_min"]*60000)+((" · "+D.short_time(tracked)) if tracked else "")
-        if self.window.blocked(ticket):text="Blocked · "+text
-        p.setPen(QColor("#e1b65d" if self.window.blocked(ticket) else C["muted"]))
-        extra=20 if ticket["labels"] else 0
-        if extra:paint_label_pills(p,QRectF(rect.left()+8,rect.top()+82,rect.width()-16,16),ticket["labels"])
-        p.drawText(rect.adjusted(8,82+extra,-6,-6),Qt.AlignTop,text)
-        if ticket["due_date"]:
-            p.setPen(QColor(C["muted"]));p.drawText(rect.adjusted(8,99+extra,-6,-3),Qt.AlignTop,"Due "+ticket["due_date"][5:])
-        p.restore()
-
-class TicketList(QListWidget):
-    def __init__(self,window,status):
-        super().__init__();self.window=window;self.status=status;self.setObjectName("ticketLane")
-        self.setItemDelegate(BoardDelegate(window,self));self.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.setDragEnabled(True);self.setAcceptDrops(True);self.setDropIndicatorShown(True);self.setSpacing(3)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.itemClicked.connect(lambda item:window.select_ticket(item.data(Qt.UserRole)))
-    def startDrag(self,actions):
-        item=self.currentItem()
-        if not item:return
-        mime=QMimeData();mime.setData("application/x-timemanager-ticket",item.data(Qt.UserRole).encode())
-        drag=QDrag(self);drag.setMimeData(mime);drag.exec(Qt.MoveAction)
-    def dragEnterEvent(self,e):
-        if e.mimeData().hasFormat("application/x-timemanager-ticket"):e.acceptProposedAction()
-    def dragMoveEvent(self,e):self.dragEnterEvent(e)
-    def dropEvent(self,e):
-        ticket_id=bytes(e.mimeData().data("application/x-timemanager-ticket")).decode();old=self.window.find_ticket(ticket_id)
-        if old:
-            previous=old["status"];self.window.undo_action=lambda:self.window.execute("ticket.save",{"id":ticket_id,"status":previous})
-            self.window.execute("ticket.save",{"id":ticket_id,"status":self.status});e.acceptProposedAction()
 
 class UnsortedList(QListWidget):
     def startDrag(self,actions):
@@ -460,7 +408,7 @@ class DayFrame(QMainWindow):
                 lst=TicketList(self,status);lst.setMinimumWidth(max(138,header.sizeHint().width()))
                 for t in group:
                     item=QListWidgetItem(t["title"]);item.setData(Qt.UserRole,t["id"]);item.setData(Qt.UserRole+1,t)
-                    item.setToolTip(t["title"]);item.setSizeHint(QSize(140,(120 if t["due_date"] else 105)+(20 if t["labels"] else 0)));lst.addItem(item)
+                    item.setToolTip(t["title"]);item.setSizeHint(card_size(t));lst.addItem(item)
                 cl.addWidget(lst,1);lanes.addWidget(col,1)
             self.work_layout.addWidget(scroll(board),1)
         else:

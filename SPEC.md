@@ -118,7 +118,7 @@ Current inspector tabs are Details and Time. Notes is hidden; activity, files an
 
 ### TKT-05: board behavior
 
-Dragging across status columns updates status with Undo. Within-column ordering persists. Filters must not cause hidden items to be deleted or statuses to change. Ticket selection remains stable after unrelated updates.
+Dragging across status columns immediately shows a translucent ghost plate in the destination, with no hold timer or confirmation. The preview occupies the position the ticket will have in the existing board order. Leaving the lane or cancelling removes it without saving. Drop updates the shared ticket status with Undo; a same-column drop makes no change. Map hold/confirmation behavior stays separate. Filters must not cause hidden items to be deleted or statuses to change. Ticket selection remains stable after unrelated updates. Manual within-column ordering remains planned.
 
 ### TKT-06: project and ticket lifecycle
 

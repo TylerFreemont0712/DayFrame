@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Show an immediate destination ghost while dragging Kanban tickets, with clean cancellation and status Undo.
 - Rename workflow stages to Not Started, In Progress, Processed, Review and Complete while preserving saved ticket stages and sync history.
 - Document natural commit/comment wording and frequent, focused commits.
 - Keep routine CI to source tests; make packaging opt-in for requested release waves or validation builds.
