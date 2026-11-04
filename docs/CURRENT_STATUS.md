@@ -18,13 +18,19 @@ Python/PySide6 Qt Widgets, SQLite and a private Python sync hub. Normal 1280×80
 
 The checkout retains current branding, native source and useful documentation. The current release and development environment stay local. Current UI reference screenshots live in screenshots/current/.
 
+## Unreleased source changes
+
+The workflow now reads Not Started → In Progress → Processed → Review → Complete across ticket views and capture. Stored stage IDs remain unchanged; Home's In Progress group follows the renamed stage. These changes are source-only; the 0.5.1 package and reference screenshots remain the last packaged baseline.
+
 ## Data and compatibility
 
 Schema 4 preserves saved records/passwords; databases on versions 1–3 migrate transactionally. Import changes only the copied database. Established storage, session, keyring and sync identifiers are documented in BRANDING.md. Notes data is retained with its UI hidden.
 
 ## Verification
 
-The cleanup release passes 58 Windows tests and a 19-screen packaged UI smoke check using Python 3.14. The preceding baseline also passed the Windows and Ubuntu 24.04 CI setup, tests, packaging and smoke checks. GitHub reruns both platform checks for this release. Tests never open the live profile.
+The cleanup release passed 58 Windows tests and a 19-screen packaged UI smoke check using Python 3.14. Windows and Ubuntu 24.04 CI also passed setup, tests, packaging and smoke checks for that baseline. Routine CI now runs source tests only; packaging requires an explicitly requested build. Tests never open the live profile. See RELEASES.md for the packaged baseline.
+
+The unreleased workflow rename passes 60 Windows source tests, including saved-stage compatibility, shared status labels, completion/Undo and Home grouping. It has not been packaged.
 
 The Windows installer is unsigned. Ubuntu CI does not verify the owner's exact Linux Mint installation. No hub/service/firewall or external integration is installed by source setup.
 

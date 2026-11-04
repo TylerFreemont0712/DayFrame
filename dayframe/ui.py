@@ -328,7 +328,8 @@ class DayFrame(QMainWindow):
         key=ElidingLabel(self.ticket_key(t),"muted");key.setFixedWidth(94);l.addWidget(key)
         project=ElidingLabel(self.project_name(t["project_id"]),"badge");project.setFixedWidth(86);project.setAlignment(Qt.AlignCenter);l.addWidget(project)
         title=button(t["title"],lambda:self.select_ticket(t["id"]));title.setObjectName("rowTitle");title.setMinimumWidth(65);title.setSizePolicy(QSizePolicy.Ignored,QSizePolicy.Preferred);title.setToolTip(t["title"]);l.addWidget(title,1)
-        meta=label(("Due "+t["due_date"][5:]) if overdue else D.STATUS_NAMES[t["status"]],"warning" if overdue else "muted");meta.setFixedWidth(66);l.addWidget(meta)
+        meta=label(("Due "+t["due_date"][5:]) if overdue else D.STATUS_NAMES[t["status"]],"warning" if overdue else "muted")
+        meta.setFixedWidth(max(66,meta.fontMetrics().horizontalAdvance(meta.text())+4));l.addWidget(meta)
         estimate=label(D.short_time(t["estimate_min"]*60000),"muted");estimate.setFixedWidth(31);l.addWidget(estimate)
         play=button("",lambda:self.execute("timer.action",{"action":"start","ticket_id":t["id"]}),"play");play.setObjectName("iconOnly");play.setFixedWidth(23);play.setToolTip("Start tracking");l.addWidget(play)
         return w
@@ -342,7 +343,7 @@ class DayFrame(QMainWindow):
         fl.addWidget(row(label("Focus","section"),self.home_focus_title,self.home_focus_clock,self.home_focus_toggle))
         tl.addWidget(focus)
         for title,group in P.home_groups(self.data,today):
-            if not group and title in ("In progress","Recent tickets"):continue
+            if not group and title in (D.STATUS_NAMES["ready"],"Recent tickets"):continue
             tl.addWidget(row(label(title,"section"),label(str(len(group)),"count"),None))
             if group:
                 for ticket in group:tl.addWidget(self.ticket_row(ticket,title=="Overdue"))
@@ -443,7 +444,7 @@ class DayFrame(QMainWindow):
             self.work_layout.addWidget(legend);return
         project_filter=combo([(None,"All projects")]+[(p["id"],p["name"]) for p in self.data["project"] if not p["archived"]],self.filter_project)
         project_filter.setMaximumWidth(170);project_filter.setVisible(not self.project_id)
-        status_filter=combo([("all","All statuses"),("open","Open tickets")]+[(s,D.STATUS_NAMES[s]) for s in D.STATUSES],self.filter_status);status_filter.setMaximumWidth(130)
+        status_filter=combo([("all","All statuses"),("open","Open tickets")]+[(s,D.STATUS_NAMES[s]) for s in D.STATUSES],self.filter_status);status_filter.setMaximumWidth(170)
         labels=sorted({v for t in self.data["ticket"] for v in t["labels"]})
         label_filter=combo([("","Label: All")]+[(v,v) for v in labels],self.filter_label);label_filter.setMaximumWidth(140)
         project_filter.currentIndexChanged.connect(lambda:self.change_filter("filter_project",project_filter.currentData()))
@@ -456,7 +457,7 @@ class DayFrame(QMainWindow):
             for status in D.STATUSES:
                 col,cl=column(spacing=3);group=[t for t in tickets if t["status"]==status]
                 header=row(label(D.STATUS_NAMES[status],"section"),label(str(len(group)),"count"),None);cl.addWidget(header)
-                lst=TicketList(self,status);lst.setMinimumWidth(138)
+                lst=TicketList(self,status);lst.setMinimumWidth(max(138,header.sizeHint().width()))
                 for t in group:
                     item=QListWidgetItem(t["title"]);item.setData(Qt.UserRole,t["id"]);item.setData(Qt.UserRole+1,t)
                     item.setToolTip(t["title"]);item.setSizeHint(QSize(140,(120 if t["due_date"] else 105)+(20 if t["labels"] else 0)));lst.addItem(item)

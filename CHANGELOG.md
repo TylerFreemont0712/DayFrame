@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Rename workflow stages to Not Started, In Progress, Processed, Review and Complete while preserving saved ticket stages and sync history.
 - Document natural commit/comment wording and frequent, focused commits.
 - Keep routine CI to source tests; make packaging opt-in for requested release waves or validation builds.
 - Record the packaged baseline and when to suggest the next release.

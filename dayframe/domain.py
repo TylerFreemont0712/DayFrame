@@ -12,7 +12,8 @@ from zoneinfo import ZoneInfo
 
 DEFINITIONS = json.loads(files("dayframe").joinpath("schema_definitions.json").read_text(encoding="utf-8"))
 STATUSES = ("inbox", "ready", "doing", "review", "done")
-STATUS_NAMES = dict(zip(STATUSES, ("Inbox", "Ready", "Doing", "Review", "Done")))
+# Keep stored IDs stable so existing tickets and sync history retain their stage.
+STATUS_NAMES = dict(zip(STATUSES, ("Not Started", "In Progress", "Processed", "Review", "Complete")))
 PRIORITIES = ("low", "medium", "high", "urgent")
 
 def text(value, maximum=500, required=False):

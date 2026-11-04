@@ -118,6 +118,6 @@ def home_groups(snapshot,day):
     group("Top priorities",[t for t in tickets if t["pinned"]],3)
     group("Due today",[t for t in tickets if t["due_date"]==day])
     group("Overdue",sorted([t for t in tickets if t["due_date"] and t["due_date"]<day],key=lambda t:t["due_date"]))
-    group("In progress",sorted([t for t in tickets if t["status"]=="doing" or t["id"]==active],key=lambda t:t["id"]!=active))
+    group(D.STATUS_NAMES["ready"],sorted([t for t in tickets if t["status"]=="ready" or t["id"]==active],key=lambda t:t["id"]!=active))
     group("Recent tickets",list(reversed(tickets)),5)
     return groups

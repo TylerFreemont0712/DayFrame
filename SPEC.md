@@ -102,7 +102,7 @@ Projects opens an all-ticket Kanban, with project filters and optional grouping.
 
 ### TKT-02: workflow
 
-Default status sequence: Inbox → Ready → Doing → Review → Done. Internal status values can remain stable while labels are displayed consistently; the Doing column corresponds to In progress ticket status. Per-project customization is a later feature.
+Default status sequence: Not Started → In Progress → Processed → Review → Complete. Stored values remain inbox, ready, doing, review and done respectively, preserving existing tickets and sync history. Home's In Progress group follows the ready stage and any actively timed ticket. Per-project customization is a later feature.
 
 Blocked is an independent indicator. When unfinished prerequisites block work, compute that flag without moving the ticket out of its chosen workflow status. Keep manual blocking reason distinguishable from dependency blocking.
 
