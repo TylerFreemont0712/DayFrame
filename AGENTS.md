@@ -3,6 +3,18 @@
 Read SPEC.md, docs/DECISIONS.md, docs/ARCHITECTURE.md, and docs/CURRENT_STATUS.md before changing behavior.
 Use Python, PySide6 Qt Widgets and QGraphicsView for the application.
 
+## Writing and commit history
+
+Write commit messages, code comments, PR descriptions, review comments and release notes in plain, natural language. Describe the actual change and its reason. Avoid boilerplate, promotional wording, process narration and unnecessary mentions of assistants, models or generation tools. Do not add automatic generation footers or co-author trailers. Preserve required third-party attribution.
+
+Keep commit titles short and concrete, such as "Fix overlapping calendar events". Add a body only when it explains a useful reason, tradeoff or validation result. Code comments should explain non-obvious intent or constraints rather than repeat the code.
+
+Commit regularly as coherent pieces of work become complete and checked. Each commit should have one clear purpose and be independently understandable and revertible; include the tests and documentation needed for that change. Split unrelated fixes and formatting into separate commits. Avoid both large end-of-task dumps and trivial filler commits. Keep shared history intact; do not rewrite or squash published commits unless the owner asks.
+
+Follow existing session authorization for committing and pushing. These conventions do not grant new permission to publish or contact others.
+
+## Application rules
+
 Default Graphite/Cyan uses the compact dashboard layout in a compact 1280x800 resizable window, minimum980x640. 1920x1200 is the owner's display size, not the application size. Themes, density, font scale and panel
 sizes are independent. Today has no contextual sidebar. Navigation glyphs use bundled scalable fonts; the application icon is a packaged DayFrame raster asset.
 

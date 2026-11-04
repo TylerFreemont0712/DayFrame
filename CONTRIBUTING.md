@@ -29,6 +29,10 @@ Smoke checks require a new, unconfigured profile each time. Never use the normal
 
 ## Iteration workflow
 
+Commit small, complete changes regularly during development. Keep each commit focused on one purpose, with related tests and docs alongside the code. Separate unrelated fixes or formatting; do not leave all completed work for one large final commit or create filler commits just to increase the count. Preserve published history unless the owner requests a rewrite.
+
+Use short, concrete commit titles and natural language in code comments, PRs and discussions. Explain what changed and why. Avoid canned narration, unnecessary tool/assistant attribution and automatic generation footers or co-author trailers. Keep required third-party attribution. Comments should explain intent or constraints rather than obvious code.
+
 1. Pull main and create a descriptive branch, such as feature/calendar-reminders.
 2. Keep changes focused. Use the shared store/domain layer so every view sees the same tickets.
 3. Run relevant checks. Functional changes require the full unit suite; packaging/resource changes also require the packaged smoke check.
