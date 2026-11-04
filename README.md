@@ -21,7 +21,7 @@ See [current status](docs/CURRENT_STATUS.md) for verification and limitations. R
 
 ## Windows
 
-For a source checkout, install Python 3.11+ and run:
+For a source checkout, install Python 3.12+ (3.14 recommended) and run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/setup-windows.ps1
@@ -41,7 +41,7 @@ sh scripts/setup-linux.sh
 sh start-dayframe.sh
 ```
 
-Python 3.11+ and system Qt/X11 libraries are required. See [operations](docs/OPERATIONS.md) for Mint dependencies, hub setup, pairing and packaging. Linux CI targets Ubuntu; the owner's exact Mint installation still needs a live check.
+Python 3.12+ (3.14 recommended) and system Qt/X11 libraries are required. See [operations](docs/OPERATIONS.md) for Mint dependencies, hub setup, pairing and packaging. Linux CI targets Ubuntu; the owner's exact Mint installation still needs a live check.
 
 ## Accounts and data
 

@@ -7,7 +7,7 @@ name = "dayframe-desktop"
 version = "0.5.0"
 description = "Private native desktop planning, tickets, and time tracking"
 readme = "README.md"
-requires-python = ">=3.11,<3.15"
+requires-python = ">=3.12,<3.15"
 dependencies = [
     "PySide6-Essentials==6.12.0",
     "QtAwesome==1.4.2",

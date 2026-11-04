@@ -40,10 +40,14 @@ Exact behavior is in CALENDAR_AND_MAP.md. Existing foundation includes Today/Kan
 
 Schema 4 preserves records/passwords. Versions 1–3 migrate; import changes only the copy. Update all clients/hub to 0.4. Earlier source and packages remain separate.
 
-58 Windows tests pass, including rename continuity for profile paths, database records and remembered sign-in. The DayFrame packaged application passes an isolated offscreen smoke check with 19 native UI captures in docs/screenshots/0.5.0. The 0.4.1 frame verification also accepted main/dialog caption, text, border and dark-mode settings for all four themes; that frame implementation is unchanged. Checks use test-only profiles or hidden HWNDs; the live application profile is not opened.
+58 Windows tests pass on the Python 3.14 desktop baseline, including rename continuity for profile paths, database records and remembered sign-in. The DayFrame packaged application passes an isolated offscreen smoke check with 19 native UI captures in docs/screenshots/0.5.0. The 0.4.1 frame verification also accepted main/dialog caption, text, border and dark-mode settings for all four themes; that frame implementation is unchanged. Checks use test-only profiles or hidden HWNDs; the live application profile is not opened.
 
-Installer is unsigned. Linux Mint source/setup/CI are supplied; the owner's exact Mint runtime is still unverified. No real profile is a test fixture and no live hub/service/firewall/external integration is deployed.
+GitHub Actions also passed all tests, standalone packaging and packaged UI smoke checks on Windows and Ubuntu 24.04 with Python 3.14. The successful baseline is run #2 (commit f273d01). Installer is unsigned. Linux Mint source/setup/CI are supplied; the owner's exact Mint runtime is still unverified. No real profile is a test fixture and no live hub/service/firewall/external integration is deployed.
 
 ## Remaining
 
 Recurrence exceptions and weekly/monthly rules, reminders, goal/reference objects, attachments/activity, durable history/recovery, large-data paging, stronger timer leasing, device/recovery management, sync-aware historical restore, GitHub, Team and mobile. Conflict resolution currently chooses local or hub data.
+
+## Desktop runtime baseline
+
+Use Python 3.12–3.14 for desktop source, with Python 3.14 recommended and used for current packaging/CI. The first Ubuntu CI run on Python 3.11.17 aborted in the Qt binding during a repeated theme change (none_dealloc in ElidingLabel.changeEvent). The unchanged application passes on Python 3.14; this is a runtime compatibility workaround, not a claimed upstream Qt fix. Older native 3.11 packages and source remain archived locally. The headless hub retains its existing protocol and configuration.

@@ -4,7 +4,7 @@ Read AGENTS.md, SPEC.md, docs/DECISIONS.md, docs/ARCHITECTURE.md and docs/CURREN
 
 ## Local development
 
-Clone https://github.com/TylerFreemont0712/DayFrame.git. Use Python 3.11 and a separate virtual environment on each OS. Run scripts/setup-windows.ps1 or sh scripts/setup-linux.sh, then install requirements-dev.txt using that environment.
+Clone https://github.com/TylerFreemont0712/DayFrame.git. Use Python 3.14 and a separate virtual environment on each OS. Run scripts/setup-windows.ps1 or sh scripts/setup-linux.sh, then install requirements-dev.txt using that environment.
 
 Windows:
 

@@ -8,7 +8,7 @@ The bundled application needs no separate Python installation:
 
 On the original development machine its executable is release/native-0.5.0/DayFrame/DayFrame.exe. Keep _internal with it. The native installer is release/native-0.5.0/DayFrame-Setup-0.5.0.exe; it installs under the current user's Programs directory and creates a Start-menu shortcut. It is unsigned. Uninstalling does not remove the runtime database. A clean Git clone contains source only; run the setup script or build locally. The launcher falls back to the source virtual environment.
 
-For source work, install Python 3.11+ and run:
+For source work, install Python 3.12+ (3.14 recommended) and run:
 
     powershell -ExecutionPolicy Bypass -File scripts/setup-windows.ps1
     .venv\Scripts\python.exe app.py
@@ -131,3 +131,7 @@ Schema2 adds ticket work blocks. Upgrade the hub and all clients to0.3 before se
 ## Native 0.4 compatibility
 
 Update the Python hub/all clients to 0.4 for event/map fields. Versions 1–3 migrate to schema4; imports migrate only the copy. Older apps cannot open the upgraded database; preserve earlier backups. Notes data remains with its UI hidden. No service/firewall/network setup is installed.
+
+## Source interpreter selection
+
+The setup scripts prefer Python 3.14, then 3.13/3.12, and reject older desktop interpreters. On Windows you can pass `-Python C:\path\to\python.exe`; on Linux set `DAYFRAME_PYTHON=/path/to/python`. An existing older .venv is preserved and setup asks you to rename it before creating a new one. Do not copy virtual environments between operating systems. Desktop build/runtime does not change existing profile or hub identities.

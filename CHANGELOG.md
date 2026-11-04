@@ -5,6 +5,7 @@
 - Rename the native application to DayFrame, with an image-generated logo, desktop icon and multi-resolution Windows ICO.
 - Rename the Python package and command entry points to dayframe; update Windows/Linux launch and build templates.
 - Preserve existing TimeManager profiles, database, auto-login, sync credentials and hub compatibility.
+- Use Python 3.14 for desktop packaging and CI; setup requires Python 3.12–3.14.
 - Establish GitHub source history, Windows/Linux CI, isolated packaged smoke checks, contribution guide, issue forms and PR template.
 
 ## 0.4.1
