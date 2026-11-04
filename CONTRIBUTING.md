@@ -50,6 +50,6 @@ Verify with an isolated profile before tagging vX.Y.Z. Publish installers or por
 
 ## Compatibility and design
 
-DayFrame replaces the TimeManager name in 0.5.0. Profile directories, SQLite filename, keyring service, drag MIME type, TM_HUB_* variables and sync protocol remain stable. See docs/BRANDING.md. Changing storage identity requires an explicit migration and continuity tests.
+Profile directories, SQLite filename, keyring service, drag MIME type, TM_HUB_* variables and sync protocol remain stable. See docs/BRANDING.md. Changing storage identity requires an explicit migration and continuity tests.
 
 Keep the app native Python/PySide6, with transactional SQLite/outbox writes, account isolation, explicit map confirmations and manual placement. Third-party notices are in docs/THIRD_PARTY.md. Never commit runtime profiles, device credentials, private certificates, local archives or builds.

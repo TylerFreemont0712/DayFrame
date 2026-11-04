@@ -1,21 +1,15 @@
 # Changelog
 
+## 0.5.1 — 2026-11-04
+
+- Remove superseded implementations, old application marks, obsolete launch/build files, design mockups and outdated screenshots/documentation.
+- Keep only current DayFrame branding, native source, current UI references and the active release.
+- Remove obsolete branding from import messages and unused theme/notes UI remnants.
+- Preserve existing profile/database/login/sync identifiers and user data.
+
 ## 0.5.0 — 2026-11-04
 
-- Rename the native application to DayFrame, with an image-generated logo, desktop icon and multi-resolution Windows ICO.
-- Rename the Python package and command entry points to dayframe; update Windows/Linux launch and build templates.
-- Preserve existing TimeManager profiles, database, auto-login, sync credentials and hub compatibility.
-- Use Python 3.14 for desktop packaging and CI; setup requires Python 3.12–3.14.
-- Establish GitHub source history, Windows/Linux CI, isolated packaged smoke checks, contribution guide, issue forms and PR template.
-
-## 0.4.1
-
-- Polish Quick Add, preset/custom colored label chips, controls, project badges and native Windows theme frames.
-
-## 0.4.0
-
-- Add the three-part calendar, shared Home planning, distinct theme profiles, nested map sections and confirmed hover linking.
-
-## Earlier foundations
-
-Native Python/PySide6 replaced the initial Electron concept. Historical local sources remain archived under legacy/ on the original machine and are excluded from this repository. Original visual concepts and implementation notes are retained in docs/.
+- Native Python/PySide6 desktop with Today, tickets, calendar, project map and time tracking.
+- DayFrame logo/icon, distinct themes, rich Quick Add and colored labels.
+- Private accounts, remembered login, SQLite persistence and optional private LAN sync.
+- Python 3.14 packaging/CI, Windows/Linux setup, project specifications and contribution workflow.

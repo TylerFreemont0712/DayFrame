@@ -1,8 +1,8 @@
-# DayFrame native design system — 0.5.0
+# DayFrame native design system — 0.5.1
 
-The app identity is DayFrame; the image-generated open-frame D icon and wordmark are defined in BRANDING.md. Existing concept screenshots predate the rename. Theme layouts and 0.4.1 control/label refinements remain the visual baseline.
+The app identity is DayFrame; the image-generated open-frame D icon and wordmark are defined in BRANDING.md. Current UI references are in screenshots/current/.
 
-This replaces earlier expansive-dashboard guidance. Graphite/Cyan remains the selected default.
+Graphite/Cyan is the default theme.
 
 ## Geometry
 
@@ -41,7 +41,7 @@ Preserve drafts through refresh; navigation uses Save/Discard/Cancel. Timer stay
 Appearance/geometry/density/text scale/panel widths are device-local. Project/account entities sync; future repository paths stay device-local. Exact interactions are in CALENDAR_AND_MAP.md.
 
 
-## 0.4.1 control and label polish
+## Controls and labels
 
 Combo/calendar/spin subcontrols use bundled SVG chevrons and transparent embedded editors. Tab bases must not draw a bright native separator. Fixed-width identifiers and project badges reserve their layout space and elide with full hover text.
 

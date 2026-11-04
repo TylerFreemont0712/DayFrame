@@ -61,15 +61,15 @@ The owner accepted the recommended answers in this table and supplied Linux Mint
 
 ## Selected engineering choices
 
-SQLite per device, transactional outbox, stable identities, application-level synchronization, and a separate optional hub remain selected. Native Python + PySide6 / Qt Widgets replaces Electron/React/TypeScript by direct owner instruction. No HTML/browser renderer is used.
+SQLite per device, transactional outbox, stable identities, application-level synchronization, and a separate optional hub remain selected. Native Python + PySide6 / Qt Widgets is the selected desktop stack.
 
-## Native architecture override — 2026-11-04
+## Native application stack
 
-D-039: Use Python libraries and a real native desktop toolkit; the owner does not want an HTML application. PySide6-Essentials / Qt Widgets and QGraphicsView are selected.
+D-039: Use Python, PySide6-Essentials / Qt Widgets and QGraphicsView.
 
-D-040: Bundle consistent scalable QtAwesome icons and a native application icon. Image generation is optional; code-native vector assets suit this interface.
+D-040: Bundle scalable QtAwesome navigation glyphs and the current DayFrame application icon.
 
-D-041: Preserve the earlier implementation and original user database. Retain schema/password compatibility and provide an explicit read-only source import into a fresh native profile.
+D-041: Preserve user data, schema/password compatibility and read-only source import into a fresh native profile.
 
 ## Source precedence
 
@@ -78,7 +78,7 @@ Direct user decisions govern. Written accepted requirements govern over incident
 
 ## Compact-window and login correction — 2026-11-04
 
-D-042: Match concept06 closely using compact task rows, board cards and narrow panes. Default window1280×800; minimum980×640. The display resolution is not the native window size.
+D-042: Use compact task rows, board cards and narrow panes. Default window1280×800; minimum980×640. The display resolution is not the native window size.
 
 D-043: No minimum password length, with existing hashes preserved. Remember local sign-in until explicit Options → Log out.
 
@@ -107,6 +107,8 @@ D-055: Offer preset labels including bug and feature; manual input adds labels. 
 
 D-056: The owner selected DayFrame and requested imagegen branding, followed by a GitHub repository and setup for future iterations.
 D-057: Version 0.5.0 uses the dayframe Python package, DayFrame application/bundle names, a generated open-frame D icon and wordmark. Preserve existing TimeManager profile/database/session/keyring/sync identities so the rename does not strand data.
-D-058: Establish TylerFreemont0712/DayFrame as a private source repository by default. Keep local legacy archives, runtime data, credentials and generated builds out of Git. Include concepts, specifications, contribution instructions, issue/PR templates and Windows/Linux build checks.
+D-058: Establish TylerFreemont0712/DayFrame as a private source repository by default. Keep runtime data, credentials and generated builds out of Git. Include current branding, specifications, contribution instructions, issue/PR templates and Windows/Linux build checks.
 
 D-059: Standardize desktop packaging/CI on Python 3.14 after the Linux 3.11.17 Qt binding crash; require Python 3.12–3.14 in source setup. Keep the application/schema/sync unchanged. The exact Mint installation still needs its own live verification.
+
+D-060: The owner requested removal of obsolete implementations, source/version archives, concepts, old logos and unused references. Retain the current native source, current branding, current release, active environment and useful current documentation. Established account/storage/sync identifiers remain stable.

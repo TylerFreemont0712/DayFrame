@@ -123,7 +123,7 @@ class DayFrame(QMainWindow):
     def __init__(self,store):
         super().__init__();self.store=store;self.sync=Sync(store)
         self.setWindowTitle("DayFrame");self.setWindowIcon(app_icon());self.resize(1280,800);self.setMinimumSize(980,640)
-        self.page="Today";self.project_id=None;self.project_view="Kanban";self.selected=None;self.note_id=None
+        self.page="Today";self.project_id=None;self.project_view="Kanban";self.selected=None
         self.filter_project=None;self.filter_status="all";self.filter_label="";self.context_collapsed=False
         self.search_text="";self.data=None;self.undo_action=None;self.busy=False;self.jobs=set();self.rebuilding=False
         self.draft_reader=None;self.draft_save=None;self.day=None
@@ -162,7 +162,7 @@ class DayFrame(QMainWindow):
         self.password.returnPressed.connect(self.submit_auth)
         if not configured:
             cl.addWidget(label("Everything stays in your local SQLite database.","muted"))
-            cl.addWidget(button("Import an existing DayFrame / TimeManager database",self.import_database,"database"))
+            cl.addWidget(button("Import an existing DayFrame database",self.import_database,"database"))
             cl.addWidget(button("Connect to my existing LAN account",self.import_hub,"network-wired"))
         cl.addWidget(label(str(self.store.root),"muted"))
         center=row(None,card,None); l.addWidget(center); l.addStretch(); self.setCentralWidget(root)
@@ -861,7 +861,7 @@ class DayFrame(QMainWindow):
         if self.jobs:self.toast.setText("Wait for the current operation before logging out.");return
         try:self.store.logout()
         except Exception as exc:error(self,exc);return
-        self.sync.token=None;self.selected=None;self.note_id=None;self.search_text="";self.statusBar().hide();self.show_auth()
+        self.sync.token=None;self.selected=None;self.search_text="";self.statusBar().hide();self.show_auth()
 
     def complete_ticket(self,ticket,checked=True):
         self.undo_action=lambda:self.execute("ticket.save",{"id":ticket["id"],"status":ticket["status"]})

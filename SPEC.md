@@ -2,7 +2,7 @@
 
 Version: 0.5, calendar and nested-map baseline
 Date: 2026-11-04
-Status: product/infrastructure decisions confirmed; runnable DayFrame 0.5.0 foundation exists; see docs/CURRENT_STATUS.md for delivered scope
+Status: product/infrastructure decisions confirmed; runnable DayFrame 0.5.1 foundation exists; see docs/CURRENT_STATUS.md for delivered scope
 Owner: personal application for the requesting user
 Project destination: C:\Apps\TimeManager on Windows; a normal user-owned project directory on Linux
 
@@ -212,7 +212,7 @@ Detailed values and breakpoints are in the design-system document.
 
 A real transactional database stores workspaces, projects, tickets, events, work blocks, time entries, notes, settings, and account/device metadata. Attachment bytes may live in a managed file store with database metadata and hashes.
 
-Selected architecture: native Python + PySide6 / Qt Widgets, one local SQLite database per device, and an optional authenticated Python sync hub. This supersedes the earlier Electron choice at the owner's request. The owner confirmed an always-on Linux LAN hub, private username/password accounts with registered devices, merge/review conflict handling, and reliance on OS/disk encryption.
+Selected architecture: native Python + PySide6 / Qt Widgets, one local SQLite database per device, and an optional authenticated Python sync hub. The owner confirmed an always-on Linux LAN hub, private username/password accounts with registered devices, merge/review conflict handling, and reliance on OS/disk encryption.
 
 Do not open one live SQLite file from several machines over a shared network folder. Sync application-level changes through an authenticated service. Never put the working database inside the Git checkout or a folder that a consumer file-sync tool overwrites while the application is using it.
 
@@ -286,12 +286,12 @@ Initial packages target x64 as a development assumption. Verify exact Mint versi
 
 ## 19. Provenance
 
-The concept archive preserves the original five explorations and two combined designs. User decisions from both discovery rounds and the final selection are summarized in the decision log. Concept screenshots contain illustrative sample data; the written specification is authoritative when generated images contain inconsistent example relationships or tiny labels.
+The decision log records accepted product choices. DESIGN_SYSTEM.md defines the native layout and visual profiles; docs/screenshots/current/ provides current UI references. The written specification is authoritative for behavior.
 
 
 ## 20. Latest owner correction — compact native app
 
-The owner explicitly requests a normal windowed app with small text, compact pieces and tight spacing based on concept06. Default1280×800, minimum980×640, resizable; the display resolution1920×1200 must not dictate the window size. Today uses compact rows with Priorities/Due today/Overdue counts, followed by three small next-event rows; Day Agenda sits alongside. Narrow screens use Tasks/Agenda tabs when the inspector needs room. Keep the compact project pane, five Kanban lanes, detail inspector, footer quick capture and daily tracked total.
+The owner explicitly requests a normal windowed app with small text, compact pieces and tight spacing following the compact native dashboard layout. Default1280×800, minimum980×640, resizable; the display resolution1920×1200 must not dictate the window size. Today uses compact rows with Priorities/Due today/Overdue counts, followed by three small next-event rows; Day Agenda sits alongside. Narrow screens use Tasks/Agenda tabs when the inspector needs room. Keep the compact project pane, five Kanban lanes, detail inspector, footer quick capture and daily tracked total.
 
 Passwords have no minimum length; simple values such as tyler are valid. Remember local sign-in after account creation/login, including across application restarts. Explicit Options → Log out clears remembered sign-in and requires the next login. Store a local account/device marker, never the password, outside backups and sync. Existing password verifiers remain valid; an authenticated local-password-change action is available.
 

@@ -1,4 +1,4 @@
-# Quick Add, labels and native chrome — 0.4.1
+# Quick Add, labels and native chrome
 
 ## Screenshot fixes
 

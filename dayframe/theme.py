@@ -2,7 +2,7 @@
 import sys
 from importlib.resources import files
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor,QFont,QIcon,QPainter,QPalette,QPixmap
+from PySide6.QtGui import QColor,QFont,QIcon,QPalette
 from PySide6.QtWidgets import QApplication
 import qtawesome as qta
 

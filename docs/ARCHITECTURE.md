@@ -1,6 +1,6 @@
 # Native application architecture
 
-The owner's native-Python request supersedes the earlier Electron selection. DayFrame 0.5.0 uses **PySide6 / Qt Widgets**, SQLite, and a Python LAN hub. There is no embedded browser, WebEngine widget, HTML application layer, or Node runtime.
+DayFrame 0.5.1 uses **PySide6 / Qt Widgets**, SQLite and a Python LAN hub.
 
 ## Boundaries
 
@@ -18,7 +18,7 @@ The owner's native-Python request supersedes the earlier Electron selection. Day
 | sync.py | Authenticated push/pull, certificate pinning, OS keyring, conflict reconciliation |
 | hub.py | Optional private HTTP/TLS service with SQLite change feed and device registry |
 
-Qt style sheets style native controls; they do not introduce a browser engine or HTML document. User content is displayed as plain text or edited in QPlainTextEdit.
+Qt style sheets provide the native control appearance. User content is displayed as plain text or edited in QPlainTextEdit.
 
 Password hashing and network requests run through QThreadPool workers. Qt widgets are touched only on the GUI thread. SQLite access shares an RLock and transaction/savepoint boundary. Timer drawing uses a one-second GUI tick; durations come from persisted timestamps, not tick counts. Automatic sync polls every five seconds while open.
 
@@ -26,11 +26,11 @@ Editor drafts block destructive navigation with Save/Discard/Cancel. Unrelated r
 
 ## Persistence and compatibility
 
-Each device has its own SQLite database, using foreign keys, WAL, schema version 4, normalized label/dependency tables, and atomic domain/outbox writes. Version 0.5.0 preserves the 0.4 schema, earlier tables and password parameters. Sequential migrations add work blocks, event metadata and map relationships. Database import uses SQLite's backup API from a read-only source connection.
+Each device has its own SQLite database, using foreign keys, WAL, schema version 4, normalized label/dependency tables, and atomic domain/outbox writes. Sequential migrations preserve saved records and password parameters while adding work blocks, event metadata and map relationships. Database import uses SQLite's backup API from a read-only source connection.
 
 Native runtime paths are %LOCALAPPDATA%\TimeManager and $XDG_DATA_HOME/TimeManager. The source directory is never the default data directory. Window geometry and view settings are local preferences, not ticket entities.
 
-The hub is application-level synchronization, never a shared database mount. The push/pull envelope is compatible with the earlier format, but current fields require0.4 clients/hub. Compatibility of the Python client and Python hub is integration-tested; a live earlier Node hub deployment has not been verified in this migration.
+The hub synchronizes application-level changes between independent databases. The Python client and Python hub are integration-tested together. Schema 4 and sync protocol 1 are the current baseline.
 
 ## Packaging and icons
 

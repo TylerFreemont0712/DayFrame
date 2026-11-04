@@ -14,7 +14,7 @@ APP=QApplication.instance() or QApplication([])
 class CapturePolishTests(unittest.TestCase):
     def setUp(self):
         self.s=Store(Path("build/test-data")/uuid.uuid4().hex);self.s.register("polish","tyler");self.w=None;self.dialogs=[]
-        self.p=self.s.command("project.save",{"name":"TimeManager","project_key":"TIMEMA"})
+        self.p=self.s.command("project.save",{"name":"DayFrame Workspace","project_key":"DAYFR"})
         self.section=self.s.command("section.save",{"project_id":self.p["id"],"name":"Calendar","rule_field":"label","rule_value":"calendar"})
         self.parent=self.s.command("ticket.save",{"project_id":self.p["id"],"title":"Calendar","component":"Frontend","milestone":"R1","labels":["shared"]})
     def tearDown(self):
@@ -55,7 +55,7 @@ class CapturePolishTests(unittest.TestCase):
                 widgets=[row.layout().itemAt(i).widget() for i in range(row.layout().count())]
                 for left,right in zip(widgets,widgets[1:]):self.assertLess(left.geometry().right(),right.geometry().left(),(theme,left.geometry(),right.geometry()))
                 badge=next(x for x in row.findChildren(ElidingLabel) if x.objectName()=="badge")
-                self.assertEqual(badge.toolTip(),"TimeManager");self.assertTrue(badge.text().startswith("Time"))
+                self.assertEqual(badge.toolTip(),"DayFrame Workspace");self.assertTrue(badge.text().startswith("Day"))
                 self.assertLessEqual(badge.fontMetrics().horizontalAdvance(badge.text()),badge.width()-12)
     def test_batch_capture_keeps_context_clears_per_item_text_and_retains_failures(self):
         d=self.dialog();calls=[]

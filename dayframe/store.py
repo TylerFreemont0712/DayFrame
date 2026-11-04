@@ -433,7 +433,7 @@ class Store:
         with self.lock, sqlite3.connect(source.as_uri()+"?mode=ro",uri=True) as original:
             tables = {r[0] for r in original.execute("SELECT name FROM sqlite_master WHERE type='table'")}
             if not {"accounts","tickets","schema_migrations"}.issubset(tables):
-                raise ValueError("That is not a DayFrame / TimeManager database.")
+                raise ValueError("That is not a DayFrame database.")
             if original.execute("SELECT max(version) FROM schema_migrations").fetchone()[0] not in (1,2,3,4):
                 raise ValueError("Unsupported database version.")
             if original.execute("PRAGMA quick_check").fetchone()[0]!="ok":

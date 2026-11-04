@@ -1,53 +1,37 @@
-# Current implementation — DayFrame 0.5.0
+# Current implementation — DayFrame 0.5.1
 
-Python/PySide6 Qt Widgets, SQLite and a private Python sync hub. Normal 1280×800 resizable window, minimum 980×640. No HTML/browser runtime.
+Python/PySide6 Qt Widgets, SQLite and a private Python sync hub. Normal 1280×800 resizable window, minimum 980×640.
 
-## Delivered in 0.5.0
+## Delivered
 
-- DayFrame name, image-generated logo, packaged icon and multi-resolution Windows ICO.
-- dayframe Python package/command entry points, Windows launcher, installer and Linux templates.
-- Existing profile paths, database, remembered login, keyring service and sync compatibility retained.
-- Private GitHub source repository, contribution guide, changelog, issue forms and PR template.
-- Windows/Linux Actions tests, standalone build and isolated packaged smoke checks with artifacts.
+- Today priorities, due/overdue/recent work, agenda, major-event countdowns, upcoming events and live timer.
+- Shared Kanban/Map/List/Details tickets, inspector, checklist, dependencies and work blocks.
+- Month/Upcoming/Sunday-first Week calendar, event presets, detailed and multi-day events, yearly birthdays, click editing and 15-minute move/resize with Undo.
+- Nested map sections, inherited rules, parent/child tickets, sequence links and collapsible Unsorted.
+- Map 1.5-second hover ghosts, confirmation, cancellation, cycle checks and Undo.
+- Rich Quick Add and reusable preset/custom label chips; colored board/map labels.
+- Durable/manual/unassigned time, overlap review, private accounts, simple passwords and remembered login until Logout.
+- Graphite/Cyan, Terminal/Amber, Paper/Linen, Midnight/Studio and System, with independent density/text scale.
+- Native Windows frame theming, current DayFrame logo/icon and Windows/Linux launch/build templates.
+- SQLite backup/import, transactional sync outbox, private LAN hub, certificate pinning, independent field merges and conflict review.
+- Private GitHub repository, issue/PR templates, contribution guide and Windows/Linux CI.
 
-See BRANDING.md and CONTRIBUTING.md. Local legacy copies and earlier builds are preserved outside Git history.
+The checkout retains current branding, native source and useful documentation. The current release and development environment stay local. Current UI reference screenshots live in screenshots/current/.
 
-## Delivered in 0.4.1
+## Data and compatibility
 
-- Rounded combo/date/spinner controls, no bright tab separator, correctly fitted project/identifier text.
-- Rich Quick Add, preset/status/priority/description/estimate/parent/map/checklist fields and Add + another.
-- Shared removable label chips: red bug, teal feature, other common presets and manual/custom labels.
-- Saved custom labels in suggestions; compact colored labels on Kanban/map cards.
-- Native Windows theme caption/text/border colors with standard OS window behavior.
+Schema 4 preserves saved records/passwords; databases on versions 1–3 migrate transactionally. Import changes only the copied database. Established storage, session, keyring and sync identifiers are documented in BRANDING.md. Notes data is retained with its UI hidden.
 
-See QUICK_ADD_AND_LABELS.md. Schema 4 and the 0.4 hub remain compatible.
+## Verification
 
-## Existing 0.4 foundation
+The cleanup release passes 58 Windows tests and a 19-screen packaged UI smoke check using Python 3.14. The preceding baseline also passed the Windows and Ubuntu 24.04 CI setup, tests, packaging and smoke checks. GitHub reruns both platform checks for this release. Tests never open the live profile.
 
-- Month + Upcoming/presets + Sunday-first weekly timeline.
-- Shared event details, multi-day spans, location/description/color, yearly birthdays and archive/Undo.
-- Click editing and 15-minute single-day move/resize; work blocks remain separate from deadlines.
-- Home ordinary events, recent undated tickets and live Focus timer.
-- Graphite/Cyan, Terminal/Amber, Paper/Linen, Midnight/Studio and System; independent density/text scale.
-- Notes UI removed; saved data preserved.
-- Nested sections, inherited rules, ticket parent/child and section sequence links.
-- 1.5-second hold, ghost/progress, release confirmation, cancellation, cycle checks and Undo.
-- Context menus, relationship inspector and collapsible red-count Unsorted tray.
-
-Exact behavior is in CALENDAR_AND_MAP.md. Existing foundation includes Today/Kanban/List/Details, checklists/dependencies, durable/manual/unassigned time and overlap indicators, private accounts, remembered login until Logout, simple passwords, consistent backup/import, transactional outbox, LAN sync, TLS pinning, field merges and conflict review.
-
-## Compatibility and verification
-
-Schema 4 preserves records/passwords. Versions 1–3 migrate; import changes only the copy. Update all clients/hub to 0.4. Earlier source and packages remain separate.
-
-58 Windows tests pass on the Python 3.14 desktop baseline, including rename continuity for profile paths, database records and remembered sign-in. The DayFrame packaged application passes an isolated offscreen smoke check with 19 native UI captures in docs/screenshots/0.5.0. The 0.4.1 frame verification also accepted main/dialog caption, text, border and dark-mode settings for all four themes; that frame implementation is unchanged. Checks use test-only profiles or hidden HWNDs; the live application profile is not opened.
-
-GitHub Actions also passed all tests, standalone packaging and packaged UI smoke checks on Windows and Ubuntu 24.04 with Python 3.14. The successful baseline is run #2 (commit f273d01). Installer is unsigned. Linux Mint source/setup/CI are supplied; the owner's exact Mint runtime is still unverified. No real profile is a test fixture and no live hub/service/firewall/external integration is deployed.
+The Windows installer is unsigned. Ubuntu CI does not verify the owner's exact Linux Mint installation. No hub/service/firewall or external integration is installed by source setup.
 
 ## Remaining
 
-Recurrence exceptions and weekly/monthly rules, reminders, goal/reference objects, attachments/activity, durable history/recovery, large-data paging, stronger timer leasing, device/recovery management, sync-aware historical restore, GitHub, Team and mobile. Conflict resolution currently chooses local or hub data.
+Recurrence exceptions and weekly/monthly rules, reminders, goal/reference objects, attachments/activity, durable history/recovery, large-data paging, stronger timer leasing, device/recovery management, sync-aware historical restore, GitHub overview, Team and mobile. Conflict resolution currently chooses local or hub data.
 
-## Desktop runtime baseline
+## Desktop runtime
 
-Use Python 3.12–3.14 for desktop source, with Python 3.14 recommended and used for current packaging/CI. The first Ubuntu CI run on Python 3.11.17 aborted in the Qt binding during a repeated theme change (none_dealloc in ElidingLabel.changeEvent). The unchanged application passes on Python 3.14; this is a runtime compatibility workaround, not a claimed upstream Qt fix. Older native 3.11 packages and source remain archived locally. The headless hub retains its existing protocol and configuration.
+Use Python 3.12–3.14, with Python 3.14 recommended and used for packaging/CI. A Python 3.11.17 Ubuntu run aborted in the Qt binding during repeated theme changes; the application passes on Python 3.14. The headless hub retains its current protocol and configuration.

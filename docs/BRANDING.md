@@ -1,6 +1,6 @@
 # DayFrame identity and compatibility
 
-The owner selected **DayFrame**, capital D and F, on 2026-11-04. Version 0.5.0 is the first DayFrame release; it retains the 0.4.1 application features and schema 4.
+Use **DayFrame**, with capital D and F. Schema 4 is the current data format.
 
 ## Assets
 
@@ -40,9 +40,9 @@ Composition: a wide horizontal canvas, approximately 3:1 aspect ratio, generous 
 Constraints: maintain the icon's identity, only add the wordmark and compose the logo; no additional symbols, no mockups, no ornaments, no gradients, no perspective, no lighting effects, no watermark. Simple restrained professional desktop app branding.
 ```
 
-## Rename boundary
+## Storage and runtime identifiers
 
-Visible app/window names, Python package, console scripts, standalone bundle, launcher, installer and Linux templates are DayFrame. The source checkout on the original Windows machine remains C:\Apps\TimeManager so existing tooling and paths remain valid.
+Application names, the Python package, launchers, installer, logo and icon use DayFrame. The existing checkout path is C:\Apps\TimeManager.
 
 The following are intentionally preserved:
 
@@ -54,8 +54,8 @@ The following are intentionally preserved:
 | TimeManager.native.sync | Reuse registered device credentials in the OS keyring |
 | TM_HUB_* variables and timemanager-hub data/config paths | Existing Linux service configuration continues to work |
 | application/x-timemanager-ticket | Stable internal drag format |
-| Schema 4 / sync protocol 1 | Existing 0.4 clients and hubs keep communicating |
+| Schema 4 / sync protocol 1 | Stable data and synchronization format |
 
-No account is recreated, no profile is moved and no live database is used to test the rename. Earlier packaged versions and local legacy archives remain available on the original machine. Old screenshots/concepts retain their original visual identity and version labels.
+These identifiers are used by the active application and its stored data. Treat changes to them as a data migration, rather than a branding edit.
 
-A DayFrame installer uses its own application install directory and uninstall entry. It does not uninstall the earlier TimeManager application or remove runtime data. Close the earlier app before opening DayFrame on the same profile; both use the same profile lock.
+The installer uses the DayFrame installation directory and uninstall entry. Uninstalling leaves runtime data intact. Only one application process may open a profile at a time.

@@ -1,4 +1,4 @@
-"""Private Python LAN hub. Compatible with the DayFrame / TimeManager v1 sync protocol."""
+"""Private Python LAN hub. Uses DayFrame sync protocol 1."""
 from __future__ import annotations
 import argparse
 import hashlib

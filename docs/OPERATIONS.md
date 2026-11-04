@@ -6,7 +6,7 @@ The bundled application needs no separate Python installation:
 
     C:\Apps\TimeManager\Start DayFrame.cmd
 
-On the original development machine its executable is release/native-0.5.0/DayFrame/DayFrame.exe. Keep _internal with it. The native installer is release/native-0.5.0/DayFrame-Setup-0.5.0.exe; it installs under the current user's Programs directory and creates a Start-menu shortcut. It is unsigned. Uninstalling does not remove the runtime database. A clean Git clone contains source only; run the setup script or build locally. The launcher falls back to the source virtual environment.
+On the original development machine its executable is release/native-0.5.1/DayFrame/DayFrame.exe. Keep _internal with it. The native installer is release/native-0.5.1/DayFrame-Setup-0.5.1.exe; it installs under the current user's Programs directory and creates a Start-menu shortcut. It is unsigned. Uninstalling does not remove the runtime database. A clean Git clone contains source only; run the setup script or build locally. The launcher falls back to the source virtual environment.
 
 For source work, install Python 3.12+ (3.14 recommended) and run:
 
@@ -46,9 +46,9 @@ Linux native: $XDG_DATA_HOME/TimeManager, default ~/.local/share/TimeManager
 
 app.py --data-dir PATH selects a separate profile. Use separate empty profiles for testing. Only one native app process opens a given profile at a time. Never put a live SQLite file on a shared network drive.
 
-## Earlier application migration
+## Database import
 
-Before creating a native account, choose Import an existing DayFrame / TimeManager database. See NATIVE_MIGRATION.md. Earlier Electron Windows data normally lives in %APPDATA%\TimeManager/timemanager.db; Linux in ~/.config/TimeManager/timemanager.db. Native TimeManager users keep the same native data directory automatically; the DayFrame rename does not require import. Use the earlier app's Backup action when possible. Preserve the original.
+Before configuring an account, choose Import an existing DayFrame database to copy a consistent SQLite backup. The source stays intact. Existing installations keep using the configured native profile automatically; no import or data move is required for this cleanup.
 
 ## Private hub and TLS
 
@@ -119,18 +119,6 @@ Import-copy is supported into an unconfigured native profile. Do not restore an 
 - Outdated backup: preserve it and reconcile account/cursor/outbox state before reconnecting.
 - Diagnostics should omit passwords, tokens, private keys and personal ticket/note content.
 
-
-##0.3 local login and compact window
-
-Passwords have no minimum length. The application remembers sign-in on this OS profile until Options → Log out; restarting does not ask again. Existing installations need one successful sign-in after the update to create their local marker. Settings → Change local password changes only this local verifier, not the hub password.
-
-Normal window size is1280×800, minimum980×640. Earlier oversized geometry is reset once, then subsequent window sizes are remembered. No maximized launch is forced.
-
-Schema2 adds ticket work blocks. Upgrade the hub and all clients to0.3 before sending these records; old hubs reject the new block kind. Backups made by0.3 require a compatible application; preserve older backups independently.
-
-## Native 0.4 compatibility
-
-Update the Python hub/all clients to 0.4 for event/map fields. Versions 1–3 migrate to schema4; imports migrate only the copy. Older apps cannot open the upgraded database; preserve earlier backups. Notes data remains with its UI hidden. No service/firewall/network setup is installed.
 
 ## Source interpreter selection
 

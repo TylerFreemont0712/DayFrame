@@ -1,4 +1,4 @@
-# Calendar and project-map behavior — native 0.4.0
+# Calendar and project-map behavior
 
 ## Calendar and Home
 

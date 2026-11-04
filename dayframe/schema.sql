@@ -1,4 +1,4 @@
--- TimeManager schema version 4; version-1 databases migrate in Store._migrate.
+-- DayFrame schema version 4; version-1 databases migrate in Store._migrate.
 BEGIN TRANSACTION;
 CREATE TABLE accounts(id TEXT PRIMARY KEY,username TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,salt TEXT NOT NULL,device_id TEXT NOT NULL);
 CREATE TABLE conflicts(id TEXT PRIMARY KEY,account_id TEXT NOT NULL,operation_id TEXT NOT NULL,kind TEXT NOT NULL,entity_id TEXT NOT NULL,remote TEXT NOT NULL,fields TEXT NOT NULL);

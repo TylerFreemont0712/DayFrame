@@ -2,9 +2,9 @@
 
 # DayFrame
 
-A private desktop dashboard for planning your day, organizing project tickets and tracking time. **Python + PySide6 / Qt Widgets**, with SQLite and optional private LAN synchronization. Windows and Linux source; no embedded browser.
+A private desktop dashboard for planning your day, organizing project tickets and tracking time. **Python + PySide6 / Qt Widgets**, with SQLite and optional private LAN synchronization. Windows and Linux source.
 
-Version **0.5.0**, formerly TimeManager. Existing profiles and sync credentials keep working; see [branding and compatibility](docs/BRANDING.md).
+Version **0.5.1**. See [branding and storage identifiers](docs/BRANDING.md) for the current assets and persistence conventions.
 
 ## What works
 
@@ -49,7 +49,7 @@ Create a private account or connect an unconfigured installation to your existin
 
 The established runtime paths remain **%LOCALAPPDATA%\TimeManager** on Windows and **$XDG_DATA_HOME/TimeManager** on Linux (default ~/.local/share/TimeManager). The database remains timemanager.db. Runtime data stays outside the checkout. Do not share a live SQLite file between devices; use the optional hub.
 
-For an earlier Electron installation, import a consistent database backup into an unconfigured native profile. The original stays intact. See [migration](docs/NATIVE_MIGRATION.md).
+To restore a database backup, import a consistent snapshot into an unconfigured profile. Import preserves the source backup. See [backup and recovery](docs/OPERATIONS.md#backups-and-recovery).
 
 ## Development
 
@@ -80,6 +80,6 @@ Use .venv/bin/python on Linux. Build on each target OS. [CONTRIBUTING.md](CONTRI
 | dayframe/ | Application, domain, store and hub |
 | tests/ | Database, sync/TLS and native UI tests |
 | assets/ | Logo, generated icon master, PNG and ICO exports |
-| docs/concepts/ | Original concept references, predating the name change |
+| docs/screenshots/current/ | Current native UI reference screenshots |
 
-Generated installers, databases, credentials, virtual environments, build folders and historical local source archives are excluded from Git. Third-party components retain their notices; see [THIRD_PARTY.md](docs/THIRD_PARTY.md). No open-source license has been selected for this private project.
+Generated installers, databases, credentials, virtual environments, build folders and temporary source archives are excluded from Git. Third-party components retain their notices; see [THIRD_PARTY.md](docs/THIRD_PARTY.md). No open-source license has been selected for this private project.
