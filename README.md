@@ -9,7 +9,7 @@ Version **0.5.1**. See [branding and storage identifiers](docs/BRANDING.md) for 
 ## What works
 
 - Today: priorities, due/overdue work, agenda, three major-event countdowns and the active timer.
-- Projects: shared Kanban, nested Map, List, Details, ticket inspector, checklists and dependencies.
+- Projects: shared Kanban, nested Map, Details, ticket inspector, checklists and dependencies.
 - Calendar: marked Month, Upcoming events and Sunday-first weekly timeline; clickable event editing and work blocks.
 - Map: inherited classification, parent/child tickets, section sequence links, hover ghosts, confirmation, Undo and Unsorted tray.
 - Time: persistent ticket/unassigned timer, manual entries and overlap review.

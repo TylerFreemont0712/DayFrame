@@ -102,7 +102,7 @@ Pinning a priority does not change its project or workflow status. Marking a tic
 
 ### TKT-01: Projects landing
 
-Projects opens an all-ticket Kanban, with project filters and optional grouping. An individual project opens its Map; its Kanban, List, and Details views remain available.
+Projects opens an all-ticket Kanban, with project filters and optional grouping. An individual project opens its Map; its Kanban and Details views remain available.
 
 ### TKT-02: workflow
 
@@ -254,7 +254,7 @@ Store provider secrets in credential storage and redact logs. Never show fiction
 
 1. Documentation and infrastructure decisions.
 2. Cross-platform scaffold, theme system, settings persistence, and account/database foundation.
-3. Working local Today, ticket CRUD, Kanban/List/Details, and durable timer.
+3. Working local Today, ticket CRUD, Kanban/Details, and durable timer.
 4. Calendar/work blocks, major-event countdowns, and notes.
 5. Project Map with rule-based sections and robust manual placement.
 6. Authenticated local sync, conflict review, device management, and backup/restore.

@@ -5,7 +5,7 @@ Python/PySide6 Qt Widgets, SQLite and a private Python sync hub. Normal 1280×80
 ## Delivered
 
 - Today priorities, due/overdue/recent work, agenda, major-event countdowns, upcoming events and live timer.
-- Shared Kanban/Map/List/Details tickets, inspector, checklist, dependencies and work blocks.
+- Shared Kanban/Map/Details tickets, inspector, checklist, dependencies and work blocks.
 - Month/Upcoming/Sunday-first Week calendar, event presets, detailed and multi-day events, yearly birthdays, click editing and 15-minute move/resize with Undo.
 - Nested map sections, inherited rules, parent/child tickets, sequence links and collapsible Unsorted.
 - Map 1.5-second hover ghosts, confirmation, cancellation, cycle checks and Undo.
@@ -19,6 +19,8 @@ Python/PySide6 Qt Widgets, SQLite and a private Python sync hub. Normal 1280×80
 The checkout retains current branding, native source and useful documentation. The current release and development environment stay local. Current UI reference screenshots live in screenshots/current/.
 
 ## Unreleased source changes
+
+Project views now use Map, Kanban and Details; calendar deadlines open the ticket in Details.
 
 Settings now has View, Theme, Local data, Sync and Account categories, with one scrollable page visible at a time. View and Theme apply independently; field entries survive category switches and appearance changes. Backup, examples, LAN connection, automatic/manual sync, conflict review and account actions remain available. The selected category stays active during the session, and Sync displays unresolved conflict counts.
 

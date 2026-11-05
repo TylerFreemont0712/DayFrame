@@ -364,7 +364,7 @@ class DayFrame(QMainWindow):
         return result
 
     def show_projects(self):
-        views=(["Map"] if self.project_id else [])+["Kanban","List","Details"]
+        views=(["Map"] if self.project_id else [])+["Kanban","Details"]
         if self.project_view not in views:self.project_view="Kanban"
         tabs=QTabBar();tabs.setExpanding(False);[tabs.addTab(v) for v in views];tabs.setCurrentIndex(views.index(self.project_view))
         tabs.currentChanged.connect(lambda index:self.change_project_view(views[index]));self.page_header.layout().addWidget(tabs)
@@ -415,7 +415,7 @@ class DayFrame(QMainWindow):
                 cl.addWidget(lst,1);lanes.addWidget(col,1)
             self.work_layout.addWidget(scroll(board),1)
         else:
-            fields=["Ticket","Title","Status","Priority","Due","Estimate","Tracked","Component","Labels"] if self.project_view=="Details" else ["Ticket","Title","Status","Priority","Due"]
+            fields=["Ticket","Title","Status","Priority","Due","Estimate","Tracked","Component","Labels"]
             table=QTableWidget(len(tickets),len(fields));table.setHorizontalHeaderLabels(fields);table.setEditTriggers(QAbstractItemView.NoEditTriggers)
             table.setSelectionBehavior(QAbstractItemView.SelectRows);table.setAlternatingRowColors(True);table.verticalHeader().hide();table.verticalHeader().setDefaultSectionSize(25)
             for r,t in enumerate(tickets):
@@ -552,7 +552,7 @@ class DayFrame(QMainWindow):
             ticket=self.find_ticket(item["ticket_id"]);record=self.store.read("block",item["id"])
             if ticket and record:self.schedule_ticket(ticket,record)
         elif item["kind"]=="deadline":
-            self.page="Projects";self.project_id=item["record"]["project_id"];self.project_view="List";self.select_ticket(item["ticket_id"])
+            self.page="Projects";self.project_id=item["record"]["project_id"];self.project_view="Details";self.selected=item["ticket_id"];self.refresh_page()
     def move_calendar_item(self,item,day,start,end):
         if item["kind"] not in ("event","block") or not self.leave_editor():return
         kind=item["kind"];old=self.store.read(kind,item["id"])
