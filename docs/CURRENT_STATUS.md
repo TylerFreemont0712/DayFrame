@@ -16,7 +16,7 @@ Python/PySide6 Qt Widgets, SQLite and a private Python sync hub. Normal 1280×80
 - SQLite backup/import, transactional sync outbox, private LAN hub, certificate pinning, independent field merges and conflict review.
 - Private GitHub repository, issue/PR templates, contribution guide and Windows/Linux CI.
 
-The checkout retains current branding, native source and useful documentation. The current release and development environment stay local. Current UI reference screenshots live in screenshots/current/.
+The checkout retains current branding, native source and useful documentation. The current release and development environment stay local. Current packaged UI references live in docs/screenshots/current/.
 
 ## Changes in 0.5.2
 
@@ -42,9 +42,9 @@ Schema 4 preserves saved records/passwords; databases on versions 1–3 migrate 
 
 The cleanup release passed 58 Windows tests and a 19-screen packaged UI smoke check using Python 3.14. Windows and Ubuntu 24.04 CI also passed setup, tests, packaging and smoke checks for that baseline. Routine CI now runs source tests only; packaging requires an explicitly requested build. Tests never open the live profile. See RELEASES.md for the packaged baseline.
 
-The source run immediately before release preparation passed all 77 Windows tests. Coverage includes saved-stage compatibility, shared status labels, Home grouping, Kanban previews/cancellation/Undo, prefix-only project colors and contrast, title containment and Details navigation. The release suite and packaged verification are pending.
+The 0.5.2 release passed all 77 Windows source tests. Coverage includes saved-stage compatibility, shared status labels, Home grouping, Kanban previews/cancellation/Undo, prefix-only project colors and contrast, title containment and Details navigation. The Windows portable bundle and extracted installer payload each passed the expanded 61-screen smoke check using isolated profiles. All 881 installer payload files matched the bundle, including the supplied NSIS license notice. The verified package is now the local release used by Start DayFrame.cmd; see RELEASES.md for its build commit and checksum.
 
-Seven Settings tests cover category and keyboard navigation, independent saves, invalid preference retention, field persistence, existing data/sync/account actions and conflict updates. Layout checks cover all four themes, both window sizes and 100–125% text, including long conflict descriptions. The expanded source smoke run passed 61 screenshots. Linux Mint has not been verified.
+Seven Settings tests cover category and keyboard navigation, independent saves, invalid preference retention, field persistence, existing data/sync/account actions and conflict updates. Packaged layout checks cover all four themes, both window sizes and 100–125% text. Source checks also cover long conflict descriptions. Windows/Ubuntu source CI is linked from the release pull request. Linux Mint has not been verified.
 
 The Windows installer is unsigned. Ubuntu CI does not verify the owner's exact Linux Mint installation. No hub/service/firewall or external integration is installed by source setup.
 
