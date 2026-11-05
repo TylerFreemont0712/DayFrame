@@ -47,7 +47,7 @@ class CapturePolishTests(unittest.TestCase):
     def test_long_project_rows_keep_distinct_bounds_and_full_hover_text(self):
         self.s.command("ticket.save",{"project_id":self.p["id"],"title":"Test","pinned":1})
         w=self.window()
-        for theme in ("graphite","amber","light","studio"):
+        for theme in ("graphite","terminal","light","studio"):
             self.s.settings({"theme":theme,"textScale":125});apply_theme(self.s.settings());w.build_shell();w.navigate("Today");w.resize(980,640);QTest.qWait(70)
             rows=[x for x in w.workspace.findChildren(QFrame) if x.objectName()=="taskRow" and x.findChildren(ElidingLabel)]
             self.assertTrue(rows)

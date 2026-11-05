@@ -97,7 +97,7 @@ class CalendarAndMapTests(unittest.TestCase):
         w.execute("timer.action",{"action":"start","ticket_id":t["id"]});self.assertEqual(w.home_focus_title.text(),t["title"])
         w.execute("timer.action",{"action":"pause"});self.assertEqual(w.home_focus_clock.text(),w.timer_clock.text())
         faces=set();radii=set()
-        for theme in ("graphite","amber","light","studio"):
+        for theme in ("graphite","terminal","light","studio"):
             self.s.settings({"theme":theme});apply_theme(self.s.settings());faces.add(APP.font().family());radii.add(CURRENT["radius"])
             w.build_shell();w.navigate("Calendar");w.resize(980,640);QTest.qWait(100)
             mini=w.mini_month;upcoming=w.upcoming_panel;week=w.week_calendar

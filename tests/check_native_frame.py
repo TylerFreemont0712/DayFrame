@@ -9,7 +9,7 @@ from dayframe.widgets import FormDialog
 if sys.platform!="win32":raise SystemExit("Run this check on Windows with QT_QPA_PLATFORM=windows.")
 Path("build").mkdir(exist_ok=True)
 app=QApplication([]);main=QMainWindow();dialog=FormDialog(main,"Frame check");report={}
-for theme in ("graphite","amber","light","studio"):
+for theme in ("graphite","terminal","light","studio"):
     apply_theme({"theme":theme})
     report[theme]={}
     for name,widget in (("main",main),("dialog",dialog)):

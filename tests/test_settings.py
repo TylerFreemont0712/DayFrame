@@ -9,7 +9,8 @@ from PySide6.QtWidgets import QApplication, QPushButton, QCheckBox, QLineEdit
 
 from dayframe.store import Store
 from dayframe.ui import DayFrame
-from dayframe.theme import apply_theme
+from dayframe.palettes import THEMES, schemes
+from dayframe.theme import apply_theme, CURRENT
 
 APP = QApplication.instance() or QApplication([])
 
@@ -95,7 +96,7 @@ class SettingsTests(unittest.TestCase):
         self.section("view")
         self.assertEqual(self.settings.fields["timezone"].text(), "Europe/London")
         self.assertEqual(self.settings.fields["textScale"].value(), 125)
-        self.settings.fields["theme"].setCurrentIndex(self.settings.fields["theme"].findData("amber"))
+        self.settings.fields["theme"].setCurrentIndex(self.settings.fields["theme"].findData("terminal"))
         self.click("Apply view settings")
         saved = self.store.settings()
         self.assertEqual((saved["density"], saved["textScale"], saved["timezone"]),
@@ -103,7 +104,88 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(saved["theme"], "light")
         self.assertNotIn("syncUrl", saved)
         self.assertEqual(self.window.settings_section, "view")
-        self.assertEqual(self.settings.fields["theme"].currentData(), "amber")
+        self.assertEqual(self.settings.fields["theme"].currentData(), "terminal")
+
+    def choose(self, box, key):
+        box.setCurrentIndex(box.findData(key))
+        APP.processEvents()
+
+    def test_color_schemes_follow_the_chosen_theme_and_are_remembered(self):
+        self.section("theme")
+        fields = self.settings.fields
+        theme, scheme = fields["theme"], fields["themeColor"]
+        self.assertEqual([scheme.itemData(i) for i in range(scheme.count())],
+                         ["cyan", "azure", "mint", "orange", "rose"])
+        self.choose(scheme, "mint")
+        self.choose(theme, "terminal")
+        self.assertEqual([scheme.itemData(i) for i in range(scheme.count())],
+                         ["amber", "green", "ice", "magenta", "mono"])
+        self.assertEqual(scheme.currentData(), "amber")
+        self.assertEqual(self.settings.color_title.text(), "Terminal colors")
+        self.choose(scheme, "green")
+        self.choose(theme, "graphite")
+        self.assertEqual(scheme.currentData(), "mint")
+        self.assertEqual(self.store.settings()["themeColors"], {})
+        self.choose(theme, "terminal")
+        self.click("Apply theme")
+        saved = self.store.settings()
+        self.assertEqual(saved["theme"], "terminal")
+        self.assertEqual(saved["themeColors"], {"graphite": "mint", "terminal": "green"})
+        self.assertEqual((CURRENT["theme"], CURRENT["scheme"], CURRENT["accent"]),
+                         ("terminal", "green", "#5df07a"))
+        self.assertEqual(self.settings.fields["themeColor"].currentData(), "green")
+        self.choose(self.settings.fields["theme"], "graphite")
+        self.assertEqual(self.settings.fields["themeColor"].currentData(), "mint")
+
+    def test_system_theme_has_no_color_choices_and_keeps_saved_schemes(self):
+        self.section("theme")
+        page = self.settings.pages.currentWidget()
+        self.choose(self.settings.fields["theme"], "light")
+        self.choose(self.settings.fields["themeColor"], "clay")
+        self.assertTrue(self.settings.fields["themeColor"].isVisibleTo(page))
+        self.choose(self.settings.fields["theme"], "system")
+        self.assertFalse(self.settings.fields["themeColor"].isVisibleTo(page))
+        self.assertEqual(self.settings.fields["themeColor"].count(), 0)
+        self.click("Apply theme")
+        saved = self.store.settings()
+        self.assertEqual((saved["theme"], saved["themeColors"]), ("system", {"light": "clay"}))
+        self.assertIn(CURRENT["theme"], ("light", "graphite"))
+
+    def test_view_apply_keeps_unsaved_theme_and_color_drafts(self):
+        self.section("theme")
+        self.choose(self.settings.fields["theme"], "studio")
+        self.choose(self.settings.fields["themeColor"], "wine")
+        self.section("view")
+        self.click("Apply view settings")
+        self.assertEqual(self.store.settings()["theme"], "graphite")
+        self.assertEqual(self.store.settings()["themeColors"], {})
+        self.assertEqual(self.settings.fields["theme"].currentData(), "studio")
+        self.assertEqual(self.settings.fields["themeColor"].currentData(), "wine")
+
+    def test_saved_amber_theme_opens_as_terminal_and_bad_colors_are_ignored(self):
+        with self.store.lock:
+            self.store.db.execute("UPDATE settings SET data=?",
+                                  ('{"theme": "amber", "themeColors": {"terminal": "purple"}}',))
+        saved = self.store.settings()
+        self.assertEqual((saved["theme"], saved["themeColors"]), ("terminal", {}))
+        apply_theme({"theme": "amber"})
+        self.assertEqual((CURRENT["theme"], CURRENT["scheme"]), ("terminal", "amber"))
+        apply_theme({"theme": "terminal", "themeColors": {"terminal": "nonsense"}})
+        self.assertEqual(CURRENT["scheme"], "amber")
+        for bad in ({"theme": "amber"}, {"themeColors": {"terminal": "purple"}},
+                    {"themeColors": {"system": "cyan"}}):
+            with self.assertRaises(ValueError):
+                self.store.settings(bad)
+
+    def test_every_scheme_applies_with_matching_chevrons(self):
+        for theme in THEMES:
+            for key, _ in schemes(theme):
+                with self.subTest(theme=theme, scheme=key):
+                    apply_theme({"theme": theme, "themeColors": {theme: key}})
+                    self.assertEqual((CURRENT["theme"], CURRENT["scheme"]), (theme, key))
+                    for arrow in ("down", "up"):
+                        text = Path(CURRENT[arrow]).read_text(encoding="utf-8")
+                        self.assertIn(CURRENT["muted"], text)
 
     def test_invalid_view_settings_keep_values_and_leave_saved_preferences_intact(self):
         self.settings.fields["timezone"].setText("Invalid/TimeZone")
@@ -181,7 +263,7 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(self.settings.navigation.currentItem().text(), "Sync")
 
     def test_pages_fit_themes_sizes_and_larger_text(self):
-        for theme in ("graphite", "amber", "light", "studio"):
+        for theme in ("graphite", "terminal", "light", "studio"):
             for scale in (100, 125):
                 self.store.settings({"theme": theme, "textScale": scale, "density": "comfortable"})
                 apply_theme(self.store.settings())

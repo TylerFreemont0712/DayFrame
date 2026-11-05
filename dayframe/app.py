@@ -77,7 +77,7 @@ def main():
                     hold=QEventLoop();QTimer.singleShot(1600,hold.quit);hold.exec();grab("native-map-ghost");window.map.clear_hover()
                 window.select_ticket(selected["id"]);grab("native-map-inspector")
                 window.store.settings({"theme":"light"});apply_theme(window.store.settings());window.build_shell();window.navigate("Today");grab("native-light")
-                for theme in ("amber","studio"):
+                for theme in ("terminal","studio"):
                     window.store.settings({"theme":theme});apply_theme(window.store.settings());window.build_shell();window.navigate("Calendar");grab("native-"+theme)
                 window.store.settings({"theme":"graphite"});apply_theme(window.store.settings());window.build_shell();window.navigate("Today")
                 dialog=AddDialog(window,window.data,"event");dialog.title.setText("Weekly planning");dialog.show();app.processEvents()
@@ -89,11 +89,11 @@ def main():
                 window.store.settings({"theme":"studio"});apply_theme(window.store.settings());window.build_shell();window.navigate("Today")
                 window.select_ticket(selected["id"]);grab("native-studio-inspector");window.close_inspector();grab("native-studio-rows")
                 window.navigate("Projects");window.choose_project(None);grab("native-labels-board")
-                for theme in ("graphite","amber"):
+                for theme in ("graphite","terminal"):
                     window.store.settings({"theme":theme});apply_theme(window.store.settings());window.build_shell();window.navigate("Today")
                     capture=AddDialog(window,window.data,"ticket",project["id"]);capture.set_submit_handler(lambda *args:True)
                     capture.title.setText("Refine the calendar interactions")
-                    capture.preset.setCurrentIndex(capture.preset.findData("bug" if theme=="amber" else "feature"))
+                    capture.preset.setCurrentIndex(capture.preset.findData("bug" if theme=="terminal" else "feature"))
                     capture.labels.input.setText("frontend");capture.labels.commit_pending();capture.show();app.processEvents()
                     path=captures/("native-quick-add-"+theme+".png");capture.grab().save(str(path));screens.append(str(path))
                     if theme=="graphite":
@@ -101,7 +101,7 @@ def main():
                         capture.labels.setText("feature, calendar");capture.section.setCurrentIndex(capture.section.count()-1);app.processEvents()
                         capture.fit_to_contents();app.processEvents();path=captures/"native-quick-add-details.png";capture.grab().save(str(path));screens.append(str(path))
                     capture.reject()
-                for theme in ("graphite","amber","light","studio"):
+                for theme in ("graphite","terminal","light","studio"):
                     for width,height,scale in ((1280,800,100),(980,640,125)):
                         window.store.settings({"theme":theme,"textScale":scale,"density":"compact" if width==1280 else "comfortable"})
                         apply_theme(window.store.settings());window.build_shell();window.navigate("Settings");window.resize(width,height)

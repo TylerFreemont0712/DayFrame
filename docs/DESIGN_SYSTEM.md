@@ -2,7 +2,7 @@
 
 The app identity is DayFrame; the image-generated open-frame D icon and wordmark are defined in BRANDING.md. Current UI references are in screenshots/current/.
 
-Graphite/Cyan is the default theme.
+Graphite with the Cyan scheme is the default theme.
 
 ## Geometry
 
@@ -20,13 +20,15 @@ Map: 180×74px cards, nested containers, preserved manual coordinates, optional 
 
 Base 8.5pt text, independent 90–125% scale and Compact/Comfortable padding.
 
-| Profile | Windows / Linux type | Shape and surface |
-|---|---|---|
-| Graphite/Cyan | Segoe UI / Noto Sans | Slate, cyan, crisp 3px corners |
-| Terminal/Amber | Consolas / DejaVu Sans Mono | Near-black olive, amber, square controls, ruled rows |
-| Paper/Linen | Trebuchet MS + Georgia headings / Noto Sans + DejaVu Serif | Ivory, green, 8px corners, editorial headings |
-| Midnight/Studio | Bahnschrift / DejaVu Sans | Violet, lavender, 11px cards, pill controls |
-| System | Paper for light OS scheme, Graphite for dark | Resolved when applied |
+| Theme | Windows / Linux type | Shape and surface | Color schemes (first is the default) |
+|---|---|---|---|
+| Graphite | Segoe UI / Noto Sans | Slate, crisp 3px corners | Cyan, Azure, Mint, Orange, Rose |
+| Terminal | Consolas / DejaVu Sans Mono | Near-black, square controls, ruled rows | Amber, Green, Ice, Magenta, Mono |
+| Paper | Trebuchet MS + Georgia headings / Noto Sans + DejaVu Serif | Ivory, 8px corners, editorial headings | Sage, Clay, Ocean, Plum |
+| Midnight | Bahnschrift / DejaVu Sans | Deep surfaces, 11px cards, pill controls | Lavender, Ocean, Forest, Wine, Ember |
+| System | Paper for light OS scheme, Graphite for dark | Resolved when applied | Uses the Paper or Graphite choice |
+
+A color scheme changes colors only; type, shape and surface treatment belong to the theme. Palettes and schemes are defined in palettes.py, which has no Qt dependency; every scheme keeps text at 4.5:1 and accents at 4:1 against its surfaces (tests/test_palettes.py). Combo and spin chevrons are generated in the scheme's muted color on first use in the system temp folder, not shipped as per-theme files.
 
 Use installed fonts with Qt fallback, no runtime downloads. Theme tokens live in theme.py. Event categories/custom colors remain consistent across views.
 
@@ -46,12 +48,12 @@ Preserve drafts through refresh; navigation uses Save/Discard/Cancel. Timer stay
 
 Appearance/geometry/density/text scale/panel widths are device-local. Project/account entities sync; future repository paths stay device-local. Exact interactions are in CALENDAR_AND_MAP.md.
 
-Settings uses a 168px category menu beside one scrollable page: View, Theme, Local data, Sync or Account. Forms stop at 820px wide. View and Theme have separate Apply actions; switching categories keeps field entries. The selected section survives appearance changes and navigation during the session. Sync shows its unresolved conflict count in the menu. Keep section controls reachable at the minimum window size and 125% text scale.
+Settings uses a 168px category menu beside one scrollable page: View, Theme, Local data, Sync or Account. Forms stop at 820px wide. View and Theme have separate Apply actions; the Theme page's Colors section lists the schemes of whichever theme is selected, remembers one choice per theme, and hides its selector for System; switching categories keeps field entries. The selected section survives appearance changes and navigation during the session. Sync shows its unresolved conflict count in the menu. Keep section controls reachable at the minimum window size and 125% text scale.
 
 
 ## Controls and labels
 
-Combo/calendar/spin subcontrols use bundled SVG chevrons and transparent embedded editors. Tab bases must not draw a bright native separator. Fixed-width identifiers and project badges reserve their layout space and elide with full hover text.
+Combo/calendar/spin subcontrols use SVG chevrons generated for the active scheme and transparent embedded editors. Tab bases must not draw a bright native separator. Fixed-width identifiers and project badges reserve their layout space and elide with full hover text.
 
 Quick Add has title-first capture, preset/context controls, optional detail tabs and a fixed footer with batch capture. Label inputs commit on Enter without submitting the form; removable colored chips wrap in narrow layouts. Bug is red, Feature teal, with stable colors for other presets/custom names. Color accompanies visible text.
 

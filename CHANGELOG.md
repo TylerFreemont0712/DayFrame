@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Rename the themes Graphite, Terminal, Paper and Midnight and add color schemes to each (Terminal now has Amber, Green, Ice, Magenta and Mono). A Colors section in Settings > Theme follows the selected theme and remembers a scheme per theme. Saved Terminal/Amber preferences carry over.
+
 ## 0.5.2 — 2026-11-05
 
 - Organize Settings into View, Theme, Local data, Sync and Account, keeping every option in a focused page with independent View/Theme saves.

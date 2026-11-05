@@ -132,3 +132,5 @@ D-066: Remove the redundant project List view; use Details for ticket tables and
 ## Settings organization — 2026-11-05
 
 D-067: Replace the long Settings form with View, Theme, Local data, Sync and Account categories. Keep all existing controls and actions, with bounded scrollable forms and independent View/Theme saves. Preserve field entries between categories and appearance changes; remember the selected category for the session. Show unresolved conflict counts beside Sync.
+
+D-068: Themes are renamed Graphite, Terminal, Paper and Midnight so each can offer several color schemes (Graphite: Cyan, Azure, Mint, Orange, Rose; Terminal: Amber, Green, Ice, Magenta, Mono; Paper: Sage, Clay, Ocean, Plum; Midnight: Lavender, Ocean, Forest, Wine, Ember). The first scheme of each theme is the previous look. A dynamic Colors section in Settings > Theme lists the schemes of the theme being chosen, and every theme remembers its own scheme (`themeColors` preference, device-local). The saved theme id `amber` is now `terminal` and old values are read as such. System has no scheme of its own and uses the choices for Paper and Graphite.

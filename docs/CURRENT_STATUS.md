@@ -11,7 +11,7 @@ Python/PySide6 Qt Widgets, SQLite and a private Python sync hub. Normal 1280×80
 - Map 1.5-second hover ghosts, confirmation, cancellation, cycle checks and Undo.
 - Rich Quick Add and reusable preset/custom label chips; colored board/map labels.
 - Durable/manual/unassigned time, overlap review, private accounts, simple passwords and remembered login until Logout.
-- Graphite/Cyan, Terminal/Amber, Paper/Linen, Midnight/Studio and System, with independent density/text scale.
+- Graphite, Terminal, Paper, Midnight and System themes with per-theme color schemes and independent density/text scale.
 - Native Windows frame theming, current DayFrame logo/icon and Windows/Linux launch/build templates.
 - SQLite backup/import, transactional sync outbox, private LAN hub, certificate pinning, independent field merges and conflict review.
 - Private GitHub repository, issue/PR templates, contribution guide and Windows/Linux CI.

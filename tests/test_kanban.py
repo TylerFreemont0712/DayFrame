@@ -203,7 +203,7 @@ class KanbanTests(unittest.TestCase):
             linear = [v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4 for v in values]
             return sum(v * w for v, w in zip(linear, (.2126, .7152, .0722)))
 
-        for theme in ('graphite', 'amber', 'light', 'studio'):
+        for theme in ('graphite', 'terminal', 'light', 'studio'):
             apply_theme({'theme': theme})
             first, second = render(self.project['id']), render(other['id'])
             self.assertNotEqual(first, second, theme)
@@ -232,7 +232,7 @@ class KanbanTests(unittest.TestCase):
     def test_column_headers_fit_at_small_window_size_with_larger_text(self):
         self.ticket()
         self.board()
-        for theme in ('graphite', 'amber', 'light', 'studio'):
+        for theme in ('graphite', 'terminal', 'light', 'studio'):
             apply_theme({'theme': theme, 'textScale': 125})
             self.window.build_shell()
             self.window.navigate('Projects')
@@ -249,7 +249,7 @@ class KanbanTests(unittest.TestCase):
         lane, option = lanes['inbox'], QStyleOptionViewItem()
         item = lane.item(0)
         option.rect = QRect(0, 0, 180, 105)
-        for theme in ('graphite', 'amber', 'light', 'studio'):
+        for theme in ('graphite', 'terminal', 'light', 'studio'):
             apply_theme({'theme': theme, 'textScale': 125})
             images = []
             for title in ('', ticket['title']):

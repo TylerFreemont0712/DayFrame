@@ -1,11 +1,26 @@
 """Focused settings pages with a shared category menu."""
 from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QListWidget, QListWidgetItem, QStackedWidget,
-    QFormLayout, QLineEdit, QSpinBox, QCheckBox, QLabel,
+    QFormLayout, QLineEdit, QSpinBox, QCheckBox, QLabel, QComboBox,
 )
+from .palettes import THEME_IDS, default_scheme, scheme_colors, schemes, theme_label
 from .theme import apply_theme, icon
 from .widgets import label, button, column, row, panel, scroll, combo
+
+
+def swatch(colors, size=16):
+    """Small icon showing a scheme's background beside its accent."""
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.transparent)
+    painter = QPainter(pixmap)
+    painter.fillRect(0, 0, size // 2, size, QColor(colors["bg"]))
+    painter.fillRect(size // 2, 0, size - size // 2, size, QColor(colors["accent"]))
+    painter.setPen(QColor(colors["line"]))
+    painter.drawRect(0, 0, size - 1, size - 1)
+    painter.end()
+    return QIcon(pixmap)
 
 
 class SettingsPanel(QWidget):
@@ -105,20 +120,56 @@ class SettingsPanel(QWidget):
         }), "check", True), None))
 
     def build_theme(self, body):
+        settings = self.window.data["settings"]
         layout, form = self.form(body, "Visual style")
-        theme = self.field(form, "Theme", "theme", combo([
-            ("graphite", "Graphite / Cyan"), ("amber", "Terminal / Amber"),
-            ("light", "Paper / Linen"), ("studio", "Midnight / Studio"),
-            ("system", "System"),
-        ], self.window.data["settings"]["theme"]))
-        layout.addWidget(label("Each theme has its own colors, fonts and shapes. System follows your OS appearance when applied.", "muted"))
+        theme = self.field(form, "Theme", "theme", combo(
+            [(key, theme_label(key)) for key in THEME_IDS], settings["theme"]))
+        layout.addWidget(label("Each theme has its own fonts, shapes and surfaces. System follows your OS appearance when applied.", "muted"))
+        # Each theme remembers its own color scheme, so switching themes never loses a choice.
+        self.pending_colors = dict(settings.get("themeColors", {}))
+        layout, form = self.form(body, "Colors")
+        self.color_title = layout.itemAt(0).widget()
+        self.color_form = form
+        self.color_scheme = self.field(form, "Color scheme", "themeColor", QComboBox())
+        self.color_hint = label("", "muted")
+        layout.addWidget(self.color_hint)
+        theme.currentIndexChanged.connect(self.show_color_schemes)
+        self.color_scheme.currentIndexChanged.connect(self.remember_color_scheme)
+        self.show_color_schemes()
         body.addWidget(row(button("Apply theme", lambda: self.save_preferences({
-            "theme": theme.currentData(),
+            "theme": theme.currentData(), "themeColors": dict(self.pending_colors),
         }), "palette", True), None))
+
+    def show_color_schemes(self):
+        """List the color schemes of the theme currently chosen in the Theme box."""
+        theme = self.fields["theme"].currentData()
+        options = schemes(theme)
+        chosen = self.pending_colors.get(theme) or (default_scheme(theme) if options else None)
+        scheme = self.color_scheme
+        scheme.blockSignals(True)
+        scheme.clear()
+        for key, name in options:
+            scheme.addItem(swatch(scheme_colors(theme, key)), name, key)
+        scheme.setCurrentIndex(scheme.findData(chosen))
+        scheme.blockSignals(False)
+        self.color_form.setRowVisible(scheme, bool(options))
+        if options:
+            self.color_title.setText(theme_label(theme) + " colors")
+            self.color_hint.setText("Changes only the colors of the " + theme_label(theme) +
+                                    " theme. Each theme remembers its own choice.")
+        else:
+            self.color_title.setText("Colors")
+            self.color_hint.setText("System uses Paper in a light OS appearance and Graphite in a dark one, "
+                                    "each with the color scheme chosen for that theme.")
+
+    def remember_color_scheme(self):
+        key = self.color_scheme.currentData()
+        if key is not None:
+            self.pending_colors[self.fields["theme"].currentData()] = key
 
     def save_preferences(self, patch):
         # Rebuilding themed icons must not discard entries on the other settings pages.
-        values = {key: widget.currentData() if key in ("theme", "density") else
+        values = {key: widget.currentData() if key in ("theme", "themeColor", "density") else
                   widget.value() if key == "textScale" else widget.text()
                   for key, widget in self.fields.items()}
         if not self.window.execute("settings.save", patch, refresh=False):
@@ -126,9 +177,12 @@ class SettingsPanel(QWidget):
         apply_theme(self.window.data["settings"])
         self.window.build_shell()
         self.window.refresh()
+        fields = self.window.settings_panel.fields
         for key, value in {**values, **patch}.items():
-            widget = self.window.settings_panel.fields[key]
-            if key in ("theme", "density"):
+            widget = fields.get(key)
+            if widget is None or value is None:
+                continue
+            if key in ("theme", "themeColor", "density"):
                 widget.setCurrentIndex(widget.findData(value))
             elif key == "textScale":
                 widget.setValue(value)

@@ -12,6 +12,7 @@ from datetime import date, timedelta
 from importlib.resources import files
 from pathlib import Path
 from . import domain as D
+from .palettes import LEGACY_THEMES, THEME_IDS, valid_theme_colors
 
 class Store:
     def __init__(self, root):
@@ -274,14 +275,20 @@ class Store:
             row = self.db.execute("SELECT data FROM settings WHERE account_id=?",(account["id"],)).fetchone()
             current = json.loads(row[0]) if row else {}
             defaults = {"theme":"graphite","density":"compact","textScale":100,"timezone":"Asia/Tokyo",
-                        "sidebarWidth":164,"inspectorWidth":280,"layoutRevision":0}
+                        "sidebarWidth":164,"inspectorWidth":280,"layoutRevision":0,"themeColors":{}}
+            if current.get("theme") in LEGACY_THEMES:
+                current["theme"] = LEGACY_THEMES[current["theme"]]
+            if not valid_theme_colors(current.get("themeColors",{})):
+                current.pop("themeColors")
             if patch is None:
                 return {**defaults,**current}
             allowed = set(defaults)|{"syncUrl","syncEnabled","syncFingerprint","windowGeometry","windowState"}
             if set(patch)-allowed:
                 raise ValueError("Unknown preference.")
-            if "theme" in patch and patch["theme"] not in ("graphite","amber","light","studio","system"):
+            if "theme" in patch and patch["theme"] not in THEME_IDS:
                 raise ValueError("Invalid theme.")
+            if "themeColors" in patch and not valid_theme_colors(patch["themeColors"]):
+                raise ValueError("Invalid theme colors.")
             if "density" in patch and patch["density"] not in ("comfortable","compact"):
                 raise ValueError("Invalid density.")
             for key,low,high in (("textScale",90,125),("sidebarWidth",140,280),("inspectorWidth",240,420)):

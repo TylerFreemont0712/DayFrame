@@ -14,7 +14,7 @@ Version **0.5.2**. See [branding and storage identifiers](docs/BRANDING.md) for 
 - Map: inherited classification, parent/child tickets, section sequence links, hover ghosts, confirmation, Undo and Unsorted tray.
 - Time: persistent ticket/unassigned timer, manual entries and overlap review.
 - Rich Quick Add, colored preset/custom labels, private accounts and remembered login until Logout.
-- Graphite/Cyan, Terminal/Amber, Paper/Linen, Midnight/Studio and System, with separate density and text scale.
+- Graphite, Terminal, Paper, Midnight and System themes, each with its own color schemes (Terminal: Amber, Green, Ice, Magenta, Mono), plus separate density and text scale.
 - Settings organized into View, Theme, Local data, Sync and Account, with independent View/Theme saves.
 - SQLite backup/import, transactional sync outbox, private LAN hub, certificate pinning, field merges and conflict review.
 
