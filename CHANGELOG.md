@@ -15,6 +15,7 @@
 - Keep routine CI to source tests; make packaging opt-in for requested release waves or validation builds.
 - Record the packaged baseline and when to suggest the next release.
 - Check all Settings pages, the Kanban destination ghost and Details in the packaged smoke run; report the package version.
+- Support portable NSIS compiler resources and include its supplied license notice in Windows packages.
 
 ## 0.5.1 — 2026-11-04
 
