@@ -38,12 +38,17 @@ An explicitly requested validation build stays in dist/build output and does not
 
 | Item | Value |
 |---|---|
-| Version | 0.5.1 |
-| Packaged date | 2026-11-04 |
-| Source commit | 883a828abd0ed44b0f559ebc8533fa7b3dc13051 |
-| Windows artifacts | release/native-0.5.1/DayFrame/ and DayFrame-Setup-0.5.1.exe on the development machine |
-| Verification | 58 Windows source tests and 19 packaged UI smoke screenshots passed; Windows/Ubuntu CI passed for this source commit |
+| Version | 0.5.2 |
+| Packaged date | 2026-11-05 |
+| Source commit | 277bb2b2e8ad80732bca5ef1f5d36a3999f01394 |
+| Windows artifacts | release/native-0.5.2/DayFrame/ and DayFrame-Setup-0.5.2.exe on the development machine |
+| Verification | 77 Windows source tests; 61 portable and 61 extracted-installer UI smoke screens; all 881 installer payload files matched the bundle |
+| Build tools | Python 3.14.3, PyInstaller 6.22.3, portable NSIS toolset nsis@2.0.4 |
+| Installer SHA-256 | 353ff66fc8468c454117468d509544052a8fcc0b09325e4647e247b9855714fd |
+| Source review and CI | [Release pull request #1](https://github.com/TylerFreemont0712/DayFrame/pull/1) |
 | Linux Mint | The owner's exact installation has not been verified |
 | GitHub publication | No GitHub Release or release tag created for this package |
 
-These paths describe local artifacts excluded from Git. The writing and release-policy updates do not change this packaged baseline.
+The build commit identifies the packaged source. Binaries and test profiles are excluded from Git. verification.json and SHA256SUMS.txt accompany the local release. Current packaged UI references are in docs/screenshots/current/.
+
+The installer payload was extracted and launched against an isolated profile; this check does not install into the owner's application directory or alter the live profile. The installer remains unsigned.

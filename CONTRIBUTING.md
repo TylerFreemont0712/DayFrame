@@ -66,6 +66,8 @@ Smoke checks require a new, unconfigured profile each time; choose a fresh path 
 
 Verify with an isolated profile before updating the stable package. Tagging vX.Y.Z and publishing GitHub Release assets require an explicit request; a local build alone does not authorize publication. If requested, publish binaries as Release assets rather than committing them. Pushing a tag does not automatically publish a binary. Record the packaged version, date, source commit and validation in docs/RELEASES.md when a release is actually built.
 
+Keep the NSIS compiler with its Include, Contrib, Stubs and COPYING files. The installer helper locates its resource root for both installed and portable compilers and copies COPYING into the packaged notices. The smoke report includes the package version and 61 screens covering the main views plus Settings across four themes and two window sizes. An installer payload can be extracted with the full 7-Zip executable, compared with the portable folder and smoke-tested with another fresh profile.
+
 ## Compatibility and design
 
 Profile directories, SQLite filename, keyring service, drag MIME type, TM_HUB_* variables and sync protocol remain stable. See docs/BRANDING.md. Changing storage identity requires an explicit migration and continuity tests.

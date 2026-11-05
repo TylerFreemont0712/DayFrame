@@ -80,6 +80,10 @@ def apply_theme(settings):
     QScrollArea#dialogContent { background:transparent; }
     QListWidget::item,QTreeWidget::item { padding:3px 4px; }
     QListWidget::item:selected,QTreeWidget::item:selected { background:%(raised)s; color:%(accent)s; }
+    QListWidget#settingsNavigation { background:transparent; border:0; }
+    QListWidget#settingsNavigation::item { padding:10px 8px; margin-bottom:4px; border:1px solid transparent; border-radius:%(radius)spx; }
+    QListWidget#settingsNavigation::item:hover { background:%(panel)s; }
+    QListWidget#settingsNavigation::item:selected { background:%(raised)s; color:%(accent)s; border-color:%(line)s; }
     QListWidget#ticketLane { background:%(panel)s; border:1px solid %(line)s; }
     QListWidget#ticketLane::item { padding:0; margin:0; border:0; background:transparent; }
     QTreeWidget#projectTree { border:0; background:transparent; }
@@ -98,6 +102,7 @@ def apply_theme(settings):
     QGroupBox::title { subcontrol-origin:margin; left:8px; padding:0 4px; }
     QMenu { background:%(panel)s; border:1px solid %(line)s; }
     QMenu::item { padding:5px 18px; }
+    QMenu#optionsMenu::icon { left:6px; }
     QMenu::item:selected { background:%(raised)s; color:%(accent)s; }
     QStatusBar { color:%(muted)s; font-size:10px; border-top:1px solid %(line)s; }
     QToolTip { background:%(panel)s; color:%(text)s; border:1px solid %(line)s; padding:4px; }
@@ -108,6 +113,12 @@ def apply_theme(settings):
         app.setStyleSheet(app.styleSheet()+"QFrame#taskRow {border:0;border-bottom:1px solid "+c["line"]+";} QLabel#heading {font-size:23px;} QTabBar::tab:selected {background:"+c["raised"]+";} QHeaderView::section {font-weight:600;}")
     elif c["mode"]=="studio":
         app.setStyleSheet(app.styleSheet()+"QFrame#masthead {background:"+c["rail"]+";} QFrame#taskRow {border:1px solid "+c["line"]+";border-left:3px solid "+c["accent"]+";} QPushButton:checked {background:"+c["panel"]+";} QTabBar::tab {border-radius:7px;}")
+
+    app.setStyleSheet(app.styleSheet()+"""
+    QPushButton:pressed,QToolButton:pressed { background:%(line)s; border-color:%(accent)s; }
+    QPushButton#accent:pressed { background:%(line)s; color:%(text)s; }
+    QPushButton#rowTitle:pressed,QPushButton#iconOnly:pressed { background:%(line)s; color:%(text)s; }
+    """%c)
 
     controls=("QSpinBox","QDoubleSpinBox","QDateEdit","QTimeEdit","QDateTimeEdit")
     rules=[]

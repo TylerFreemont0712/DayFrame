@@ -121,7 +121,7 @@ class LabelsEditor(QWidget):
             remove=QPushButton("×");remove.setAutoDefault(False);remove.setObjectName("tagRemove");remove.setFixedSize(16,17);remove.setAccessibleName("Remove label "+name)
             remove.clicked.connect(lambda checked=False,n=name:self.remove(n));layout.addWidget(text);layout.addWidget(remove);self.flow.addWidget(chip)
             base,fg,fill=colors(name);radius=min(6,C.get("radius",3))
-            chip.setStyleSheet("QFrame#tagChip {background:rgba("+str(fill.red())+","+str(fill.green())+","+str(fill.blue())+",38);border:1px solid "+base.name()+";border-radius:"+str(radius)+"px;} QLabel {color:"+fg.name()+";background:transparent;border:0;padding:0;} QPushButton#tagRemove {color:"+fg.name()+";background:transparent;border:0;padding:0;} QPushButton#tagRemove:hover {background:"+C["raised"]+";}")
+            chip.setStyleSheet("QFrame#tagChip {background:rgba("+str(fill.red())+","+str(fill.green())+","+str(fill.blue())+",38);border:1px solid "+base.name()+";border-radius:"+str(radius)+"px;} QLabel {color:"+fg.name()+";background:transparent;border:0;padding:0;} QPushButton#tagRemove {color:"+fg.name()+";background:transparent;border:0;padding:0;} QPushButton#tagRemove:hover {background:"+C["raised"]+";} QPushButton#tagRemove:pressed {background:"+C["line"]+";}")
         self.chips.setVisible(bool(self.values));self.flow.invalidate();self.chips.updateGeometry();self.updateGeometry()
     def eventFilter(self,obj,event):
         if obj is self.input and event.type()==QEvent.KeyPress and event.key() in (Qt.Key_Return,Qt.Key_Enter):

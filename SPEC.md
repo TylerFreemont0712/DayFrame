@@ -2,7 +2,7 @@
 
 Version: 0.5, calendar and nested-map baseline
 Date: 2026-11-04
-Status: product/infrastructure decisions confirmed; runnable DayFrame 0.5.1 foundation exists; see docs/CURRENT_STATUS.md for delivered scope
+Status: product/infrastructure decisions confirmed; runnable DayFrame 0.5.2 foundation exists; see docs/CURRENT_STATUS.md for delivered scope
 Owner: personal application for the requesting user
 Project destination: C:\Apps\TimeManager on Windows; a normal user-owned project directory on Linux
 
@@ -68,6 +68,10 @@ A persistent bottom utility area exposes the current timer, pause/stop controls,
 
 Remember selected view, project, panel sizes, density, and filters at appropriate account/device scopes. Layout and text size can be device-specific; project data is not duplicated per view.
 
+### NAV-06: settings sections
+
+Settings uses a keyboard-accessible category menu with View, Theme, Local data, Sync and Account. Show one scrollable section at a time, with bounded form widths. View contains density, text size and time zone; Theme contains the visual profile. Apply those sections independently and preserve entries when switching categories or applying appearance changes. Keep backup/examples, LAN connection credentials, automatic/manual sync, conflict review and account actions available in their corresponding sections. Remember the selected category while the app is open.
+
 ## 5. Today / Home
 
 ### HOME-01: daily focus
@@ -98,7 +102,7 @@ Pinning a priority does not change its project or workflow status. Marking a tic
 
 ### TKT-01: Projects landing
 
-Projects opens an all-ticket Kanban, with project filters and optional grouping. An individual project opens its Map; its Kanban, List, and Details views remain available.
+Projects opens an all-ticket Kanban, with project filters and optional grouping. An individual project opens its Map; its Kanban and Details views remain available.
 
 ### TKT-02: workflow
 
@@ -250,7 +254,7 @@ Store provider secrets in credential storage and redact logs. Never show fiction
 
 1. Documentation and infrastructure decisions.
 2. Cross-platform scaffold, theme system, settings persistence, and account/database foundation.
-3. Working local Today, ticket CRUD, Kanban/List/Details, and durable timer.
+3. Working local Today, ticket CRUD, Kanban/Details, and durable timer.
 4. Calendar/work blocks, major-event countdowns, and notes.
 5. Project Map with rule-based sections and robust manual placement.
 6. Authenticated local sync, conflict review, device management, and backup/restore.

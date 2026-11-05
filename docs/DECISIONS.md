@@ -11,7 +11,7 @@
 | D-005 | Agenda includes appointments, ticket work blocks, personal plans, and routines. |
 | D-006 | Three major-event countdowns with optional pinning. |
 | D-007 | Projects landing is an all-ticket Kanban. |
-| D-008 | Project selection opens its Map; Map/Kanban/List/Details share tickets. |
+| D-008 | Project selection opens its Map; Map/Kanban/Details share tickets (updated by D-066). |
 | D-009 | Ticket click opens a side inspector; full Details is separate. |
 | D-010 | Full optional ticket structure with checklists, subtasks, dependencies, estimates, deadlines. |
 | D-011 | Not Started/In Progress/Processed/Review/Complete (updated by D-063); Blocked is a separate flag. |
@@ -126,3 +126,9 @@ D-063: Rename workflow stages to Not Started, In Progress, Processed, Review and
 D-064: Kanban dragging gets an immediate destination ghost plate, with no hold delay or confirmation. Hover/cancellation never writes data; dropping changes only status and offers Undo. The map retains its separate 1.5-second hold and confirmation rules.
 
 D-065: Differentiate projects on Kanban with a colored project-key prefix, keeping the suffix and card body neutral. Repeat the hue in project folder icons. The initial color assignment derives from stable project UUIDs, with theme-aware brightness; no database or sync migration is needed.
+
+D-066: Remove the redundant project List view; use Details for ticket tables and calendar deadline navigation.
+
+## Settings organization — 2026-11-05
+
+D-067: Replace the long Settings form with View, Theme, Local data, Sync and Account categories. Keep all existing controls and actions, with bounded scrollable forms and independent View/Theme saves. Preserve field entries between categories and appearance changes; remember the selected category for the session. Show unresolved conflict counts beside Sync.

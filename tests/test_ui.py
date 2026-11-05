@@ -6,7 +6,7 @@ from pathlib import Path
 from PySide6.QtCore import Qt,QMimeData,QPoint,QPointF,QTimer,QTime
 from PySide6.QtGui import QDragEnterEvent,QDropEvent
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication,QLineEdit,QPushButton,QComboBox,QGraphicsView,QTimeEdit
+from PySide6.QtWidgets import QApplication,QLineEdit,QPushButton,QComboBox,QGraphicsView,QTimeEdit,QTabBar,QTableWidget
 from PySide6.QtWidgets import QMessageBox
 from dayframe.store import Store
 from dayframe import domain as D
@@ -48,10 +48,30 @@ class NativeUiTests(unittest.TestCase):
         self.assertEqual(len(self.w.map.nodes)+len(self.w.map.unsorted),len([x for x in self.s.list("ticket") if x["project_id"]==t["project_id"]]))
         self.w.map.fit();APP.processEvents()
         self.w.navigate("Calendar");self.w.navigate("Time");self.w.navigate("Settings");APP.processEvents()
+        self.w.settings_panel.navigation.setCurrentRow(1);APP.processEvents()
         themes=next(c for c in self.w.workspace.findChildren(QComboBox) if c.findData("light")>=0)
-        themes.setCurrentIndex(themes.findData("light"));self.click("Apply appearance")
+        themes.setCurrentIndex(themes.findData("light"));self.click("Apply theme")
         self.assertEqual(self.s.settings()["theme"],"light")
         self.assertFalse(any("WebEngine" in type(x).__name__ for x in self.w.findChildren(object) if hasattr(x,"metaObject")))
+    def test_project_tabs_and_calendar_deadline_open_details(self):
+        self.w.navigate("Projects")
+        def tabs():
+            bar=self.w.page_header.findChild(QTabBar)
+            return [bar.tabText(i) for i in range(bar.count())]
+        self.assertEqual(tabs(),["Kanban","Details"])
+        ticket=self.w.data["ticket"][0]
+        self.w.choose_project(ticket["project_id"])
+        self.assertEqual(tabs(),["Map","Kanban","Details"])
+        self.w.navigate("Calendar")
+        self.w.open_calendar_item({"kind":"deadline","record":ticket,"ticket_id":ticket["id"]})
+        APP.processEvents()
+        self.assertEqual(self.w.page,"Projects")
+        self.assertEqual(self.w.project_view,"Details")
+        self.assertEqual(self.w.selected,ticket["id"])
+        self.assertTrue(self.w.inspector.isVisible())
+        table=self.w.workspace.findChild(QTableWidget)
+        self.assertEqual(table.columnCount(),9)
+        self.assertEqual(tabs(),["Map","Kanban","Details"])
     def test_draft_survives_refresh_and_saves_only_changed_fields(self):
         self.w.navigate("Projects")
         t=next(t for t in self.w.data["ticket"] if t["status"]=="doing")

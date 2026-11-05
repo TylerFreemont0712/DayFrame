@@ -18,6 +18,7 @@ from .labels import LabelsEditor,label_choices,paint_label_pills
 from .kanban import BoardDelegate,TicketList,card_size,project_color
 from .calendar_views import MiniMonth,UpcomingPanel,WeekCalendar,paint_item,readable
 from .sync import Sync
+from .settings import SettingsPanel
 
 class WorkerSignals(QObject):
     done=Signal(object); failed=Signal(str)
@@ -72,6 +73,7 @@ class DayFrame(QMainWindow):
         super().__init__();self.store=store;self.sync=Sync(store)
         self.setWindowTitle("DayFrame");self.setWindowIcon(app_icon());self.resize(1280,800);self.setMinimumSize(980,640)
         self.page="Today";self.project_id=None;self.project_view="Kanban";self.selected=None
+        self.settings_section="view"
         self.filter_project=None;self.filter_status="all";self.filter_label="";self.context_collapsed=False
         self.search_text="";self.data=None;self.undo_action=None;self.busy=False;self.jobs=set();self.rebuilding=False
         self.draft_reader=None;self.draft_save=None;self.day=None
@@ -174,8 +176,8 @@ class DayFrame(QMainWindow):
         self.search=QLineEdit();self.search.setPlaceholderText("Search tickets…  Ctrl+K");self.search.setMinimumWidth(140);self.search.setMaximumWidth(300);self.search.textChanged.connect(self.search_changed);tl.addWidget(self.search)
         self.sync_label=label("Local","muted");self.sync_label.setMaximumWidth(100);tl.addWidget(self.sync_label)
         tl.addWidget(button("Add",lambda:self.quick_add(),"plus",True))
-        self.options=button("",None,"ellipsis-h");self.options.setAccessibleName("Options");self.options.setToolTip("Options");self.options.setFixedWidth(32)
-        self.options_menu=QMenu(self)
+        self.options=button("",None,"ellipsis-h");self.options.setAccessibleName("Options");self.options.setToolTip("Options");self.options.setFixedWidth(38)
+        self.options_menu=QMenu(self);self.options_menu.setObjectName("optionsMenu")
         self.options_menu.addAction(icon("cog"),"Settings",lambda:self.navigate("Settings"))
         self.options_menu.addAction(icon("sync-alt"),"Sync now",lambda:self.sync_now(False))
         self.options_menu.addAction(icon("undo"),"Undo",self.undo);self.options_menu.addSeparator()
@@ -362,7 +364,7 @@ class DayFrame(QMainWindow):
         return result
 
     def show_projects(self):
-        views=(["Map"] if self.project_id else [])+["Kanban","List","Details"]
+        views=(["Map"] if self.project_id else [])+["Kanban","Details"]
         if self.project_view not in views:self.project_view="Kanban"
         tabs=QTabBar();tabs.setExpanding(False);[tabs.addTab(v) for v in views];tabs.setCurrentIndex(views.index(self.project_view))
         tabs.currentChanged.connect(lambda index:self.change_project_view(views[index]));self.page_header.layout().addWidget(tabs)
@@ -413,7 +415,7 @@ class DayFrame(QMainWindow):
                 cl.addWidget(lst,1);lanes.addWidget(col,1)
             self.work_layout.addWidget(scroll(board),1)
         else:
-            fields=["Ticket","Title","Status","Priority","Due","Estimate","Tracked","Component","Labels"] if self.project_view=="Details" else ["Ticket","Title","Status","Priority","Due"]
+            fields=["Ticket","Title","Status","Priority","Due","Estimate","Tracked","Component","Labels"]
             table=QTableWidget(len(tickets),len(fields));table.setHorizontalHeaderLabels(fields);table.setEditTriggers(QAbstractItemView.NoEditTriggers)
             table.setSelectionBehavior(QAbstractItemView.SelectRows);table.setAlternatingRowColors(True);table.verticalHeader().hide();table.verticalHeader().setDefaultSectionSize(25)
             for r,t in enumerate(tickets):
@@ -550,7 +552,7 @@ class DayFrame(QMainWindow):
             ticket=self.find_ticket(item["ticket_id"]);record=self.store.read("block",item["id"])
             if ticket and record:self.schedule_ticket(ticket,record)
         elif item["kind"]=="deadline":
-            self.page="Projects";self.project_id=item["record"]["project_id"];self.project_view="List";self.select_ticket(item["ticket_id"])
+            self.page="Projects";self.project_id=item["record"]["project_id"];self.project_view="Details";self.selected=item["ticket_id"];self.refresh_page()
     def move_calendar_item(self,item,day,start,end):
         if item["kind"] not in ("event","block") or not self.leave_editor():return
         kind=item["kind"];old=self.store.read(kind,item["id"])
@@ -599,46 +601,8 @@ class DayFrame(QMainWindow):
         l.addWidget(label("Repository connections are a future milestone.","muted"))
         self.work_layout.addWidget(p);self.work_layout.addStretch()
     def show_settings(self):
-        root,l=column(spacing=18);p,pl=panel("Appearance");f=QFormLayout();pl.addLayout(f)
-        theme=combo([("graphite","Graphite / Cyan"),("amber","Terminal / Amber"),("light","Paper / Linen"),("studio","Midnight / Studio"),("system","System")],self.data["settings"]["theme"])
-        density=combo([("comfortable","Comfortable"),("compact","Compact")],self.data["settings"]["density"])
-        scale=QSpinBox();scale.setRange(90,125);scale.setSuffix("%");scale.setValue(self.data["settings"]["textScale"])
-        zone=QLineEdit(self.data["settings"]["timezone"])
-        f.addRow("Theme",theme);f.addRow("Density",density);f.addRow("Text size",scale);f.addRow("Time zone",zone)
-        def appearance():
-            if self.execute("settings.save",{"theme":theme.currentData(),"density":density.currentData(),"textScale":scale.value(),"timezone":zone.text()},refresh=False):
-                apply_theme(self.data["settings"]);self.build_shell();self.refresh()
-        pl.addWidget(button("Apply appearance",appearance,"palette",True));l.addWidget(p)
-        p,pl=panel("Local data")
-        pl.addWidget(label("SQLite storage: "+str(self.store.root/"timemanager.db"),"muted"))
-        pl.addWidget(row(button("Back up database",self.backup,"database"),button("Load example workspace",lambda:self.execute("examples.load"))))
-        pl.addWidget(label("Backups contain your project data and password verifier. Protect them with your disk or backup encryption.","muted"));l.addWidget(p)
-        p,pl=panel("Private LAN synchronization");f=QFormLayout();pl.addLayout(f)
-        url=QLineEdit(self.data["settings"].get("syncUrl",""));url.setPlaceholderText("https://linux-hub:47831")
-        fp=QLineEdit(self.data["settings"].get("syncFingerprint",""));fp.setPlaceholderText("SHA-256 of the trusted hub certificate")
-        password=QLineEdit();password.setEchoMode(QLineEdit.Password)
-        setup=QLineEdit();setup.setEchoMode(QLineEdit.Password)
-        for title,w in (("Hub address",url),("Certificate fingerprint",fp),("Account password",password),("Private setup token",setup)):f.addRow(title,w)
-        enabled=QCheckBox("Automatically sync while the app is open");enabled.setChecked(self.data["settings"].get("syncEnabled",False))
-        enabled.toggled.connect(lambda value:self.execute("settings.save",{"syncEnabled":value},refresh=False));pl.addWidget(enabled)
-        pl.addWidget(label("Use Connect for an existing hub account; Publish creates this account on your private hub.","muted"))
-        def connect(publish=False):
-            params={"url":url.text().strip(),"fingerprint":fp.text().strip(),"password":password.text(),"setupToken":setup.text()}
-            password.clear();setup.clear()
-            self.run_async(lambda:self.sync.publish(params) if publish else self.sync.connect(params),self.sync_finished)
-        pl.addWidget(row(button("Connect",lambda:connect(False),"link"),button("Publish account to hub",lambda:connect(True),"upload"),button("Sync now",self.sync_now,"sync-alt")))
-        pl.addWidget(label(self.sync.state.get("error") or "Credentials use the OS keyring when available; otherwise they last for this session.","muted"))
-        l.addWidget(p)
-        if self.data["conflicts"]:
-            p,pl=panel("Sync conflicts · "+str(len(self.data["conflicts"])))
-            for conflict in self.data["conflicts"]:
-                pl.addWidget(button(conflict["kind"]+" · "+conflict["entity_id"][:8]+" · "+", ".join(conflict["fields"]),lambda checked=False,c=conflict:self.review_conflict(c)))
-            l.addWidget(p)
-        p,pl=panel("Account");pl.addWidget(label("Signed in as "+self.data["account"]["username"],"section"))
-        pl.addWidget(row(button("Change local password",self.change_local_password,"key"),button("Log out",self.logout,"sign-out-alt")));l.addWidget(p);l.addStretch()
-        for hint in root.findChildren(QLabel):
-            if len(hint.text())>60:hint.setWordWrap(True)
-        self.work_layout.addWidget(scroll(root),1)
+        self.settings_panel=SettingsPanel(self)
+        self.work_layout.addWidget(self.settings_panel,1)
     def backup(self):
         file,_=QFileDialog.getSaveFileName(self,"Back up DayFrame","DayFrame-backup-"+D.day_key()+".db","SQLite database (*.db)")
         if file:
@@ -708,7 +672,7 @@ class DayFrame(QMainWindow):
         self.run_async(lambda:self.sync.run(force=not quiet),lambda result:self.sync_finished(result,quiet))
     def sync_finished(self,result,quiet=False):
         latest=self.store.snapshot()
-        changed=any(latest[k]!=self.data[k] for k in D.DEFINITIONS) if self.data else True
+        changed=any(latest[k]!=self.data[k] for k in (*D.DEFINITIONS,"conflicts")) if self.data else True
         self.data=latest
         if changed:self.refresh_page()
         self.tick()
