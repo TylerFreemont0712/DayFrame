@@ -20,9 +20,11 @@ The checkout retains current branding, native source and useful documentation. T
 
 ## Unreleased source changes
 
-Project views now use Map, Kanban and Details; calendar deadlines open the ticket in Details.
-
 Settings now has View, Theme, Local data, Sync and Account categories, with one scrollable page visible at a time. View and Theme apply independently; field entries survive category switches and appearance changes. Backup, examples, LAN connection, automatic/manual sync, conflict review and account actions remain available. The selected category stays active during the session, and Sync displays unresolved conflict counts.
+
+Buttons, including compact icon controls, show a visible state while pressed.
+
+Project views now use Map, Kanban and Details; calendar deadlines open the ticket in Details.
 
 The workflow now reads Not Started → In Progress → Processed → Review → Complete across ticket views and capture. Stored stage IDs remain unchanged; Home's In Progress group follows the renamed stage. These changes are source-only; the 0.5.1 package and reference screenshots remain the last packaged baseline.
 

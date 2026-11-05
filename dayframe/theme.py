@@ -114,6 +114,12 @@ def apply_theme(settings):
     elif c["mode"]=="studio":
         app.setStyleSheet(app.styleSheet()+"QFrame#masthead {background:"+c["rail"]+";} QFrame#taskRow {border:1px solid "+c["line"]+";border-left:3px solid "+c["accent"]+";} QPushButton:checked {background:"+c["panel"]+";} QTabBar::tab {border-radius:7px;}")
 
+    app.setStyleSheet(app.styleSheet()+"""
+    QPushButton:pressed,QToolButton:pressed { background:%(line)s; border-color:%(accent)s; }
+    QPushButton#accent:pressed { background:%(line)s; color:%(text)s; }
+    QPushButton#rowTitle:pressed,QPushButton#iconOnly:pressed { background:%(line)s; color:%(text)s; }
+    """%c)
+
     controls=("QSpinBox","QDoubleSpinBox","QDateEdit","QTimeEdit","QDateTimeEdit")
     rules=[]
     for control in controls:
