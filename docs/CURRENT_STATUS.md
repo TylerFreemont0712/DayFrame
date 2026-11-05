@@ -28,6 +28,8 @@ Kanban shows an immediate destination ghost with no hold/confirmation. Leaving o
 
 Kanban project prefixes have stable, theme-aware project colors, repeated in folder icons. The identifier suffix and card body stay neutral. Colors derive from project identity without a schema change.
 
+The Options button has more room for its ellipsis and dropdown arrow, and its menu icons sit farther from the left edge.
+
 ## Data and compatibility
 
 Schema 4 preserves saved records/passwords; databases on versions 1–3 migrate transactionally. Import changes only the copied database. Established storage, session, keyring and sync identifiers are documented in BRANDING.md. Notes data is retained with its UI hidden.

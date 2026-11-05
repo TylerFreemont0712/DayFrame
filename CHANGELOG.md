@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Give the Options button and its menu icons more room.
 - Organize Settings into View, Theme, Local data, Sync and Account, keeping every option in a focused page with independent View/Theme saves.
 - Highlight Kanban project-key prefixes with stable project colors and matching folder icons; keep ticket bodies neutral.
 - Show an immediate destination ghost while dragging Kanban tickets, with clean cancellation and status Undo.

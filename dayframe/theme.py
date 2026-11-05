@@ -102,6 +102,7 @@ def apply_theme(settings):
     QGroupBox::title { subcontrol-origin:margin; left:8px; padding:0 4px; }
     QMenu { background:%(panel)s; border:1px solid %(line)s; }
     QMenu::item { padding:5px 18px; }
+    QMenu#optionsMenu::icon { left:6px; }
     QMenu::item:selected { background:%(raised)s; color:%(accent)s; }
     QStatusBar { color:%(muted)s; font-size:10px; border-top:1px solid %(line)s; }
     QToolTip { background:%(panel)s; color:%(text)s; border:1px solid %(line)s; padding:4px; }
