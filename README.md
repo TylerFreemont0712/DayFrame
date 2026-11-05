@@ -4,7 +4,7 @@
 
 A private desktop dashboard for planning your day, organizing project tickets and tracking time. **Python + PySide6 / Qt Widgets**, with SQLite and optional private LAN synchronization. Windows and Linux source.
 
-Version **0.5.1**. See [branding and storage identifiers](docs/BRANDING.md) for the current assets and persistence conventions.
+Version **0.5.2**. See [branding and storage identifiers](docs/BRANDING.md) for the current assets and persistence conventions.
 
 ## What works
 
@@ -15,6 +15,7 @@ Version **0.5.1**. See [branding and storage identifiers](docs/BRANDING.md) for 
 - Time: persistent ticket/unassigned timer, manual entries and overlap review.
 - Rich Quick Add, colored preset/custom labels, private accounts and remembered login until Logout.
 - Graphite/Cyan, Terminal/Amber, Paper/Linen, Midnight/Studio and System, with separate density and text scale.
+- Settings organized into View, Theme, Local data, Sync and Account, with independent View/Theme saves.
 - SQLite backup/import, transactional sync outbox, private LAN hub, certificate pinning, field merges and conflict review.
 
 See [current status](docs/CURRENT_STATUS.md) for verification and limitations. Reminders, richer recurrence, Code/GitHub overview, Team and mobile remain future work.

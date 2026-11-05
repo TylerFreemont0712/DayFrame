@@ -2,10 +2,11 @@
 
 ## Unreleased
 
+## 0.5.2 — 2026-11-05
+
 - Organize Settings into View, Theme, Local data, Sync and Account, keeping every option in a focused page with independent View/Theme saves.
 - Show a visible pressed state on buttons, including compact icon controls.
 - Remove the redundant List view; open calendar deadlines in Details.
-
 - Give the Options button and its menu icons more room.
 - Highlight Kanban project-key prefixes with stable project colors and matching folder icons; keep ticket bodies neutral.
 - Show an immediate destination ghost while dragging Kanban tickets, with clean cancellation and status Undo.
@@ -13,6 +14,7 @@
 - Document natural commit/comment wording and frequent, focused commits.
 - Keep routine CI to source tests; make packaging opt-in for requested release waves or validation builds.
 - Record the packaged baseline and when to suggest the next release.
+- Check all Settings pages, the Kanban destination ghost and Details in the packaged smoke run; report the package version.
 
 ## 0.5.1 — 2026-11-04
 

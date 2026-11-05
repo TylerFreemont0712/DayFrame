@@ -1,4 +1,4 @@
-# DayFrame native design system — 0.5.1
+# DayFrame native design system — 0.5.2
 
 The app identity is DayFrame; the image-generated open-frame D icon and wordmark are defined in BRANDING.md. Current UI references are in screenshots/current/.
 

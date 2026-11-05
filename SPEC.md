@@ -2,7 +2,7 @@
 
 Version: 0.5, calendar and nested-map baseline
 Date: 2026-11-04
-Status: product/infrastructure decisions confirmed; runnable DayFrame 0.5.1 foundation exists; see docs/CURRENT_STATUS.md for delivered scope
+Status: product/infrastructure decisions confirmed; runnable DayFrame 0.5.2 foundation exists; see docs/CURRENT_STATUS.md for delivered scope
 Owner: personal application for the requesting user
 Project destination: C:\Apps\TimeManager on Windows; a normal user-owned project directory on Linux
 
