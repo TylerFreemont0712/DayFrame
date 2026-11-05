@@ -54,12 +54,18 @@ def main():
                 screens=[]
                 def grab(name):
                     app.processEvents();settle=QEventLoop();QTimer.singleShot(80,settle.quit);settle.exec()
-                    path=captures/(name+".png");window.grab().save(str(path));screens.append(str(path))
+                    path=captures/(name+".png")
+                    if not window.grab().save(str(path)):raise RuntimeError("Could not save smoke screenshot: "+str(path))
+                    screens.append(str(path))
                 grab("native-today")
                 window.navigate("Calendar");grab("native-calendar")
                 window.resize(980,640);grab("native-calendar-small");window.resize(1280,800)
                 window.navigate("Projects");grab("native-kanban")
                 selected=next(t for t in window.data["ticket"] if t["status"]=="doing")
+                from .kanban import TicketList
+                lane=next(lane for lane in window.findChildren(TicketList) if lane.status=="review")
+                lane.show_preview(selected);grab("native-kanban-ghost");lane.clear_preview()
+                window.change_project_view("Details");grab("native-details");window.change_project_view("Kanban")
                 window.select_ticket(selected["id"]);grab("native-inspector")
                 project=next(p for p in window.data["project"] if p["project_key"]=="WEB")
                 window.choose_project(project["id"]);grab("native-project-map")
@@ -95,7 +101,17 @@ def main():
                         capture.labels.setText("feature, calendar");capture.section.setCurrentIndex(capture.section.count()-1);app.processEvents()
                         capture.fit_to_contents();app.processEvents();path=captures/"native-quick-add-details.png";capture.grab().save(str(path));screens.append(str(path))
                     capture.reject()
-                report={"ok":True,"runtime":"PySide6 / Qt Widgets","screenshots":screens,"projects":len(window.data["project"]),"tickets":len(window.data["ticket"])}
+                for theme in ("graphite","amber","light","studio"):
+                    for width,height,scale in ((1280,800,100),(980,640,125)):
+                        window.store.settings({"theme":theme,"textScale":scale,"density":"compact" if width==1280 else "comfortable"})
+                        apply_theme(window.store.settings());window.build_shell();window.navigate("Settings");window.resize(width,height)
+                        for index,(key,*_) in enumerate(window.settings_panel.SECTIONS):
+                            window.settings_panel.navigation.setCurrentRow(index)
+                            grab("native-settings-"+theme+"-"+key+("-small" if width==980 else ""))
+                            if window.width()!=width:raise RuntimeError("Settings exceeded the requested window width.")
+                            if window.settings_panel.pages.currentWidget().horizontalScrollBar().maximum():
+                                raise RuntimeError("Settings requires horizontal scrolling: "+theme+" / "+key)
+                report={"ok":True,"version":__version__,"runtime":"PySide6 / Qt Widgets","screenshots":screens,"projects":len(window.data["project"]),"tickets":len(window.data["ticket"])}
                 (captures/"smoke-report.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
                 window.close()
             except Exception:

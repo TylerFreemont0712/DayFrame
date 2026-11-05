@@ -62,7 +62,7 @@ jobs:
           else
             dist/DayFrame/DayFrame --smoke-test --data-dir build/ci-profile --screenshots build/ci-screenshots
           fi
-          python -c "import json; from pathlib import Path; report=json.loads(Path('build/ci-screenshots/smoke-report.json').read_text()); assert report['ok'] and len(report['screenshots']) >= 19"
+          python -c "import json; from pathlib import Path; from dayframe import __version__; report=json.loads(Path('build/ci-screenshots/smoke-report.json').read_text()); assert report['ok'] and report['version'] == __version__ and len(report['screenshots']) >= 61"
       - name: Upload portable bundle
         if: github.event_name == 'workflow_dispatch' && inputs.build_packages
         uses: actions/upload-artifact@v7
