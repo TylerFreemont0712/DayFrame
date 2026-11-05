@@ -48,8 +48,9 @@ class NativeUiTests(unittest.TestCase):
         self.assertEqual(len(self.w.map.nodes)+len(self.w.map.unsorted),len([x for x in self.s.list("ticket") if x["project_id"]==t["project_id"]]))
         self.w.map.fit();APP.processEvents()
         self.w.navigate("Calendar");self.w.navigate("Time");self.w.navigate("Settings");APP.processEvents()
+        self.w.settings_panel.navigation.setCurrentRow(1);APP.processEvents()
         themes=next(c for c in self.w.workspace.findChildren(QComboBox) if c.findData("light")>=0)
-        themes.setCurrentIndex(themes.findData("light"));self.click("Apply appearance")
+        themes.setCurrentIndex(themes.findData("light"));self.click("Apply theme")
         self.assertEqual(self.s.settings()["theme"],"light")
         self.assertFalse(any("WebEngine" in type(x).__name__ for x in self.w.findChildren(object) if hasattr(x,"metaObject")))
     def test_draft_survives_refresh_and_saves_only_changed_fields(self):

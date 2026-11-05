@@ -126,3 +126,7 @@ D-063: Rename workflow stages to Not Started, In Progress, Processed, Review and
 D-064: Kanban dragging gets an immediate destination ghost plate, with no hold delay or confirmation. Hover/cancellation never writes data; dropping changes only status and offers Undo. The map retains its separate 1.5-second hold and confirmation rules.
 
 D-065: Differentiate projects on Kanban with a colored project-key prefix, keeping the suffix and card body neutral. Repeat the hue in project folder icons. The initial color assignment derives from stable project UUIDs, with theme-aware brightness; no database or sync migration is needed.
+
+## Settings organization — 2026-11-05
+
+D-067: Replace the long Settings form with View, Theme, Local data, Sync and Account categories. Keep all existing controls and actions, with bounded scrollable forms and independent View/Theme saves. Preserve field entries between categories and appearance changes; remember the selected category for the session. Show unresolved conflict counts beside Sync.

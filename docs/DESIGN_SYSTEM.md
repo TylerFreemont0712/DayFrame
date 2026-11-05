@@ -46,6 +46,8 @@ Preserve drafts through refresh; navigation uses Save/Discard/Cancel. Timer stay
 
 Appearance/geometry/density/text scale/panel widths are device-local. Project/account entities sync; future repository paths stay device-local. Exact interactions are in CALENDAR_AND_MAP.md.
 
+Settings uses a 168px category menu beside one scrollable page: View, Theme, Local data, Sync or Account. Forms stop at 820px wide. View and Theme have separate Apply actions; switching categories keeps field entries. The selected section survives appearance changes and navigation during the session. Sync shows its unresolved conflict count in the menu. Keep section controls reachable at the minimum window size and 125% text scale.
+
 
 ## Controls and labels
 

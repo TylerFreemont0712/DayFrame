@@ -8,6 +8,7 @@ DayFrame 0.5.1 uses **PySide6 / Qt Widgets**, SQLite and a Python LAN hub.
 |---|---|
 | app.py / dayframe.app | QApplication lifecycle, platform data path, per-profile process lock, isolated smoke check |
 | ui.py / widgets.py / dialogs.py | Native windows, forms, tables, lists, dialogs, and background-worker delivery |
+| settings.py | Settings category navigation and focused View, Theme, Local data, Sync and Account forms |
 | kanban.py | Ticket card delegate, status lanes and temporary drag destination plates |
 | planning.py / calendar_views.py | Shared calendar projections and month/upcoming/week gestures |
 | project_map.py | QGraphicsView scene, cards, section geometry, dependency arrows, pan/zoom |

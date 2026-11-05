@@ -68,6 +68,10 @@ A persistent bottom utility area exposes the current timer, pause/stop controls,
 
 Remember selected view, project, panel sizes, density, and filters at appropriate account/device scopes. Layout and text size can be device-specific; project data is not duplicated per view.
 
+### NAV-06: settings sections
+
+Settings uses a keyboard-accessible category menu with View, Theme, Local data, Sync and Account. Show one scrollable section at a time, with bounded form widths. View contains density, text size and time zone; Theme contains the visual profile. Apply those sections independently and preserve entries when switching categories or applying appearance changes. Keep backup/examples, LAN connection credentials, automatic/manual sync, conflict review and account actions available in their corresponding sections. Remember the selected category while the app is open.
+
 ## 5. Today / Home
 
 ### HOME-01: daily focus

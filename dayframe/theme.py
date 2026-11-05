@@ -80,6 +80,10 @@ def apply_theme(settings):
     QScrollArea#dialogContent { background:transparent; }
     QListWidget::item,QTreeWidget::item { padding:3px 4px; }
     QListWidget::item:selected,QTreeWidget::item:selected { background:%(raised)s; color:%(accent)s; }
+    QListWidget#settingsNavigation { background:transparent; border:0; }
+    QListWidget#settingsNavigation::item { padding:10px 8px; margin-bottom:4px; border:1px solid transparent; border-radius:%(radius)spx; }
+    QListWidget#settingsNavigation::item:hover { background:%(panel)s; }
+    QListWidget#settingsNavigation::item:selected { background:%(raised)s; color:%(accent)s; border-color:%(line)s; }
     QListWidget#ticketLane { background:%(panel)s; border:1px solid %(line)s; }
     QListWidget#ticketLane::item { padding:0; margin:0; border:0; background:transparent; }
     QTreeWidget#projectTree { border:0; background:transparent; }
