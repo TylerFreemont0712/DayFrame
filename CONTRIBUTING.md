@@ -29,6 +29,16 @@ Format and lint before committing. The formatting commit is listed in .git-blame
 
 Use the source entry point to preview ongoing changes. Start DayFrame.cmd prefers an existing packaged release, which stays unchanged between release waves. Never use the normal runtime profile as a test fixture.
 
+To try the current source as a user would, double-click **Preview DayFrame.cmd** (or run `sh scripts/preview.sh` on Linux). It sets up .venv when needed and runs app.py with a separate preview profile, `%LOCALAPPDATA%\TimeManager-preview` (`$XDG_DATA_HOME/TimeManager-preview` on Linux), so the real profile is never migrated to a schema the installed release cannot open. Options:
+
+```powershell
+scripts\preview.ps1 -CopyProfile   # copy the real profile's data into an empty preview first (read-only copy, automatic sync off)
+scripts\preview.ps1 -Reset         # delete the preview profile and start empty
+scripts\preview.ps1 -Console       # keep a console open to see errors
+```
+
+A copied preview does not carry the remembered sign-in; sign in with your usual password. Keep its sync off unless the hub has been updated to the same version.
+
 ## Iteration workflow
 
 Commit small, complete changes regularly during development. Keep each commit focused on one purpose, with related tests and docs alongside the code. Separate unrelated fixes or formatting; do not leave all completed work for one large final commit or create filler commits just to increase the count. Preserve published history unless the owner requests a rewrite.

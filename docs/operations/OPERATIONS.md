@@ -15,7 +15,7 @@ For source work, install Python 3.12+ (3.14 recommended) and run:
     .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
     .venv\Scripts\python.exe -m unittest discover -s tests -v
 
-Run app.py directly to preview source changes; the regular launcher prefers the current packaged release. Development commits do not replace it. Build only for an explicitly requested release or validation build; see [release policy](RELEASES.md) and [packaging commands](../../CONTRIBUTING.md#version-and-release).
+Run Preview DayFrame.cmd (or scripts/preview.sh) to preview source changes in a separate TimeManager-preview profile; see [CONTRIBUTING.md](../../CONTRIBUTING.md). The regular launcher prefers the current packaged release. Development commits do not replace it. Build only for an explicitly requested release or validation build; see [release policy](RELEASES.md) and [packaging commands](../../CONTRIBUTING.md#version-and-release).
 
 Source desktop dependencies are pinned in requirements.txt. requirements-windows.lock.txt captures the tested environment; do not use its Windows-only packages as a Linux lock.
 
