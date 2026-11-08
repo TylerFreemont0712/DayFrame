@@ -8,9 +8,9 @@ from cryptography import x509
 from cryptography.hazmat.primitives import hashes,serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
-from dayframe.store import Store
-from dayframe.hub import Hub
-from dayframe.sync import Sync,request
+from dayframe.data.store import Store
+from dayframe.sync.hub import Hub
+from dayframe.sync.client import Sync,request
 BASE=Path("build/test-data")
 class SyncTests(unittest.TestCase):
     def setUp(self):

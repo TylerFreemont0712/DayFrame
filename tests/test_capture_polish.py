@@ -4,11 +4,11 @@ from pathlib import Path
 from PySide6.QtCore import Qt,QTimer,QPoint
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication,QWidget,QVBoxLayout,QComboBox,QSpinBox,QTabWidget,QLabel,QFrame
-from dayframe.store import Store
-from dayframe.ui import DayFrame
-from dayframe.widgets import ElidingLabel
-from dayframe.dialogs import AddDialog
-from dayframe.theme import apply_theme,CURRENT
+from dayframe.data.store import Store
+from dayframe.ui.window import DayFrame
+from dayframe.ui.widgets import ElidingLabel
+from dayframe.ui.dialogs import AddDialog
+from dayframe.ui.theme import apply_theme,CURRENT
 APP=QApplication.instance() or QApplication([])
 
 class CapturePolishTests(unittest.TestCase):
@@ -106,7 +106,7 @@ class CapturePolishTests(unittest.TestCase):
         d.kind.setCurrentIndex(d.kind.findData("event"));self.assertEqual(d.payload()[1]["description"],"Event context")
 
     def test_manual_labels_commit_on_enter_without_submitting_the_dialog(self):
-        from dayframe.labels import label_color
+        from dayframe.ui.labels import label_color
         from PySide6.QtWidgets import QPushButton
         d=self.dialog();d.title.setText("Still a draft")
         QTest.keyClicks(d.labels.input,"backend");QTest.keyClick(d.labels.input,Qt.Key_Return);APP.processEvents()
@@ -121,7 +121,7 @@ class CapturePolishTests(unittest.TestCase):
         bug=QColor(label_color("bug"));feature=QColor(label_color("feature"))
         self.assertGreater(bug.red(),bug.green());self.assertGreater(feature.green(),feature.red())
     def test_inspector_label_editor_saves_custom_labels_and_offers_them_again(self):
-        from dayframe.labels import LabelsEditor
+        from dayframe.ui.labels import LabelsEditor
         from PySide6.QtWidgets import QPushButton
         w=self.window();w.navigate("Projects");w.select_ticket(self.parent["id"]);APP.processEvents()
         editor=w.inspector.findChild(LabelsEditor)

@@ -3,9 +3,9 @@ import unittest
 from unittest.mock import patch
 from PySide6.QtCore import Qt,QRect,QTime
 from PySide6.QtWidgets import QApplication,QDialog,QLineEdit,QDialogButtonBox
-from dayframe.dialogs import AddDialog,SectionDialog
-from dayframe.widgets import FormDialog,label
-from dayframe.theme import apply_theme
+from dayframe.ui.dialogs import AddDialog,SectionDialog
+from dayframe.ui.widgets import FormDialog,label
+from dayframe.ui.theme import apply_theme
 
 APP=QApplication.instance() or QApplication([])
 SNAPSHOT={"settings":{"timezone":"Asia/Tokyo"},"project":[{"id":"project-1","name":"Example","archived":0}]}

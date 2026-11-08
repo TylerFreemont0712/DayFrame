@@ -3,9 +3,9 @@ import json,sys
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parent.parent))
 from PySide6.QtWidgets import QApplication,QMainWindow
-from dayframe.theme import apply_theme,CURRENT
-from dayframe.window_frame import apply_native_frame,read_native_frame,colorref
-from dayframe.widgets import FormDialog
+from dayframe.ui.theme import apply_theme,CURRENT
+from dayframe.ui.window_frame import apply_native_frame,read_native_frame,colorref
+from dayframe.ui.widgets import FormDialog
 if sys.platform!="win32":raise SystemExit("Run this check on Windows with QT_QPA_PLATFORM=windows.")
 Path("build").mkdir(exist_ok=True)
 app=QApplication([]);main=QMainWindow();dialog=FormDialog(main,"Frame check");report={}

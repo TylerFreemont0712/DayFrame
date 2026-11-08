@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt,QEvent,QPointF
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication,QWidget,QMessageBox
-from dayframe.project_map import ProjectMap,SectionHeader,CONTENT_X,CONTENT_Y
+from dayframe.ui.views.project_map import ProjectMap,SectionHeader,CONTENT_X,CONTENT_Y
 
 APP=QApplication.instance() or QApplication([])
 

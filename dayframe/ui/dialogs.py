@@ -2,7 +2,7 @@
 import json
 from PySide6.QtCore import QDate,QTime,Qt,QTimer
 from PySide6.QtWidgets import QFormLayout,QLineEdit,QPlainTextEdit,QCheckBox,QSpinBox,QDateEdit,QTimeEdit,QToolButton,QWidget,QDialogButtonBox,QButtonGroup,QTabWidget,QVBoxLayout,QComboBox
-from . import domain as D,planning as P
+from ..core import domain as D,planning as P
 from .widgets import FormDialog,label,combo,row,button,column
 from PySide6.QtGui import QShortcut,QKeySequence
 from .theme import CURRENT as C

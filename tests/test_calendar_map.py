@@ -9,11 +9,11 @@ from PySide6.QtCore import Qt,QDate,QTime,QTimer,QPointF,QEvent
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication,QPushButton,QMessageBox,QStyle,QTableWidget
-from dayframe import domain as D,planning as P
-from dayframe.store import Store
-from dayframe.ui import DayFrame
-from dayframe.dialogs import AddDialog
-from dayframe.theme import apply_theme,CURRENT
+from dayframe.core import domain as D, planning as P
+from dayframe.data.store import Store
+from dayframe.ui.window import DayFrame
+from dayframe.ui.dialogs import AddDialog
+from dayframe.ui.theme import apply_theme,CURRENT
 APP=QApplication.instance() or QApplication([])
 BASE=Path("build/test-data")
 

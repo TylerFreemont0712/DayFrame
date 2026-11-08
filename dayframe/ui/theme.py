@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor,QFont,QIcon,QPalette
 from PySide6.QtWidgets import QApplication
 import qtawesome as qta
-from .palettes import THEMES,LEGACY_THEMES,scheme_colors,schemes,default_scheme
+from ..core.palettes import THEMES,LEGACY_THEMES,scheme_colors,schemes,default_scheme
 
 CURRENT=scheme_colors("graphite").copy()
 

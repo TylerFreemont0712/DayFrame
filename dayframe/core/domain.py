@@ -10,7 +10,7 @@ from datetime import date, datetime, time, timedelta, timezone
 from importlib.resources import files
 from zoneinfo import ZoneInfo
 
-DEFINITIONS = json.loads(files("dayframe").joinpath("schema_definitions.json").read_text(encoding="utf-8"))
+DEFINITIONS = json.loads(files("dayframe.data").joinpath("schema_definitions.json").read_text(encoding="utf-8"))
 STATUSES = ("inbox", "ready", "doing", "review", "done")
 # Keep stored IDs stable so existing tickets and sync history retain their stage.
 STATUS_NAMES = dict(zip(STATUSES, ("Not Started", "In Progress", "Processed", "Review", "Complete")))

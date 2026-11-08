@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
 from cryptography import x509
-from . import domain as D
+from ..core import domain as D
 
 class PinnedHTTPSConnection(http.client.HTTPSConnection):
     def __init__(self,host,port,fingerprint,timeout=12):

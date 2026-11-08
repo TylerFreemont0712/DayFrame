@@ -8,11 +8,12 @@ from PySide6.QtGui import QDragEnterEvent,QDropEvent
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication,QLineEdit,QPushButton,QComboBox,QGraphicsView,QTimeEdit,QTabBar,QTableWidget
 from PySide6.QtWidgets import QMessageBox
-from dayframe.store import Store
-from dayframe import domain as D
-from dayframe.ui import DayFrame,TicketList
-from dayframe.project_map import TicketNode
-from dayframe.theme import apply_theme,icon
+from dayframe.data.store import Store
+from dayframe.core import domain as D
+from dayframe.ui.window import DayFrame
+from dayframe.ui.views.kanban import TicketList
+from dayframe.ui.views.project_map import TicketNode
+from dayframe.ui.theme import apply_theme,icon
 APP=QApplication.instance() or QApplication([])
 class NativeUiTests(unittest.TestCase):
     def setUp(self):

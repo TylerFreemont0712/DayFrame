@@ -8,11 +8,11 @@ from PySide6.QtWidgets import (
     QAbstractItemView,
 )
 
-from . import domain as D
-from .labels import paint_label_pills
-from .theme import CURRENT as C
+from ...core import domain as D
+from ..labels import paint_label_pills
+from ..dragdrop import TICKET_MIME
+from ..theme import CURRENT as C
 
-TICKET_MIME = 'application/x-timemanager-ticket'
 PREVIEW_ROLE = Qt.UserRole + 2
 
 

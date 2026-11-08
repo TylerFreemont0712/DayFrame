@@ -4,21 +4,23 @@ DayFrame 0.5.2 uses **PySide6 / Qt Widgets**, SQLite and a Python LAN hub.
 
 ## Boundaries
 
-| Module | Responsibility |
+The package is split by layer. Lower layers never import higher ones: `core` has no Qt or SQLite, `data` and `sync` have no Qt, and only `ui` touches widgets. [CODE_MAP.md](CODE_MAP.md) lists every module, how the window mixins connect, and which threads run what.
+
+| Path | Responsibility |
 |---|---|
-| app.py / dayframe.app | QApplication lifecycle, platform data path, per-profile process lock, isolated smoke check |
-| ui.py / widgets.py / dialogs.py | Native windows, forms, tables, lists, dialogs, and background-worker delivery |
-| settings.py | Settings category navigation and focused View, Theme, Local data, Sync and Account forms |
-| kanban.py | Ticket card delegate, status lanes and temporary drag destination plates |
-| planning.py / calendar_views.py | Shared calendar projections and month/upcoming/week gestures |
-| project_map.py | QGraphicsView scene, cards, section geometry, dependency arrows, pan/zoom |
-| labels.py | Native flow/chip editor, label catalog/colors and shared card label painting |
-| window_frame.py | Guarded native DWM theme attributes for Windows top-level windows |
-| theme.py | Semantic palettes, QApplication font/palette, Qt widget style rules, QtAwesome glyphs |
-| domain.py | Shared validation, dates, password hashing, rules, dependencies, field comparisons |
-| store.py | SQLite migrations, account scope, normalized relations, transactions/outbox, backup/import |
-| sync.py | Authenticated push/pull, certificate pinning, OS keyring, conflict reconciliation |
-| hub.py | Optional private HTTP/TLS service with SQLite change feed and device registry |
+| app.py, \_\_main\_\_.py | QApplication lifecycle, platform data path, per-profile process lock, isolated smoke check |
+| hub.py | Stable `python -m dayframe.hub` launch path for installed hub services |
+| core/domain.py | Shared validation, dates, password hashing, rules, dependencies, field comparisons |
+| core/planning.py | Shared calendar projections for Home and Calendar (Sunday-first weeks, occurrences, overlap lanes) |
+| core/palettes.py | Theme and color-scheme definitions used by Store validation and the Qt theme |
+| data/store.py, schema.sql, schema_definitions.json | SQLite migrations, account scope, normalized relations, transactions/outbox, backup/import |
+| sync/client.py | Authenticated push/pull, certificate pinning, OS keyring, conflict reconciliation |
+| sync/hub.py | Optional private HTTP/TLS service with SQLite change feed and device registry |
+| ui/window/ | Main window: `main.py` owns state, async jobs and refresh; one mixin module per page or concern |
+| ui/views/ | Painted view widgets: Kanban lanes, project Map, Calendar, Today agenda, Settings panel |
+| ui/dialogs.py, widgets.py, labels.py | Quick Add/section/conflict dialogs, small widget helpers, label chip editor and painting |
+| ui/theme.py, window_frame.py | Semantic palette application, Qt style rules, QtAwesome glyphs; guarded Windows DWM frame colors |
+| ui/workers.py, dragdrop.py | QThreadPool worker delivery; the shared ticket drag MIME type |
 
 Qt style sheets provide the native control appearance. User content is displayed as plain text or edited in QPlainTextEdit.
 

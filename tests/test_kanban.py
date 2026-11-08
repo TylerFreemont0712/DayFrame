@@ -8,12 +8,14 @@ from PySide6.QtCore import Qt, QMimeData, QPoint, QPointF, QRect
 from PySide6.QtGui import QDragEnterEvent, QDragMoveEvent, QDragLeaveEvent, QDropEvent, QImage, QPainter, QColor
 from PySide6.QtWidgets import QApplication, QComboBox, QLabel, QStyleOptionViewItem
 
-from dayframe import domain as D, planning as P
-from dayframe.dialogs import AddDialog
-from dayframe.store import Store
-from dayframe.ui import DayFrame, TicketList
-from dayframe.kanban import TICKET_MIME, project_color
-from dayframe.theme import apply_theme, CURRENT
+from dayframe.core import domain as D, planning as P
+from dayframe.ui.dialogs import AddDialog
+from dayframe.data.store import Store
+from dayframe.ui.window import DayFrame
+from dayframe.ui.views.kanban import TicketList
+from dayframe.ui.dragdrop import TICKET_MIME
+from dayframe.ui.views.kanban import project_color
+from dayframe.ui.theme import apply_theme, CURRENT
 
 APP = QApplication.instance() or QApplication([])
 
@@ -136,7 +138,7 @@ class KanbanTests(unittest.TestCase):
         self.assertIsNone(lanes['ready'].preview_item)
         self.assertEqual(lanes['ready'].count(), 0)
         lanes['inbox'].setCurrentRow(0)
-        with patch('dayframe.kanban.QDrag') as drag:
+        with patch('dayframe.ui.views.kanban.QDrag') as drag:
             drag.return_value.exec.side_effect = lambda action: self.enter(lanes['review'], mime)
             lanes['inbox'].startDrag(Qt.MoveAction)
         self.assertIsNone(lanes['review'].preview_item)

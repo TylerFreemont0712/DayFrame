@@ -7,10 +7,10 @@ from PySide6.QtCore import Qt
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QPushButton, QCheckBox, QLineEdit
 
-from dayframe.store import Store
-from dayframe.ui import DayFrame
-from dayframe.palettes import THEMES, schemes
-from dayframe.theme import apply_theme, CURRENT
+from dayframe.data.store import Store
+from dayframe.ui.window import DayFrame
+from dayframe.core.palettes import THEMES, schemes
+from dayframe.ui.theme import apply_theme, CURRENT
 
 APP = QApplication.instance() or QApplication([])
 
@@ -190,7 +190,7 @@ class SettingsTests(unittest.TestCase):
     def test_invalid_view_settings_keep_values_and_leave_saved_preferences_intact(self):
         self.settings.fields["timezone"].setText("Invalid/TimeZone")
         self.settings.fields["textScale"].setValue(110)
-        with patch("dayframe.ui.error") as error:
+        with patch("dayframe.ui.window.main.error") as error:
             self.click("Apply view settings")
         error.assert_called_once()
         self.assertEqual(self.store.settings()["timezone"], "Asia/Tokyo")

@@ -4,8 +4,8 @@ import sqlite3
 import unittest
 import uuid
 from pathlib import Path
-from dayframe.store import Store
-from dayframe import domain as D
+from dayframe.data.store import Store
+from dayframe.core import domain as D
 
 BASE=Path("build/test-data")
 class StoreTests(unittest.TestCase):

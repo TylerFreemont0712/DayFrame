@@ -7,10 +7,10 @@ from pathlib import Path
 from PySide6.QtCore import QTimer,QLockFile,QEventLoop
 from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import QApplication,QMessageBox
-from .store import Store
-from .ui import DayFrame
-from .dialogs import AddDialog
-from .theme import apply_theme
+from .data.store import Store
+from .ui.window import DayFrame
+from .ui.dialogs import AddDialog
+from .ui.theme import apply_theme
 from . import __version__
 
 def data_directory():
@@ -62,7 +62,7 @@ def main():
                 window.resize(980,640);grab("native-calendar-small");window.resize(1280,800)
                 window.navigate("Projects");grab("native-kanban")
                 selected=next(t for t in window.data["ticket"] if t["status"]=="doing")
-                from .kanban import TicketList
+                from .ui.views.kanban import TicketList
                 lane=next(lane for lane in window.findChildren(TicketList) if lane.status=="review")
                 lane.show_preview(selected);grab("native-kanban-ghost");lane.clear_preview()
                 window.change_project_view("Details");grab("native-details");window.change_project_view("Kanban")

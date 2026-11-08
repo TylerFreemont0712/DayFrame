@@ -1,6 +1,6 @@
 import unittest
 
-from dayframe.palettes import (LEGACY_THEMES, THEMES, THEME_IDS, default_scheme, scheme_colors,
+from dayframe.core.palettes import (LEGACY_THEMES, THEMES, THEME_IDS, default_scheme, scheme_colors,
                                schemes, valid_theme_colors)
 
 COLOR_KEYS = {"bg", "panel", "raised", "line", "text", "muted", "accent", "danger", "rail"}

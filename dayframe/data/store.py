@@ -11,8 +11,8 @@ from contextlib import contextmanager
 from datetime import date, timedelta
 from importlib.resources import files
 from pathlib import Path
-from . import domain as D
-from .palettes import LEGACY_THEMES, THEME_IDS, valid_theme_colors
+from ..core import domain as D
+from ..core.palettes import LEGACY_THEMES, THEME_IDS, valid_theme_colors
 
 class Store:
     def __init__(self, root):
@@ -33,7 +33,7 @@ class Store:
         if version > 4:
             raise ValueError("This database requires a newer DayFrame version.")
         if not version:
-            self.db.executescript(files("dayframe").joinpath("schema.sql").read_text(encoding="utf-8"))
+            self.db.executescript(files("dayframe.data").joinpath("schema.sql").read_text(encoding="utf-8"))
             return
         if version == 1:
             with self.atomic():

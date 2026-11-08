@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from dayframe.app import data_directory
-from dayframe.store import Store
+from dayframe.data.store import Store
 
 
 class BrandingCompatibilityTests(unittest.TestCase):

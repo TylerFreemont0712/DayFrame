@@ -1,11 +1,12 @@
 """Compact native project canvas. Ticket cards share the board's persistent records."""
 import math
-from PySide6.QtCore import Qt,QRectF,QPointF,QTimer,Signal,QElapsedTimer
+from PySide6.QtCore import Qt,QRectF,QPointF,QTimer,Signal,QElapsedTimer,QMimeData
 from PySide6.QtGui import QColor,QPen,QBrush,QPainter,QPainterPath,QFont,QFontMetricsF,QPolygonF,QTransform,QDrag
-from PySide6.QtWidgets import QApplication,QGraphicsView,QGraphicsScene,QGraphicsObject,QGraphicsItem,QMessageBox,QMenu
-from .theme import CURRENT as C
-from . import domain as D
-from .labels import paint_label_pills
+from PySide6.QtWidgets import QApplication,QGraphicsView,QGraphicsScene,QGraphicsObject,QGraphicsItem,QMessageBox,QMenu,QListWidget
+from ..theme import CURRENT as C
+from ...core import domain as D
+from ..labels import paint_label_pills
+from ..dragdrop import TICKET_MIME
 
 CARD_WIDTH=180
 CARD_HEIGHT=74
@@ -339,19 +340,19 @@ class ProjectMap(QGraphicsView):
             elif zone=="right":self.commit_section(section,{"predecessor_ids":list(dict.fromkeys(section.get("predecessor_ids",[])+[target_id]))},section["name"]+" comes AFTER "+other["name"])
             else:self.commit_section(other,{"predecessor_ids":list(dict.fromkeys(other.get("predecessor_ids",[])+[source]))},section["name"]+" comes BEFORE "+other["name"])
     def dragEnterEvent(self,event):
-        if event.mimeData().hasFormat("application/x-timemanager-ticket"):event.acceptProposedAction()
+        if event.mimeData().hasFormat(TICKET_MIME):event.acceptProposedAction()
         else:super().dragEnterEvent(event)
     def dragMoveEvent(self,event):
-        if event.mimeData().hasFormat("application/x-timemanager-ticket"):
-            source=bytes(event.mimeData().data("application/x-timemanager-ticket")).decode()
+        if event.mimeData().hasFormat(TICKET_MIME):
+            source=bytes(event.mimeData().data(TICKET_MIME)).decode()
             if any(t["id"]==source for t in self.tickets):
                 self.consider_hover("ticket",source,self.mapToScene(event.position().toPoint()));event.acceptProposedAction()
         else:super().dragMoveEvent(event)
     def dragLeaveEvent(self,event):
         self.clear_hover();event.accept()
     def dropEvent(self,event):
-        if event.mimeData().hasFormat("application/x-timemanager-ticket"):
-            source=bytes(event.mimeData().data("application/x-timemanager-ticket")).decode()
+        if event.mimeData().hasFormat(TICKET_MIME):
+            source=bytes(event.mimeData().data(TICKET_MIME)).decode()
             if any(t["id"]==source for t in self.tickets):
                 self.finish_hover("ticket",source,self.mapToScene(event.position().toPoint()));event.acceptProposedAction()
         else:super().dropEvent(event)
@@ -385,3 +386,12 @@ class ProjectMap(QGraphicsView):
             else:self.zoom_by(1/1.15 if event.key()==Qt.Key_Minus else 1.15)
             event.accept()
         else:super().keyPressEvent(event)
+
+
+class UnsortedList(QListWidget):
+    """The Map's Unsorted tray; drags tickets onto the canvas with the shared ticket MIME type."""
+    def startDrag(self,actions):
+        item=self.currentItem()
+        if not item:return
+        mime=QMimeData();mime.setData(TICKET_MIME,item.data(Qt.UserRole).encode())
+        drag=QDrag(self);drag.setMimeData(mime);drag.exec(Qt.MoveAction)

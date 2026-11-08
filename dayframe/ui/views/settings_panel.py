@@ -5,9 +5,9 @@ from PySide6.QtWidgets import (
     QWidget, QHBoxLayout, QListWidget, QListWidgetItem, QStackedWidget,
     QFormLayout, QLineEdit, QSpinBox, QCheckBox, QLabel, QComboBox,
 )
-from .palettes import THEME_IDS, default_scheme, scheme_colors, schemes, theme_label
-from .theme import apply_theme, icon
-from .widgets import label, button, column, row, panel, scroll, combo
+from ...core.palettes import THEME_IDS, default_scheme, scheme_colors, schemes, theme_label
+from ..theme import apply_theme, icon
+from ..widgets import label, button, column, row, panel, scroll, combo
 
 
 def swatch(colors, size=16):

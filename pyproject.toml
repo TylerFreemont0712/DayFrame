@@ -18,7 +18,7 @@ dependencies = [
 
 [project.scripts]
 dayframe = "dayframe.app:main"
-dayframe-hub = "dayframe.hub:main"
+dayframe-hub = "dayframe.sync.hub:main"
 
 [project.urls]
 Repository = "https://github.com/TylerFreemont0712/DayFrame"
@@ -28,4 +28,5 @@ Issues = "https://github.com/TylerFreemont0712/DayFrame/issues"
 include = ["dayframe*"]
 
 [tool.setuptools.package-data]
-dayframe = ["*.json", "*.sql", "resources/*.svg", "resources/*.png"]
+dayframe = ["resources/*.svg", "resources/*.png"]
+"dayframe.data" = ["*.json", "*.sql"]

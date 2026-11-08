@@ -5,9 +5,9 @@ from datetime import date,datetime,timedelta
 from PySide6.QtCore import Qt,QRectF,QPointF,QSize,QTimer,Signal
 from PySide6.QtGui import QColor,QPainter,QPen,QFont,QPolygonF
 from PySide6.QtWidgets import QWidget,QVBoxLayout,QHBoxLayout,QLabel,QListWidget,QListWidgetItem,QStyledItemDelegate,QScrollArea,QFrame,QSizePolicy,QStyle
-from .theme import CURRENT as C,icon
-from .widgets import label,button,row,combo,column
-from . import planning as P,domain as D
+from ..theme import CURRENT as C,icon
+from ..widgets import label,button,row,combo,column
+from ...core import planning as P,domain as D
 
 def readable(item):
     span=item["date"]+(" → "+item["end_date"] if item["end_date"]!=item["date"] else "")
