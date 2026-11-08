@@ -333,6 +333,27 @@ class SettingsTests(unittest.TestCase):
                                 point = control.mapTo(page.viewport(), control.rect().center())
                                 self.assertTrue(page.viewport().rect().contains(point), control.text())
 
+    def test_old_default_text_size_moves_to_ninety_percent_once(self):
+        for saved, expected in ((100, 90), (110, 110)):
+            with self.subTest(saved=saved):
+                store = Store(Path("build/test-data") / uuid.uuid4().hex)
+                try:
+                    store.register("upgrade", "tyler")
+                    store.settings({"layoutRevision": 3, "textScale": saved})
+                    window = DayFrame(store)
+                    window.close()
+                    self.assertEqual(
+                        (store.settings()["textScale"], store.settings()["layoutRevision"]), (expected, 4)
+                    )
+                    # A size chosen after the upgrade is kept on later starts.
+                    store.settings({"textScale": 100})
+                    window = DayFrame(store)
+                    window.close()
+                    self.assertEqual(store.settings()["textScale"], 100)
+                finally:
+                    APP.processEvents()
+                    store.close()
+
     def test_custom_colors_start_from_the_scheme_and_advanced_roles_apply(self):
         self.section("theme")
         fields = self.settings.fields
