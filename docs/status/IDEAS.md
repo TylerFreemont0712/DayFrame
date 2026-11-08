@@ -49,7 +49,7 @@ Collected from [SPEC.md](../../SPEC.md), [DECISIONS.md](../product/DECISIONS.md)
 - **planned** Manual ordering within a Kanban lane (TKT-05).
 - **planned** Per-project workflow customization (TKT-02).
 - **planned** Goal and reference objects; linked map references (D-018, D-022).
-- **planned** Inspector Activity, Files/attachments and Code tabs (TKT-04, D-026).
+- **planned** Inspector Activity and Files/attachments tabs (TKT-04, D-026).
 - **parked** Notes UI and note capture; saved notes stay intact (SPEC §10).
 
 ### Time tracking
@@ -65,7 +65,11 @@ Collected from [SPEC.md](../../SPEC.md), [DECISIONS.md](../product/DECISIONS.md)
 - **planned** Paged queries and virtualized rendering for large collections.
 
 ### Code area and team
-- **planned** Repository overview: repository, branch, latest commit, release/tag, checks and linked issues/PRs (SPEC §14, D-029, D-030).
+- **planned** Subversion support: per-project SVN checkouts with shelves stored as changesets (D-075).
+- **proposed** Use the GitHub token for git push and pull over HTTPS through a credential helper, so one sign-in covers both.
+- **proposed** Link tickets to GitHub issues and pull requests both ways, showing pull request state and checks on cards.
+- **proposed** File tree and per-file diff navigation on the Code page; side-by-side diffs.
+- **proposed** Drop DayFrame's own git stash backups when a changeset is committed or deleted.
 - **planned** Team workspaces with memberships, explicit sharing and assignees (SPEC §13, D-015, D-016).
 
 ### Platforms and packaging

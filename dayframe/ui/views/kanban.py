@@ -2,7 +2,7 @@
 
 import hashlib
 
-from PySide6.QtCore import Qt, QMimeData, QSize, QRectF, QPointF
+from PySide6.QtCore import Qt, QMimeData, QSize, QRectF, QPointF, QTimer
 from PySide6.QtGui import QColor, QPainter, QPen, QDrag, QFont, QTextLayout, QTextOption
 from PySide6.QtWidgets import (
     QApplication,
@@ -10,12 +10,13 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QAbstractItemView,
+    QMenu,
 )
 
 from ...core import domain as D
 from ..labels import paint_label_pills
 from ..dragdrop import TICKET_MIME
-from ..theme import CURRENT as C
+from ..theme import CURRENT as C, icon
 
 PREVIEW_ROLE = Qt.UserRole + 2
 
@@ -56,6 +57,27 @@ def paint_project_key(p, rect, project_id, prefix, suffix):
         Qt.AlignVCenter | Qt.AlignLeft,
         metrics.elidedText(tail, Qt.ElideRight, int(remaining.width())),
     )
+    p.restore()
+
+
+def code_badge_rect(rect):
+    """Clickable Code marker at a card's top right, left of the priority dot."""
+    return QRectF(rect.right() - 50, rect.top() + 4, 32, 16)
+
+
+def paint_code_badge(p, rect, count):
+    """A small code glyph plus the ticket's changeset count; shown when its project has a repository."""
+    p.save()
+    tint = QColor(C["accent"])
+    tint.setAlpha(32)
+    p.setBrush(tint)
+    p.setPen(Qt.NoPen)
+    p.drawRoundedRect(rect, 3, 3)
+    side = int(rect.height() - 4)
+    icon("code", C["accent"]).paint(p, int(rect.left() + 3), int(rect.top() + 2), side, side)
+    if count:
+        p.setPen(QColor(C["accent"]))
+        p.drawText(rect.adjusted(side + 5, 0, -2, 0), Qt.AlignVCenter | Qt.AlignLeft, str(count))
     p.restore()
 
 
@@ -121,9 +143,10 @@ class BoardDelegate(QStyledItemDelegate):
         font.setPointSizeF(max(7.5, font.pointSizeF() - 0.5))
         p.setFont(font)
         project = next((x for x in self.window.data["project"] if x["id"] == ticket["project_id"]), {})
+        code = bool(self.window.code_repo(ticket["project_id"]))
         paint_project_key(
             p,
-            QRectF(rect.left() + 8, rect.top() + 5, rect.width() - 27, 18),
+            QRectF(rect.left() + 8, rect.top() + 5, rect.width() - (61 if code else 27), 18),
             ticket["project_id"],
             project.get("project_key", "T"),
             ticket["id"][:6].upper(),
@@ -134,6 +157,8 @@ class BoardDelegate(QStyledItemDelegate):
         p.setBrush(QColor(color))
         p.setPen(Qt.NoPen)
         p.drawEllipse(QPointF(rect.right() - 10, rect.top() + 12), 3, 3)
+        if code and not ghost:
+            paint_code_badge(p, code_badge_rect(rect), self.window.changeset_count(ticket["id"]))
         font.setBold(True)
         p.setFont(font)
         p.setPen(QColor(C["text"]))
@@ -191,6 +216,44 @@ class TicketList(QListWidget):
         self.itemClicked.connect(
             lambda item: window.select_ticket(item.data(Qt.UserRole)) if item.data(Qt.UserRole) else None
         )
+
+    def code_hit(self, pos):
+        """The ticket whose Code badge is under a viewport position, if any."""
+        item = self.itemAt(pos)
+        ticket = self.window.find_ticket(item.data(Qt.UserRole)) if item and item.data(Qt.UserRole) else None
+        if not ticket or not self.window.code_repo(ticket["project_id"]):
+            return None
+        rect = QRectF(self.visualItemRect(item)).adjusted(2, 2, -2, -2)
+        return ticket["id"] if code_badge_rect(rect).contains(QPointF(pos)) else None
+
+    def mousePressEvent(self, event):
+        ticket_id = self.code_hit(event.position().toPoint()) if event.button() == Qt.LeftButton else None
+        if ticket_id:
+            # Leave the list's own event before the page is rebuilt.
+            QTimer.singleShot(0, lambda: self.window.open_code(ticket_id))
+            event.accept()
+            return
+        super().mousePressEvent(event)
+
+    def contextMenuEvent(self, event):
+        item = self.itemAt(event.pos())
+        ticket = self.window.find_ticket(item.data(Qt.UserRole)) if item and item.data(Qt.UserRole) else None
+        if not ticket:
+            return
+        w, ticket_id = self.window, ticket["id"]
+        menu = QMenu(self)
+        menu.addAction(icon("external-link-alt"), "Open ticket", lambda: w.select_ticket(ticket_id))
+        if w.code_repo(ticket["project_id"]):
+            menu.addAction(
+                icon("code"), "Open in Code", lambda: QTimer.singleShot(0, lambda: w.open_code(ticket_id))
+            )
+        menu.addAction(
+            icon("play"),
+            "Start timer",
+            lambda: w.execute("timer.action", {"action": "start", "ticket_id": ticket_id}),
+        )
+        menu.addAction(icon("calendar-plus"), "Schedule work", lambda: w.schedule_ticket(ticket))
+        menu.exec(event.globalPos())
 
     def startDrag(self, actions):
         item = self.currentItem()

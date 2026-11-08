@@ -318,18 +318,6 @@ class ProjectsPage:
                 "section.save", {"project_id": self.project_id, "sort_order": len(sections), **d.payload()}
             )
 
-    def show_code(self):
-        p, l = panel("Repository overview · planned")
-        l.addWidget(
-            label(
-                "Linked GitHub repository, branch, latest commit, release/tag, checks, and local sync status.",
-                "muted",
-            )
-        )
-        l.addWidget(label("Repository connections are a future milestone.", "muted"))
-        self.work_layout.addWidget(p)
-        self.work_layout.addStretch()
-
     def new_child_ticket(self, parent):
         if self.leave_editor():
             self.quick_add("ticket", project_id=parent["project_id"], parent_id=parent["id"], more=True)
@@ -351,8 +339,7 @@ class ProjectsPage:
         elif kind == "milestones":
             self.show_milestones(project_id)
         else:
-            self.project_id = project_id
-            self.navigate("Code")
+            self.open_code(project_id=project_id)
 
     def show_milestones(self, project_id):
         d = FormDialog(self, self.project_name(project_id) + " · Milestones")

@@ -69,6 +69,12 @@ class MapWindow(QWidget):
     def blocked(self, ticket):
         return False
 
+    def code_repo(self, project_id):
+        return None
+
+    def changeset_count(self, ticket_id):
+        return 0
+
     def select_ticket(self, ticket_id, rebuild=False):
         self.selected = ticket_id
 

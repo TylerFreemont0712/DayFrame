@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add the Code page. Each project connects a Git repository with a checkout folder per device, and each ticket keeps changesets: saved working-tree changes whose diff is stored and synced, with New changeset, Save to selected, Shelve and Switch to for moving between them.
+- Run fetch, fast-forward pull, commit, push and branch create/switch from the Code page in the background, with confirmations that show the command and outgoing commits. Push never forces.
+- Connect GitHub with an access token in Settings > Sync (kept in the OS credential store) to see checks, the latest release, pull requests and issues, open pull requests and issues, merge pull requests and create tickets from issues.
+- Open a ticket on the Code page from a code badge on Kanban and Map cards, their context menus, the inspector, and the work-block dialog in Calendar and Today.
+- Move the database to schema 5 for repositories and changesets. Update the hub before syncing from a client that uses the Code page.
+
 ## 0.6.0 — 2026-11-08
 
 - Add the Nord, Catppuccin and Editor themes. Editor offers Dracula, Tokyo Night, One Dark, Monokai, Gruvbox, Solarized, Rosé Pine and Everforest schemes; Nord, Catppuccin and Editor include light schemes.

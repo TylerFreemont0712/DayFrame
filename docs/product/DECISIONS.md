@@ -33,7 +33,7 @@
 | D-027 | Quick Add supports tickets, events, notes, and optional field chips. |
 | D-028 | Reminders only for explicitly enabled events/deadlines. |
 | D-029 | Revision means branch + latest commit ID + release/tag. |
-| D-030 | Repository overview first; files/diffs later. |
+| D-030 | Repository overview first; files/diffs later (updated by D-075). |
 | D-031 | Graphite/Cyan wins over the alternate combined concept. |
 | D-032 | Real app is a larger dashboard; do not copy the compressed concept-sheet proportions. |
 | D-033 | Smaller text is acceptable with configurable scale/density and readable controls. |
@@ -148,3 +148,13 @@ D-072: Interface, heading and number fonts can be chosen from installed fonts, d
 D-073: The time zone is chosen from a searchable list sorted by UTC offset that shows each zone's current time, including whole-hour fixed UTC offsets. Up to three world clocks show the current time elsewhere in the bottom bar.
 
 D-074: Bottom-bar controls and calendar all-day chips size themselves from the active font; the all-day band shows up to four rows and summarizes the rest as "+N more".
+
+## Code area — 2026-11-08
+
+D-075: The Code page becomes a working hub for version control, not only a read-only overview. Each project selects its version control; Git ships first and Subversion (shelves) follows later. A project has one active repository connection.
+
+D-076: Tickets own changesets: saved working-tree changes whose diff is stored in the database and synced so other devices can see and restore them. Git stash creates them and remains a local backup. Switching between changesets restores files into the checkout, shelving uncommitted work first so nothing is lost.
+
+D-077: GitHub gets full read/write API access through a personal access token in Settings > Sync, kept only in the OS credential store. Commit, push, pull, branch switches, merges and deletions require confirmation; push never forces and pull only fast-forwards.
+
+D-078: Other views link to the Code page: a code badge on Kanban and Map cards, Open in Code in their context menus, a Code button in the inspector, and Open ticket / Open in Code in the work-block dialog used by Calendar and Today.

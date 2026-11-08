@@ -1,7 +1,7 @@
 """Ticket inspector side panel, draft protection and work scheduling."""
 
 from __future__ import annotations
-from PySide6.QtCore import QDate, Qt, QTime
+from PySide6.QtCore import QDate, Qt, QTime, QTimer
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -287,7 +287,12 @@ class InspectorMixin:
             )
         more_actions = button("More actions")
         more_actions.setMenu(menu)
-        l.addWidget(more_actions)
+        code = button("Code", lambda: self.open_code(t["id"]), "code")
+        code.setToolTip(
+            "Open this ticket's changesets on the Code page"
+            + (" · " + str(self.changeset_count(t["id"])) + " saved" if self.changeset_count(t["id"]) else "")
+        )
+        l.addWidget(row(code, more_actions))
         self.inspect_layout.addWidget(root, 1)
         for field in details.findChildren(QWidget):
             if isinstance(field, (QLineEdit, QComboBox, QSpinBox, QPlainTextEdit, QListWidget)):
@@ -302,6 +307,18 @@ class InspectorMixin:
         self.page = "Projects"
         self.project_id = t["project_id"]
         self.project_view = "Details"
+        self.refresh_page()
+
+    def open_ticket(self, ticket_id):
+        """Show a ticket in its project with the inspector open, from any page."""
+        ticket = self.find_ticket(ticket_id)
+        if not ticket or not self.leave_editor():
+            return
+        self.page = "Projects"
+        self.project_id = ticket["project_id"]
+        if self.project_view not in ("Map", "Kanban", "Details"):
+            self.project_view = "Map"
+        self.selected = ticket_id
         self.refresh_page()
 
     def close_inspector(self):
@@ -338,6 +355,22 @@ class InspectorMixin:
         hint = label("Ticket deadline stays " + (ticket["due_date"] or "unset") + ".", "muted")
         hint.setWordWrap(True)
         d.layout.addWidget(hint)
+        if existing:
+            # Calendar and agenda blocks open here, so this is where they link back to the ticket.
+            def jump(target):
+                d.reject()
+                QTimer.singleShot(0, target)
+
+            links = [
+                button(
+                    "Open ticket", lambda: jump(lambda: self.open_ticket(ticket["id"])), "external-link-alt"
+                )
+            ]
+            if self.code_repo(ticket["project_id"]):
+                links.append(
+                    button("Open in Code", lambda: jump(lambda: self.open_code(ticket["id"])), "code")
+                )
+            d.layout.addWidget(row(*links, None))
         d.finish_form()
         if d.exec() == QDialog.Accepted:
             payload = {

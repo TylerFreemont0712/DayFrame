@@ -1,7 +1,7 @@
 """Focused settings pages with a shared category menu."""
 
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPixmap
+from PySide6.QtCore import Qt, QSize, QUrl
+from PySide6.QtGui import QColor, QDesktopServices, QFont, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout,
@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QMenu,
     QToolButton,
 )
+from ...code.github import API_URL, TOKEN_PAGE, GitHub, check_api_url
 from ...core import preferences as PREFS
 from ...core import timezones as TZ
 from ...core.palettes import (
@@ -32,6 +33,7 @@ from ...core.palettes import (
     schemes,
     theme_label,
 )
+from ..code_dialogs import confirm
 from ..color_picker import ColorSwatchButton, PalettePreview
 from ..theme import SUGGESTED_MONO_FONTS, SUGGESTED_UI_FONTS, apply_theme, icon, installed_families
 from ..widgets import label, button, column, row, panel, scroll, combo
@@ -110,7 +112,12 @@ class SettingsPanel(QWidget):
         ),
         ("theme", "Theme", "palette", "Choose the theme, colors, corners and fonts of DayFrame."),
         ("data", "Local data", "database", "Back up your workspace or load example projects."),
-        ("sync", "Sync", "sync-alt", "Connect this device to your private LAN hub and review conflicts."),
+        (
+            "sync",
+            "Sync",
+            "sync-alt",
+            "Connect this device to your private LAN hub, review conflicts and connect GitHub.",
+        ),
         ("account", "Account", "user", "Manage your local password and sign-in."),
     )
 
@@ -581,6 +588,7 @@ class SettingsPanel(QWidget):
             )
         )
         body.addWidget(card)
+        self.build_github(body, settings)
         conflicts = self.window.data["conflicts"]
         if conflicts:
             self.section_items["sync"].setText(f"Sync ({len(conflicts)})")
@@ -602,6 +610,103 @@ class SettingsPanel(QWidget):
                 )
                 layout.addWidget(row(details, review))
             body.addWidget(card)
+
+    def build_github(self, body, settings):
+        layout, form = self.form(body, "GitHub")
+        token = self.field(form, "Access token", "githubToken", QLineEdit())
+        token.setEchoMode(QLineEdit.Password)
+        token.setPlaceholderText("ghp_… or github_pat_…")
+        api = self.field(
+            form, "API address", "githubApiUrl", QLineEdit(settings.get("githubApiUrl") or API_URL)
+        )
+        api.setPlaceholderText(API_URL)
+        user = settings.get("githubUser", "")
+        connected = bool(user and self.window.github_token())
+        self.github_status = label(
+            "Connected as " + user if connected else "No GitHub token saved on this device.",
+            "section" if connected else "muted",
+        )
+        layout.addWidget(self.github_status)
+        layout.addWidget(
+            label(
+                "DayFrame uses the token for pull requests, issues, checks, releases and merges on the "
+                "Code page. A classic token needs the repo scope (add workflow to change Actions files); "
+                "a fine-grained token needs read and write access to Contents, Pull requests and Issues "
+                "on your repositories. The token is kept in the OS credential store, never in the "
+                "database, backups or sync. Git push and pull keep using git's own credentials.",
+                "muted",
+            )
+        )
+        remove = button("Remove token", self.remove_github_token, "trash-alt")
+        remove.setEnabled(bool(self.window.github_token()))
+        layout.addWidget(
+            row(
+                button("Save and test", self.save_github_token, "check", True),
+                remove,
+                button(
+                    "Create a token on GitHub",
+                    lambda: QDesktopServices.openUrl(QUrl(TOKEN_PAGE)),
+                    "external-link-alt",
+                ),
+                None,
+            )
+        )
+
+    def save_github_token(self):
+        token = self.fields["githubToken"].text().strip() or self.window.github_token()
+        try:
+            api = check_api_url(self.fields["githubApiUrl"].text().strip() or API_URL)
+        except ValueError as exc:
+            self.github_status.setText(str(exc))
+            return
+        if not token:
+            self.github_status.setText("Paste a token first.")
+            return
+        self.fields["githubToken"].clear()
+        self.github_status.setText("Checking the token with GitHub…")
+        window = self.window
+        store = self.token_store()
+
+        def work():
+            viewer = GitHub(token, api).viewer()
+            return {"viewer": viewer, "remembered": store.set(token)}
+
+        def done(result):
+            window.set_github_token(token)
+            viewer = result["viewer"]
+            window.execute(
+                "settings.save", {"githubUser": viewer["login"], "githubApiUrl": api}, refresh=False
+            )
+            where = (
+                "in the OS credential store"
+                if result["remembered"]
+                else "for this session only (no secure credential store)"
+            )
+            scopes = " · scopes: " + viewer["scopes"] if viewer.get("scopes") else ""
+            window.toast.setText("GitHub connected as " + viewer["login"] + ", token saved " + where)
+            if window.page == "Settings" and getattr(window, "settings_panel", None) is self:
+                self.github_status.setText("Connected as " + viewer["login"] + scopes)
+
+        window.run_async(work, done)
+
+    def token_store(self):
+        self.window.github_token()
+        return self.window.github_tokens
+
+    def remove_github_token(self):
+        if not confirm(
+            self.window,
+            "Remove GitHub token",
+            "Remove the GitHub token from this device? The Code page stops reaching GitHub until you add one again. "
+            "Revoke it on GitHub as well if you no longer use it.",
+            action="Remove",
+        ):
+            return
+        self.token_store().delete()
+        self.window.set_github_token(None)
+        self.window.execute("settings.save", {"githubUser": ""}, refresh=False)
+        self.github_status.setText("No GitHub token saved on this device.")
+        self.window.toast.setText("GitHub token removed")
 
     def connect_hub(self, publish):
         params = {

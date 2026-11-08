@@ -24,6 +24,7 @@ from .schedule import CalendarPage
 from .tracking import TimePage
 from .settings import SettingsPage
 from .capture import CaptureMixin
+from .code import CodePage
 
 
 class DayFrame(
@@ -36,6 +37,7 @@ class DayFrame(
     CalendarPage,
     TimePage,
     SettingsPage,
+    CodePage,
     CaptureMixin,
     QMainWindow,
 ):
@@ -136,11 +138,13 @@ class DayFrame(
         self.rebuilding = True
         self.clear_layout(self.work_layout)
         self.clear_layout(self.context_layout)
-        self.context.setVisible(self.page == "Projects" and not self.context_collapsed)
+        self.context.setVisible(self.page in ("Projects", "Code") and not self.context_collapsed)
         for name, w in self.nav.items():
             w.setChecked(name == self.page)
         if self.page == "Projects":
             self.projects_context()
+        elif self.page == "Code":
+            self.code_context()
         title = self.page
         if self.page == "Projects":
             title = self.project_name(self.project_id) if self.project_id else "All tickets"
@@ -150,7 +154,7 @@ class DayFrame(
             dt = datetime.strptime(D.day_key(self.data["settings"]["timezone"]), "%Y-%m-%d")
             self.page_header.layout().addWidget(label(dt.strftime("%A, %b %d").replace(" 0", " "), "muted"))
         self.page_header.layout().addStretch()
-        if self.page == "Projects" and self.context_collapsed:
+        if self.page in ("Projects", "Code") and self.context_collapsed:
             self.page_header.layout().addWidget(button("", self.toggle_context, "bars"))
         self.work_layout.addWidget(self.page_header)
         getattr(self, "show_" + self.page.lower())()

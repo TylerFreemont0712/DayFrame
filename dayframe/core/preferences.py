@@ -139,7 +139,13 @@ def validate(patch):
             raise ValueError("Invalid " + key + ".")
     if "githubApiUrl" in patch:
         url = patch["githubApiUrl"]
-        if not isinstance(url, str) or len(url) > 200 or (url and not url.startswith("https://")):
+        # Plain HTTP is accepted only on this machine (a local test server or proxy).
+        local = url.startswith(("http://127.0.0.1", "http://localhost")) if isinstance(url, str) else False
+        if (
+            not isinstance(url, str)
+            or len(url) > 200
+            or (url and not url.startswith("https://") and not local)
+        ):
             raise ValueError("The GitHub API address must start with https://.")
     if "githubUser" in patch and not (
         isinstance(patch["githubUser"], str) and len(patch["githubUser"]) <= 100

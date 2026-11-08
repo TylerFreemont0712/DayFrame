@@ -50,11 +50,11 @@ Desktop is the initial priority. Windows and Linux must be first-class targets. 
 
 ### NAV-01: primary navigation
 
-A compact icon rail contains Home, Projects, Calendar, Time, future Code, and Settings. Icons have labels for assistive technology, hover/focus tooltips, and a clear active state.
+A compact icon rail contains Home, Projects, Calendar, Time, Code, and Settings. Icons have labels for assistive technology, hover/focus tooltips, and a clear active state.
 
 ### NAV-02: contextual navigation
 
-Home has no secondary sidebar. Projects reveals a collapsible contextual pane with All tickets, Schedule, Time tracker, and the project list. Selecting an individual project exposes project-specific overview/map, milestones, and future code information.
+Home has no secondary sidebar. Projects reveals a collapsible contextual pane with All tickets, Schedule, Time tracker, and the project list. Selecting an individual project exposes project-specific overview/map, milestones, and its Code page. Code reveals the same kind of collapsible pane listing projects and their repositories.
 
 ### NAV-03: workspace scope
 
@@ -70,7 +70,7 @@ Remember selected view, project, panel sizes, density, and filters at appropriat
 
 ### NAV-06: settings sections
 
-Settings uses a keyboard-accessible category menu with View, Theme, Local data, Sync and Account. Show one scrollable section at a time, with bounded form widths. View contains density, text size and time zone; Theme contains the visual profile. Apply those sections independently and preserve entries when switching categories or applying appearance changes. Keep backup/examples, LAN connection credentials, automatic/manual sync, conflict review and account actions available in their corresponding sections. Remember the selected category while the app is open.
+Settings uses a keyboard-accessible category menu with View, Theme, Local data, Sync and Account. Show one scrollable section at a time, with bounded form widths. View contains density, text size and time zone; Theme contains the visual profile. Apply those sections independently and preserve entries when switching categories or applying appearance changes. Keep backup/examples, LAN connection credentials, automatic/manual sync, conflict review, the GitHub access token and account actions available in their corresponding sections. Remember the selected category while the app is open.
 
 ## 5. Today / Home
 
@@ -118,7 +118,7 @@ Click a ticket to open a side inspector without losing board/map context. Provid
 
 Title, description, status, priority, owning project, labels, component, deadline, estimated duration, tracked time, checklist, and dependencies. Use optional fields rather than forcing data entry for every ticket. Include creation/update metadata, archive state, and stable identity.
 
-Current inspector tabs are Details and Time. Notes is hidden; activity, files and Code remain planned. Child tickets have their own identity, workflow, and time entries. Checklist items do not.
+Current inspector tabs are Details and Time, with a Code button that opens the ticket's changesets. Notes is hidden; activity and files remain planned. Child tickets have their own identity, workflow, and time entries. Checklist items do not.
 
 ### TKT-05: board behavior
 
@@ -230,13 +230,29 @@ Personal application first. Team support later introduces memberships, owners/ad
 
 Plan stable workspace IDs and authorization boundaries now. Do not implement team access as a client-side filter over otherwise accessible personal records. A shared link is an explicit object/authorization relationship, not a hidden duplication of personal work.
 
-## 14. Future GitHub / Code area
+## 14. Code area
 
-Initial code integration is a repository overview: repository identity/URL, current or tracked branch, latest commit ID, release/tag when available, last update, checks, and linked issues/PRs.
+### CODE-01: repository per project
 
-Distinguish remote repository metadata from local checkout state. Working-tree changes, ahead/behind counts, and local branch require a selected accessible local checkout. Files and diffs follow later. Editing, terminal, pushing, merging, and shell execution are outside the initial overview.
+Each project chooses its version control: Git now, Subversion later. One active repository connection per project stores provider, name, remote URL, GitHub `owner/name` and default branch, and syncs between devices. Each device chooses its own checkout folder; paths never sync. Disconnecting archives the connection and keeps its changesets.
 
-Store provider secrets in credential storage and redact logs. Never show fictional mockup repository metadata as a connected real repository.
+### CODE-02: ticket changesets
+
+The Code page lists the project's tickets. Each ticket keeps changesets: named snapshots of working-tree changes (untracked files included) with branch, base commit, a short stat and the unified diff. The diff is stored in the database and synced, so every device can see and restore it. New changeset and Save to selected capture the working tree and keep working; Shelve saves into the applied changeset (or a new one) and cleans the checkout; Switch to restores a changeset into a clean checkout, shelving uncommitted work first and optionally switching to the changeset's branch. Restores apply the stored patch, falling back to a three-way apply. A local git stash entry is kept as a device backup and is used when a diff was too large to store (about 200 KB encoded). Deleting a changeset archives it with Undo.
+
+### CODE-03: git actions with failsafes
+
+Refresh, Fetch, Pull, Commit, Push and branch create/switch run in the background. Pull is fast-forward only; push never forces and refuses while the branch is behind. Commit, push, pull, branch switches, shelving and deletion show what will happen first, including the git command, the outgoing commits and a warning for the default branch. Commit can archive the applied changeset and continue to a confirmed push. Git uses its own credentials and never prompts on a terminal.
+
+### CODE-04: GitHub
+
+Settings > Sync holds a GitHub access token (tested against the API before saving) and an API address for GitHub Enterprise. The token lives only in the OS credential store, or in memory for the session; never in the database, backups, sync or logs. The Code page's GitHub tab shows the repository, checks on the current branch, the latest release, open pull requests and issues. It opens pull requests (prefilled from the selected ticket), creates issues, merges a selected pull request after confirmation, and creates DayFrame tickets from issues.
+
+### CODE-05: links from other views
+
+Kanban and Map cards of projects with a repository show a code badge with the ticket's changeset count; clicking it, or Open in Code in the card's context menu, opens the ticket on the Code page. The inspector has a Code button. Calendar and agenda work blocks open their schedule dialog with Open ticket and Open in Code.
+
+Subversion shelves, file trees and in-app editing remain outside the current Code area.
 
 ## 15. Data reliability, accessibility, and quality
 
@@ -282,7 +298,8 @@ Some foundation work for sync begins in milestone 2 even if the network feature 
 | A-14 | Two-device sync, when implemented, survives duplicate requests, offline edits, conflict, and deletion. |
 | A-15 | Another account/workspace cannot read unauthorized private records through the data/API layer. |
 | A-16 | Windows and the selected Linux target launch from their own native package and preserve user data. |
-| A-17 | Unimplemented Code/Team controls explain availability rather than pretending to complete actions. |
+| A-17 | Unimplemented Subversion/Team controls explain availability rather than pretending to complete actions. |
+| A-18 | A changeset shelved on one device restores the same files in another device's checkout; push and pull never rewrite remote history. |
 
 ## 18. Confirmed infrastructure decisions
 

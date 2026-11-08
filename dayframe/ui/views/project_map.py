@@ -28,6 +28,7 @@ from ..theme import CURRENT as C
 from ...core import domain as D
 from ..labels import paint_label_pills
 from ..dragdrop import TICKET_MIME
+from .kanban import paint_code_badge
 
 CARD_WIDTH = 180
 CARD_HEIGHT = 74
@@ -91,6 +92,11 @@ class SectionHeader(QGraphicsObject):
         )
 
     def mousePressEvent(self, event):
+        if self.code and event.button() == Qt.LeftButton and self.code_rect.contains(event.pos()):
+            ticket_id = self.ticket["id"]
+            QTimer.singleShot(0, lambda: self.view.window.open_code(ticket_id))
+            event.accept()
+            return
         self.origin = QPointF(self.pos())
         self.view.begin_hover("section", self.section["id"])
         super().mousePressEvent(event)
@@ -160,6 +166,8 @@ class TicketNode(QGraphicsObject):
         )
         self.setZValue(10)
         self.origin = QPointF()
+        self.code = bool(view.window.code_repo(ticket["project_id"]))
+        self.code_rect = QRectF(CARD_WIDTH - 52, 4, 32, 16)
 
     def boundingRect(self):
         return QRectF(0, 0, CARD_WIDTH, CARD_HEIGHT)
@@ -178,11 +186,14 @@ class TicketNode(QGraphicsObject):
         key = self.view.window.ticket_key(self.ticket)
         if self.placement and self.placement["manual"]:
             key += " · pin"
+        key_width = CARD_WIDTH - (66 if self.code else 34)
         p.drawText(
-            QRectF(10, 5, CARD_WIDTH - 34, 15),
+            QRectF(10, 5, key_width, 15),
             Qt.AlignVCenter,
-            QFontMetricsF(p.font()).elidedText(key, Qt.ElideRight, CARD_WIDTH - 34),
+            QFontMetricsF(p.font()).elidedText(key, Qt.ElideRight, key_width),
         )
+        if self.code:
+            paint_code_badge(p, self.code_rect, self.view.window.changeset_count(self.ticket["id"]))
         colors = {"urgent": C["danger"], "high": "#edba71", "medium": "#86c99a", "low": C["muted"]}
         p.setPen(Qt.NoPen)
         p.setBrush(QColor(colors.get(self.ticket["priority"], C["muted"])))
@@ -206,6 +217,11 @@ class TicketNode(QGraphicsObject):
             )
 
     def mousePressEvent(self, event):
+        if self.code and event.button() == Qt.LeftButton and self.code_rect.contains(event.pos()):
+            ticket_id = self.ticket["id"]
+            QTimer.singleShot(0, lambda: self.view.window.open_code(ticket_id))
+            event.accept()
+            return
         self.origin = QPointF(self.pos())
         self.view.begin_hover("ticket", self.ticket["id"])
         super().mousePressEvent(event)
@@ -233,6 +249,8 @@ class TicketNode(QGraphicsObject):
         w = self.view.window
         t = self.ticket
         menu.addAction("Open ticket", lambda: w.select_ticket(t["id"]))
+        if self.code:
+            menu.addAction("Open in Code", lambda: QTimer.singleShot(0, lambda: w.open_code(t["id"])))
         menu.addAction(
             "Start timer", lambda: w.execute("timer.action", {"action": "start", "ticket_id": t["id"]})
         )

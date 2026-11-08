@@ -16,6 +16,7 @@ Python/PySide6 Qt Widgets, SQLite and a private Python sync hub. Normal 1280×80
 - Native Windows frame theming, current DayFrame logo/icon and Windows/Linux launch/build templates.
 - SQLite backup/import, transactional sync outbox, private LAN hub, certificate pinning, independent field merges and conflict review.
 - Private GitHub repository, issue/PR templates, contribution guide and Windows/Linux CI.
+- Code page (unreleased): one Git repository per project with a device-local checkout folder; per-ticket changesets with stored, synced diffs; shelve, save and switch between changesets; fetch, fast-forward pull, commit and push with confirmations; branch create/switch; GitHub token in Settings > Sync with checks, release, pull requests and issues, new pull requests and issues, merges and tickets from issues; code badges and Open in Code links from Kanban, Map, inspector and calendar work blocks.
 
 The checkout retains current branding, native source and useful documentation. The current release and development environment stay local. Current packaged UI references live in docs/screenshots/current/.
 
@@ -33,7 +34,7 @@ The source is organized into layered subpackages with one module per window page
 
 ## Data and compatibility
 
-Schema 4 preserves saved records/passwords; databases on versions 1–3 migrate transactionally. Import changes only the copied database. Established storage, session, keyring and sync identifiers are documented in [BRANDING.md](../operations/BRANDING.md). Notes data is retained with its UI hidden.
+Schema 5 preserves saved records/passwords; databases on versions 1–4 migrate transactionally. Schema 5 (unreleased) adds repositories and changesets; update the hub before syncing them from a client. Import changes only the copied database. Established storage, session, keyring and sync identifiers are documented in [BRANDING.md](../operations/BRANDING.md). Notes data is retained with its UI hidden.
 
 ## Verification
 
@@ -47,9 +48,13 @@ Seven Settings tests cover category and keyboard navigation, independent saves, 
 
 The Windows installer is unsigned. Ubuntu CI does not verify the owner's exact Linux Mint installation. No hub/service/firewall or external integration is installed by source setup.
 
+## Code page verification
+
+Source tests cover the schema 5 migration, repository and changeset rules, the diff size limit, syncing a large Unicode diff between two devices through the hub, git status parsing, shelving with untracked files, restoring a stored diff in a second clone, snapshots, committing selected files, push and pull against a bare remote (including the refusal to push while behind), the GitHub client against a local fake API (errors never include the token), and the page itself: capture, shelve, switch with automatic shelving, commit with changeset archiving, confirmed push, recoverable delete, the GitHub settings and tab, and the links from Kanban, Map, inspector and calendar work blocks. Verified on Windows with git 2.45 from source only: not packaged, not checked on Linux Mint, and not exercised against the real GitHub API.
+
 ## Remaining
 
-Recurrence exceptions and weekly/monthly rules, reminders, goal/reference objects, attachments/activity, durable history/recovery, large-data paging, stronger timer leasing, device/recovery management, sync-aware historical restore, GitHub overview, Team and mobile. Conflict resolution currently chooses local or hub data. The full list of planned and proposed work is in [IDEAS.md](IDEAS.md).
+Recurrence exceptions and weekly/monthly rules, reminders, goal/reference objects, attachments/activity, durable history/recovery, large-data paging, stronger timer leasing, device/recovery management, sync-aware historical restore, Subversion shelves, Team and mobile. Conflict resolution currently chooses local or hub data. The full list of planned and proposed work is in [IDEAS.md](IDEAS.md).
 
 ## Desktop runtime
 
