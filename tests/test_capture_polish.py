@@ -2,7 +2,7 @@
 
 import unittest, uuid
 from pathlib import Path
-from PySide6.QtCore import Qt, QTimer, QPoint
+from PySide6.QtCore import QEvent, Qt, QTimer, QPoint
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QComboBox, QSpinBox, QTabWidget, QFrame
 from dayframe.data.store import Store
@@ -42,7 +42,12 @@ class CapturePolishTests(unittest.TestCase):
             d.deleteLater()
         if self.w:
             self.w.close()
+            self.w.deleteLater()
+            self.w = None
+        self.dialogs = []
         APP.processEvents()
+        # unittest keeps finished tests alive; flush deleteLater() so widgets do not pile up.
+        APP.sendPostedEvents(None, QEvent.Type.DeferredDelete)
         self.s.close()
 
     def dialog(self):

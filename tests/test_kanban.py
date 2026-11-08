@@ -5,7 +5,7 @@ import uuid
 from pathlib import Path
 from unittest.mock import patch
 
-from PySide6.QtCore import Qt, QMimeData, QPoint, QPointF, QRect
+from PySide6.QtCore import QEvent, Qt, QMimeData, QPoint, QPointF, QRect
 from PySide6.QtGui import (
     QDragEnterEvent,
     QDragMoveEvent,
@@ -38,10 +38,15 @@ class KanbanTests(unittest.TestCase):
         )
         self.window = None
 
+    # Delete windows rather than only closing them: unittest keeps finished tests (and their
+    # windows) alive, and without an event loop deleteLater() needs an explicit flush.
     def tearDown(self):
         if self.window:
             self.window.close()
-            APP.processEvents()
+            self.window.deleteLater()
+            self.window = None
+        APP.processEvents()
+        APP.sendPostedEvents(None, QEvent.Type.DeferredDelete)
         self.store.close()
 
     def ticket(self, **fields):

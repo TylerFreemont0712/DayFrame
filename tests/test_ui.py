@@ -3,7 +3,7 @@ import uuid
 import time
 from unittest.mock import patch
 from pathlib import Path
-from PySide6.QtCore import Qt, QMimeData, QPoint, QPointF, QTimer, QTime
+from PySide6.QtCore import QEvent, Qt, QMimeData, QPoint, QPointF, QTimer, QTime
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import (
@@ -37,9 +37,14 @@ class NativeUiTests(unittest.TestCase):
         self.w.show()
         APP.processEvents()
 
+    # Delete windows rather than only closing them: unittest keeps finished tests (and their
+    # windows) alive, and without an event loop deleteLater() needs an explicit flush.
     def tearDown(self):
         self.w.close()
+        self.w.deleteLater()
+        self.w = None
         APP.processEvents()
+        APP.sendPostedEvents(None, QEvent.Type.DeferredDelete)
         self.s.close()
 
     def click(self, text, parent=None):
@@ -205,6 +210,7 @@ class NativeUiTests(unittest.TestCase):
             QTest.qWait(20)
         self.assertIsNotNone(self.w.data)
         self.w.close()
+        self.w.deleteLater()
         self.s.close()
         self.s = Store(root)
         self.w = DayFrame(self.s)

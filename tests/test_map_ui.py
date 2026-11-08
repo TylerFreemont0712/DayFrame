@@ -92,8 +92,13 @@ class MapUiTests(unittest.TestCase):
         if self.view:
             self.view.close()
             self.view.deleteLater()
+            self.view = None
         self.window.close()
+        self.window.deleteLater()
+        self.window = None
         APP.processEvents()
+        # unittest keeps finished tests alive; flush deleteLater() so widgets do not pile up.
+        APP.sendPostedEvents(None, QEvent.Type.DeferredDelete)
 
     def show_map(self):
         self.view = ProjectMap(self.window, "p")

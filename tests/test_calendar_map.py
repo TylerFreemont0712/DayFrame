@@ -27,10 +27,15 @@ class CalendarAndMapTests(unittest.TestCase):
         self.p = self.s.command("project.save", {"name": "App"})
         self.w = None
 
+    # Delete windows rather than only closing them: unittest keeps finished tests (and their
+    # windows) alive, and without an event loop deleteLater() needs an explicit flush.
     def tearDown(self):
         if self.w:
             self.w.close()
-            APP.processEvents()
+            self.w.deleteLater()
+            self.w = None
+        APP.processEvents()
+        APP.sendPostedEvents(None, QEvent.Type.DeferredDelete)
         self.s.close()
 
     def ticket(self, **fields):

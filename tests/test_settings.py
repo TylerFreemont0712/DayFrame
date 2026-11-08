@@ -3,7 +3,7 @@ import uuid
 from pathlib import Path
 from unittest.mock import patch
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QEvent, Qt
 from PySide6.QtTest import QTest
 from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import QApplication, QPushButton, QCheckBox, QLineEdit
@@ -16,6 +16,14 @@ from dayframe.ui.theme import _fonts, apply_theme, CURRENT
 APP = QApplication.instance() or QApplication([])
 
 
+def dispose(window):
+    """Close and delete a window now, including widgets it replaced with deleteLater()."""
+    window.close()
+    window.deleteLater()
+    APP.processEvents()
+    APP.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+
+
 class SettingsTests(unittest.TestCase):
     def setUp(self):
         self.store = Store(Path("build/test-data") / uuid.uuid4().hex)
@@ -25,9 +33,11 @@ class SettingsTests(unittest.TestCase):
         self.window.navigate("Settings")
         APP.processEvents()
 
+    # Delete windows rather than only closing them: unittest keeps finished tests (and their
+    # windows) alive, and without an event loop deleteLater() needs an explicit flush.
     def tearDown(self):
-        self.window.close()
-        APP.processEvents()
+        dispose(self.window)
+        self.window = None
         self.store.close()
 
     @property
@@ -341,15 +351,13 @@ class SettingsTests(unittest.TestCase):
                 try:
                     store.register("upgrade", "tyler")
                     store.settings({"layoutRevision": 3, "textScale": saved})
-                    window = DayFrame(store)
-                    window.close()
+                    dispose(DayFrame(store))
                     self.assertEqual(
                         (store.settings()["textScale"], store.settings()["layoutRevision"]), (expected, 4)
                     )
                     # A size chosen after the upgrade is kept on later starts.
                     store.settings({"textScale": 100})
-                    window = DayFrame(store)
-                    window.close()
+                    dispose(DayFrame(store))
                     self.assertEqual(store.settings()["textScale"], 100)
                 finally:
                     APP.processEvents()
