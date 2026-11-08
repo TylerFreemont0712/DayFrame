@@ -363,12 +363,13 @@ class SettingsPanel(QWidget):
 
         picker = ColorSwatchButton("#000000", title, swatches)
         picker.colorPicked.connect(lambda color, r=role: self.set_custom_color(r, color))
-        value = label("", "muted")
         self.role_buttons[role] = picker
-        self.role_values[role] = value
         grid.addWidget(label(title), line, column_)
         grid.addWidget(picker, line, column_ + 1)
         if resettable:
+            # Only advanced rows show their value ("Automatic" or the chosen color).
+            value = label("", "muted")
+            self.role_values[role] = value
             grid.addWidget(value, line, column_ + 2)
             reset = button("", lambda checked=False, r=role: self.reset_custom_color(r), "undo")
             reset.setObjectName("iconOnly")
