@@ -1,6 +1,6 @@
 # Native application architecture
 
-DayFrame 0.5.2 uses **PySide6 / Qt Widgets**, SQLite and a Python LAN hub.
+DayFrame 0.6.0 uses **PySide6 / Qt Widgets**, SQLite and a Python LAN hub.
 
 ## Boundaries
 

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.0 — 2026-11-08
+
 - Add the Nord, Catppuccin and Editor themes. Editor offers Dracula, Tokyo Night, One Dark, Monokai, Gruvbox, Solarized, Rosé Pine and Everforest schemes; Nord, Catppuccin and Editor include light schemes.
 - Add a Custom color scheme to every theme, with a color wheel for the main colors, Advanced per-element colors (buttons, button text, headings, inputs, selection, warnings, clocks) and a live preview.
 - Choose interface, heading and number fonts from installed fonts, and a corner style.

@@ -1,4 +1,4 @@
-# Current implementation — DayFrame 0.5.2
+# Current implementation — DayFrame 0.6.0
 
 Python/PySide6 Qt Widgets, SQLite and a private Python sync hub. Normal 1280×800 resizable window, minimum 980×640.
 
@@ -19,21 +19,17 @@ Python/PySide6 Qt Widgets, SQLite and a private Python sync hub. Normal 1280×80
 
 The checkout retains current branding, native source and useful documentation. The current release and development environment stay local. Current packaged UI references live in docs/screenshots/current/.
 
-## Changes in 0.5.2
+## Changes in 0.6.0
 
-Settings now has View, Theme, Local data, Sync and Account categories, with one scrollable page visible at a time. View and Theme apply independently; field entries survive category switches and appearance changes. Backup, examples, LAN connection, automatic/manual sync, conflict review and account actions remain available. The selected category stays active during the session, and Sync displays unresolved conflict counts.
+Three themes join Graphite, Terminal, Paper and Midnight: Nord, Catppuccin and Editor. Editor collects popular editor palettes (Dracula, Tokyo Night, One Dark, Monokai, Gruvbox, Solarized, Rosé Pine, Everforest), and the new themes include light schemes. Every theme has a Custom scheme: a color wheel sets the nine main colors, Advanced colors override single elements, and a preview shows the result before applying.
 
-Buttons, including compact icon controls, show a visible state while pressed.
+Fonts (interface, headings, numbers) and corners can be overridden. 90% is the default text size, and profiles on the old 100% default move to it once. Text size ranges 75–140% with a separate heading size; density adds Spacious, and panel widths and window-size presets are in Settings > View.
 
-Project views now use Map, Kanban and Details; calendar deadlines open the ticket in Details.
+The time zone is picked from a searchable list sorted by UTC offset that shows each zone's current time, and up to three world clocks show in the bottom bar.
 
-The workflow now reads Not Started → In Progress → Processed → Review → Complete across ticket views and capture. Stored stage IDs remain unchanged; Home's In Progress group follows the renamed stage.
+The bottom bar's Ticket/Event selector, timer and totals, and the calendar's all-day chips, now size themselves from the font; a day with more than four all-day rows shows "+N more".
 
-Kanban shows an immediate destination ghost with no hold/confirmation. Leaving or cancelling removes it without saving; drop changes status with Undo. Same-column drops make no change. The Map still requires its 1.5-second hold and confirmation. Manual ordering within a Kanban lane remains planned.
-
-Kanban project prefixes have stable, theme-aware project colors, repeated in folder icons. The identifier suffix and card body stay neutral. Colors derive from project identity without a schema change.
-
-The Options button has more room for its ellipsis and dropdown arrow, and its menu icons sit farther from the left edge.
+The source is organized into layered subpackages with one module per window page, formatted and linted with Ruff, and the documentation is grouped by topic with a code map and writing rules. Stored data, runtime paths, keyring and sync identifiers are unchanged.
 
 ## Data and compatibility
 

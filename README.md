@@ -4,7 +4,7 @@
 
 A private desktop dashboard for planning your day, organizing project tickets and tracking time. **Python + PySide6 / Qt Widgets**, with SQLite and optional private LAN synchronization. Windows and Linux source.
 
-Version **0.5.2**. See [branding and storage identifiers](docs/operations/BRANDING.md) for the current assets and persistence conventions.
+Version **0.6.0**. See [branding and storage identifiers](docs/operations/BRANDING.md) for the current assets and persistence conventions.
 
 ## What works
 
