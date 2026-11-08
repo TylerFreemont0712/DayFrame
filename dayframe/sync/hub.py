@@ -202,6 +202,16 @@ CREATE TABLE IF NOT EXISTS changes(seq INTEGER PRIMARY KEY AUTOINCREMENT,user_id
                                 ):
                                     raise ValueError("Invalid dependency.")
                             D.assert_acyclic(tickets, op["entity_id"], data["dependencies"])
+                        if op["kind"] in ("repo", "changeset"):
+
+                            def find(kind, entity_id):
+                                row = self.db.execute(
+                                    "SELECT data FROM entities WHERE user_id=? AND kind=? AND id=?",
+                                    (uid, kind, entity_id),
+                                ).fetchone()
+                                return {"id": entity_id, **json.loads(row["data"])} if row else None
+
+                            D.check_code_relations(op["kind"], data, find)
                         if op["kind"] in ("placement", "entry", "timer", "block"):
                             target = self.db.execute(
                                 "SELECT data FROM entities WHERE user_id=? AND kind='ticket' AND id=?",

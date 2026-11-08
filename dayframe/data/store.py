@@ -16,6 +16,23 @@ from ..core import domain as D
 from ..core import preferences
 
 
+# Schema 5: version-control records. Kept here so the migration and schema.sql agree.
+REPOSITORIES_TABLE = (
+    "CREATE TABLE IF NOT EXISTS repositories(account_id TEXT NOT NULL,id TEXT NOT NULL,project_id TEXT NOT NULL,"
+    "provider TEXT NOT NULL,name TEXT NOT NULL,remote_url TEXT NOT NULL,github_repo TEXT NOT NULL,"
+    "default_branch TEXT NOT NULL,archived INTEGER NOT NULL,PRIMARY KEY(account_id,id),"
+    "FOREIGN KEY(account_id,project_id) REFERENCES projects(account_id,id))"
+)
+CHANGESETS_TABLE = (
+    "CREATE TABLE IF NOT EXISTS changesets(account_id TEXT NOT NULL,id TEXT NOT NULL,repo_id TEXT NOT NULL,"
+    "ticket_id TEXT NOT NULL,title TEXT NOT NULL,branch TEXT NOT NULL,base_commit TEXT NOT NULL,"
+    "diff TEXT NOT NULL,stat TEXT NOT NULL,updated_at REAL NOT NULL,archived INTEGER NOT NULL,"
+    "PRIMARY KEY(account_id,id),FOREIGN KEY(account_id,repo_id) REFERENCES repositories(account_id,id),"
+    "FOREIGN KEY(account_id,ticket_id) REFERENCES tickets(account_id,id))"
+)
+CHANGESETS_INDEX = "CREATE INDEX IF NOT EXISTS changesets_ticket ON changesets(account_id,ticket_id)"
+
+
 class Store:
     def __init__(self, root):
         self.root = Path(root)
@@ -32,7 +49,7 @@ class Store:
 
     def _migrate(self):
         version = self.db.execute("SELECT coalesce(max(version),0) FROM schema_migrations").fetchone()[0]
-        if version > 4:
+        if version > 5:
             raise ValueError("This database requires a newer DayFrame version.")
         if not version:
             self.db.executescript(files("dayframe.data").joinpath("schema.sql").read_text(encoding="utf-8"))
@@ -74,6 +91,12 @@ class Store:
                             + "'"
                         )
                 self.db.execute("INSERT INTO schema_migrations VALUES(4)")
+        if version < 5:
+            with self.atomic():
+                self.db.execute(REPOSITORIES_TABLE)
+                self.db.execute(CHANGESETS_TABLE)
+                self.db.execute(CHANGESETS_INDEX)
+                self.db.execute("INSERT INTO schema_migrations VALUES(5)")
 
     def remember_session(self):
         """Remember trusted local access without storing a password or syncing it.
@@ -260,14 +283,19 @@ class Store:
                 ]
             return result
 
-    def list(self, kind):
+    def list(self, kind, summary=False):
+        """All records of a kind. summary=True replaces large fields (diffs) with their size."""
         with self.lock:
             account = self.auth()
             table = D.DEFINITIONS[kind]["table"]
             ids = self.db.execute(
                 f"SELECT id FROM {table} WHERE account_id=? ORDER BY rowid", (account["id"],)
             ).fetchall()
-            return [self.read(kind, row[0]) for row in ids]
+            records = [self.read(kind, row[0]) for row in ids]
+            for key in D.DEFINITIONS[kind].get("heavy", []) if summary else ():
+                for record in records:
+                    record[key + "_size"] = len(record.pop(key))
+            return records
 
     def _save(self, kind, payload, queue=True):
         account = self.auth()
@@ -300,6 +328,18 @@ class Store:
                 section = self.read("section", next_record["section_id"])
                 if not section or section["project_id"] != ticket["project_id"]:
                     raise ValueError("Section belongs to another project.")
+        if kind in ("repo", "changeset"):
+            D.check_code_relations(kind, next_record, self.read)
+            # Only local edits are refused; a duplicate arriving through sync is kept and the
+            # Code page uses the first one.
+            if kind == "repo" and queue and not next_record["archived"]:
+                if any(
+                    r["id"] != record_id
+                    and r["project_id"] == next_record["project_id"]
+                    and not r["archived"]
+                    for r in self.list("repo")
+                ):
+                    raise ValueError("This project already has a repository.")
         if (
             kind in ("entry", "timer", "block")
             and next_record["ticket_id"]
@@ -364,7 +404,7 @@ class Store:
         with self.lock:
             a = self.auth()
             result = {"account": {k: a[k] for k in ("id", "username")}, "settings": self.settings()}
-            result.update({kind: self.list(kind) for kind in D.DEFINITIONS})
+            result.update({kind: self.list(kind, summary=True) for kind in D.DEFINITIONS})
             rows = self.db.execute("SELECT * FROM conflicts WHERE account_id=?", (a["id"],)).fetchall()
             result["conflicts"] = [
                 {**dict(r), "remote": json.loads(r["remote"]), "fields": json.loads(r["fields"])}
@@ -455,6 +495,8 @@ class Store:
                 "event.save": "event",
                 "note.save": "note",
                 "block.save": "block",
+                "repo.save": "repo",
+                "changeset.save": "changeset",
             }
             if method in direct:
                 return self._save(direct[method], p)
@@ -583,6 +625,7 @@ class Store:
                 2,
                 3,
                 4,
+                5,
             ):
                 raise ValueError("Unsupported database version.")
             if original.execute("PRAGMA quick_check").fetchone()[0] != "ok":

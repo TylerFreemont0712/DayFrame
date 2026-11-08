@@ -193,5 +193,54 @@
       "paused": 0,
       "device_id": ""
     }
+  },
+  "repo": {
+    "table": "repositories",
+    "fields": [
+      "project_id",
+      "provider",
+      "name",
+      "remote_url",
+      "github_repo",
+      "default_branch",
+      "archived"
+    ],
+    "defaults": {
+      "project_id": "",
+      "provider": "git",
+      "name": "",
+      "remote_url": "",
+      "github_repo": "",
+      "default_branch": "",
+      "archived": 0
+    }
+  },
+  "changeset": {
+    "table": "changesets",
+    "fields": [
+      "repo_id",
+      "ticket_id",
+      "title",
+      "branch",
+      "base_commit",
+      "diff",
+      "stat",
+      "updated_at",
+      "archived"
+    ],
+    "defaults": {
+      "repo_id": "",
+      "ticket_id": "",
+      "title": "",
+      "branch": "",
+      "base_commit": "",
+      "diff": "",
+      "stat": "",
+      "updated_at": 0,
+      "archived": 0
+    },
+    "heavy": [
+      "diff"
+    ]
   }
 }

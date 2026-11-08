@@ -31,11 +31,11 @@ Editor drafts block destructive navigation with Save/Discard/Cancel. Unrelated r
 
 ## Persistence and compatibility
 
-Each device has its own SQLite database, using foreign keys, WAL, schema version 4, normalized label/dependency tables, and atomic domain/outbox writes. Sequential migrations preserve saved records and password parameters while adding work blocks, event metadata and map relationships. Database import uses SQLite's backup API from a read-only source connection.
+Each device has its own SQLite database, using foreign keys, WAL, schema version 5, normalized label/dependency tables, and atomic domain/outbox writes. Sequential migrations preserve saved records and password parameters while adding work blocks, event metadata and map relationships. Database import uses SQLite's backup API from a read-only source connection.
 
 Native runtime paths are %LOCALAPPDATA%\TimeManager and $XDG_DATA_HOME/TimeManager. The source directory is never the default data directory. Window geometry and view settings are local preferences, not ticket entities.
 
-The hub synchronizes application-level changes between independent databases. The Python client and Python hub are integration-tested together. Schema 4 and sync protocol 1 are the current baseline.
+The hub synchronizes application-level changes between independent databases. The Python client and Python hub are integration-tested together. Schema 5 and sync protocol 1 are the current baseline. Schema 5 adds repository and changeset records; a hub must be updated before clients that use the Code page sync them.
 
 ## Packaging and icons
 

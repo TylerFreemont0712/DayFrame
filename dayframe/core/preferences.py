@@ -47,7 +47,19 @@ DEFAULTS = {
     "customColors": {},
 }
 # Saved alongside the defaults but without a default value.
-OPTIONAL = {"syncUrl", "syncEnabled", "syncFingerprint", "windowGeometry", "windowState"}
+OPTIONAL = {
+    "syncUrl",
+    "syncEnabled",
+    "syncFingerprint",
+    "windowGeometry",
+    "windowState",
+    # Code area: checkout folders and the applied changeset are per device, never synced.
+    "repoPaths",
+    "activeChangesets",
+    "githubApiUrl",
+    "githubUser",
+}
+MAX_PATH = 1000
 LAYOUT_REVISION = 4
 NUMBER_RANGES = {
     "textScale": TEXT_SCALE,
@@ -122,3 +134,25 @@ def validate(patch):
             raise ValueError("Invalid world clocks.")
     if "syncEnabled" in patch and not isinstance(patch["syncEnabled"], bool):
         raise ValueError("Invalid sync switch.")
+    for key in ("repoPaths", "activeChangesets"):
+        if key in patch and not _string_map(patch[key]):
+            raise ValueError("Invalid " + key + ".")
+    if "githubApiUrl" in patch:
+        url = patch["githubApiUrl"]
+        if not isinstance(url, str) or len(url) > 200 or (url and not url.startswith("https://")):
+            raise ValueError("The GitHub API address must start with https://.")
+    if "githubUser" in patch and not (
+        isinstance(patch["githubUser"], str) and len(patch["githubUser"]) <= 100
+    ):
+        raise ValueError("Invalid GitHub user.")
+
+
+def _string_map(value):
+    return (
+        isinstance(value, dict)
+        and len(value) <= 500
+        and all(
+            isinstance(k, str) and isinstance(v, str) and len(k) <= 120 and len(v) <= MAX_PATH
+            for k, v in value.items()
+        )
+    )

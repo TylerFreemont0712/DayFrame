@@ -1,6 +1,6 @@
 # Persistent Data Model
 
-Status: complete-product logical model. The current normalized foundation schema is implemented in dayframe/data/schema.sql and dayframe/data/store.py, migration version 4. Entity families listed here include future features; [CURRENT_STATUS.md](../status/CURRENT_STATUS.md) identifies what is delivered. The hub stores validated canonical entity revisions separately from client projections.
+Status: complete-product logical model. The current normalized foundation schema is implemented in dayframe/data/schema.sql and dayframe/data/store.py, migration version 5. Entity families listed here include future features; [CURRENT_STATUS.md](../status/CURRENT_STATUS.md) identifies what is delivered. The hub stores validated canonical entity revisions separately from client projections.
 
 ## Global conventions
 
@@ -39,7 +39,8 @@ Store instants in UTC with timezone context where relevant; date-only fields rem
 | TimerSession / Segment | Active/pause state, association, persisted segment timestamps |
 | Note | Workspace, optional project/ticket link, title, Markdown body |
 | Attachment | Workspace/object association, content hash, size, media type, managed file reference |
-| RepoConnection | Project, provider/repo identity, credential reference; checkout paths device-local |
+| RepoConnection | Project, provider/repo identity, credential reference; checkout paths device-local (implemented as `repo`) |
+| Changeset | Repository, ticket, branch, base commit, stored diff (implemented as `changeset`) |
 | RepoSnapshot | Branch, commit, release/check summary, observation time, remote/local source |
 | Preference | Scope account/workspace/device, key, typed value |
 | Activity | Actor/device, affected object, action, redacted field changes |
@@ -86,3 +87,12 @@ work_blocks stores account_id, id, ticket_id, date, start_time and end_time. Tic
 
 Events add end_date, description, location, color, recurrence and archived. Empty end_date means start date; all-day end dates are inclusive. Recurrence currently accepts empty/yearly.
 Tickets add parent_id; sections add parent_id and JSON predecessor_ids. Parent/dependency/sequence cycles and scope are checked locally/on hub. Classification and placement commit atomically. Notes remain stored with no current UI. Versions 1–3 migrate to 4. Roadmap activity/revision/attachment fields are not all implemented.
+
+
+## Implemented code records in schema 5
+
+`repositories` (kind `repo`) holds one active version-control connection per project: provider (`git`, or `svn` reserved for later), display name, remote URL, GitHub `owner/name` and default branch, with an archive flag. Creating a second active repository for a project is refused locally; a duplicate that arrives through sync is kept and the Code page uses the first.
+
+`changesets` (kind `changeset`) holds a ticket's saved working-tree changes: repository, ticket (from the same project), title, branch, base commit, the unified diff, a short stat line, `updated_at` and an archive flag. The diff is the shared, synchronized copy; a local git stash entry is only a device backup. Its JSON-encoded size is limited to 200 KB so a sync operation carrying the new diff and its merge base stays under the hub's 500 KB limit. Snapshots replace the diff with `diff_size`; views read the full record when they show it.
+
+Checkout folders (`repoPaths`), the changeset applied on this device (`activeChangesets`), the GitHub API address and the signed-in GitHub user are device preferences and never sync. The GitHub token lives only in the OS credential store under `DayFrame.github` (or in memory for the session). Version 4 profiles migrate to 5 by adding the two tables.
