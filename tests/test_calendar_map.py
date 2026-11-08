@@ -237,7 +237,9 @@ class CalendarAndMapTests(unittest.TestCase):
         for theme in ("graphite", "terminal", "light", "studio"):
             self.s.settings({"theme": theme})
             apply_theme(self.s.settings())
-            faces.add(APP.font().family())
+            # Compare the fonts actually used. A machine without a theme's preferred
+            # body font can share it with another theme, but headings still differ.
+            faces.add((CURRENT["font"], CURRENT["heading"]))
             radii.add(CURRENT["radius"])
             w.build_shell()
             w.navigate("Calendar")

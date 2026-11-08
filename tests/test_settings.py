@@ -5,12 +5,13 @@ from unittest.mock import patch
 
 from PySide6.QtCore import Qt
 from PySide6.QtTest import QTest
+from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import QApplication, QPushButton, QCheckBox, QLineEdit
 
 from dayframe.data.store import Store
 from dayframe.ui.window import DayFrame
-from dayframe.core.palettes import THEME_ORDER, THEMES, schemes
-from dayframe.ui.theme import apply_theme, CURRENT
+from dayframe.core.palettes import THEME_ORDER, THEMES, palette, schemes
+from dayframe.ui.theme import _fonts, apply_theme, CURRENT
 
 APP = QApplication.instance() or QApplication([])
 
@@ -388,12 +389,17 @@ class SettingsTests(unittest.TestCase):
         self.section("theme")
         fields = self.settings.fields
         fields["cornerRadius"].setCurrentIndex(fields["cornerRadius"].findData(14))
-        fields["fontFamily"].addItem("Verdana", "Verdana")
-        fields["fontFamily"].setCurrentIndex(fields["fontFamily"].findData("Verdana"))
+        # Use an installed font other than the current one. Qt's offscreen platform on
+        # Windows lists no fonts, and then any name is used as given.
+        installed = [name for name in QFontDatabase.families() if name != CURRENT["font"]]
+        font = installed[0] if installed else "Verdana"
+        if fields["fontFamily"].findData(font) < 0:
+            fields["fontFamily"].addItem(font, font)
+        fields["fontFamily"].setCurrentIndex(fields["fontFamily"].findData(font))
         self.click("Apply theme")
         saved = self.store.settings()
-        self.assertEqual((saved["cornerRadius"], saved["fontFamily"]), (14, "Verdana"))
-        self.assertEqual((CURRENT["radius"], CURRENT["font"]), (14, "Verdana"))
+        self.assertEqual((saved["cornerRadius"], saved["fontFamily"]), (14, font))
+        self.assertEqual((CURRENT["radius"], CURRENT["font"]), (14, font))
         self.section("view")
         fields = self.settings.fields
         fields["textScale"].setValue(120)
@@ -408,7 +414,7 @@ class SettingsTests(unittest.TestCase):
         )
         self.assertAlmostEqual(APP.font().pointSizeF(), 8.5 * 1.2, places=1)
         self.assertIn("font-size:%dpx" % round(20 * 1.2 * 1.5), APP.styleSheet())
-        self.assertEqual(self.settings.fields["fontFamily"].currentData(), "Verdana")
+        self.assertEqual(self.settings.fields["fontFamily"].currentData(), font)
 
     def test_time_zone_picker_lists_offsets_and_world_clocks_show_in_the_bar(self):
         zone = self.settings.fields["timezone"]
@@ -436,6 +442,58 @@ class SettingsTests(unittest.TestCase):
         self.window.tick()
         self.assertEqual(self.store.settings()["worldClocks"], [])
         self.assertFalse(self.window.world_clock.isVisible())
+
+
+LINUX_FONTS = ("DejaVu Sans", "DejaVu Sans Mono", "DejaVu Serif")
+WINDOWS_FONTS = ("Segoe UI", "Consolas", "Trebuchet MS", "Georgia", "Bahnschrift", "Verdana", "Cascadia Code")
+
+
+class ThemeFontFallbackTests(unittest.TestCase):
+    """Font choice follows what is installed, so it is pinned here with fixed font sets."""
+
+    def fonts(self, platform, installed, **settings):
+        families = {name.casefold(): name for name in installed}
+        with (
+            patch("dayframe.ui.theme.sys.platform", platform),
+            patch("dayframe.ui.theme.installed_families", return_value=families),
+        ):
+            result = {}
+            for theme in ("graphite", "terminal", "light", "studio", "nord", "catppuccin", "editor"):
+                colors = palette(theme)
+                result[theme] = _fonts(colors, settings)
+            return result
+
+    def test_linux_with_only_dejavu_keeps_mono_and_serif_themes_distinct(self):
+        fonts = self.fonts("linux", LINUX_FONTS)
+        self.assertEqual(fonts["graphite"][:2], ("DejaVu Sans", "DejaVu Sans"))
+        self.assertEqual(fonts["terminal"][:2], ("DejaVu Sans Mono", "DejaVu Sans Mono"))
+        self.assertEqual(fonts["light"][:2], ("DejaVu Sans", "DejaVu Serif"))
+        self.assertEqual(fonts["editor"][1], "DejaVu Sans Mono")
+        self.assertTrue(all(mono == "DejaVu Sans Mono" for _, _, mono in fonts.values()))
+        self.assertGreaterEqual(len({pair[:2] for pair in fonts.values()}), 3)
+
+    def test_windows_uses_each_themes_own_fonts_and_falls_back_from_missing_ones(self):
+        fonts = self.fonts("win32", WINDOWS_FONTS)
+        self.assertEqual(fonts["graphite"][0], "Segoe UI")
+        self.assertEqual(fonts["terminal"][:2], ("Consolas", "Consolas"))
+        self.assertEqual(fonts["light"][:2], ("Trebuchet MS", "Georgia"))
+        self.assertEqual(fonts["studio"][0], "Bahnschrift")
+        # Segoe UI Variable is missing here, so Nord and Catppuccin fall back to Segoe UI.
+        self.assertEqual(fonts["nord"][0], "Segoe UI")
+        self.assertEqual(fonts["editor"][1], "Cascadia Code")
+        # Graphite, Nord and Catppuccin then share Segoe UI; they differ in shape and color.
+        self.assertEqual(len({pair[:2] for pair in fonts.values()}), 5)
+
+    def test_chosen_fonts_win_when_installed_and_fall_back_when_missing(self):
+        chosen = self.fonts("win32", WINDOWS_FONTS, fontFamily="Verdana", monoFamily="Cascadia Code")
+        self.assertEqual((chosen["graphite"][0], chosen["graphite"][2]), ("Verdana", "Cascadia Code"))
+        missing = self.fonts("linux", LINUX_FONTS, fontFamily="Verdana")
+        self.assertEqual(missing["graphite"][0], "DejaVu Sans")
+
+    def test_without_any_listed_fonts_the_preferred_name_is_kept(self):
+        fonts = self.fonts("win32", ())
+        self.assertEqual(fonts["graphite"][0], "Segoe UI")
+        self.assertEqual(fonts["nord"][0], "Segoe UI Variable Text")
 
 
 if __name__ == "__main__":
