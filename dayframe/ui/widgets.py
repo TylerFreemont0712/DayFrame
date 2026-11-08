@@ -16,6 +16,8 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QMessageBox,
     QLineEdit,
+    QStyle,
+    QStyleOptionComboBox,
 )
 from .theme import icon
 
@@ -130,6 +132,35 @@ def combo(items, current=None):
     if current is not None:
         w.setCurrentIndex(max(0, w.findData(current)))
     return w
+
+
+def fit_text_width(widget, sample, extra=0, fixed=True):
+    """Size a label to its style-sheet font so sample text never clips at any text scale."""
+    widget.ensurePolished()
+    width = widget.fontMetrics().horizontalAdvance(sample) + extra
+    if fixed:
+        widget.setFixedWidth(width)
+    else:
+        widget.setMinimumWidth(width)
+    return width
+
+
+def fit_combo_width(box, extra=6):
+    """Fixed width that shows the longest item beside the drop-down arrow.
+
+    The space around the text (padding, borders and the arrow) is measured from the
+    style, so the result stays right for every theme, density and text size.
+    """
+    box.ensurePolished()
+    metrics = box.fontMetrics()
+    longest = max((metrics.horizontalAdvance(box.itemText(i)) for i in range(box.count())), default=0)
+    option = QStyleOptionComboBox()
+    box.initStyleOption(option)
+    option.rect = QRect(0, 0, 400, max(20, box.sizeHint().height()))
+    field = box.style().subControlRect(QStyle.CC_ComboBox, option, QStyle.SC_ComboBoxEditField, box)
+    width = longest + (400 - field.width()) + extra
+    box.setFixedWidth(width)
+    return width
 
 
 def error(parent, exc):

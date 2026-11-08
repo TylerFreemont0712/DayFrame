@@ -27,7 +27,7 @@ class Agenda(QWidget):
         items = [x for x in P.day_items(self.window.data, self.day) if not x["all_day"]]
         first = min([9] + [x["start_min"] // 60 for x in items])
         last = max([19] + [(x["end_min"] + 59) // 60 for x in items])
-        left, top = 43, 12
+        left, top = max(43, p.fontMetrics().horizontalAdvance("00:00") + 10), 12
         span = max(300, self.height() - 34)
         hour = span / max(1, last - first)
         width = self.width() - left - 5
@@ -53,9 +53,11 @@ class Agenda(QWidget):
             p.drawLine(left, int(y), self.width() - 3, int(y))
             p.setBrush(QColor(C["accent"]))
             p.setPen(Qt.NoPen)
-            p.drawRoundedRect(QRectF(0, y - 9, 39, 18), 3, 3)
+            badge_height = p.fontMetrics().height() + 4
+            badge = QRectF(0, y - badge_height / 2, left - 4, badge_height)
+            p.drawRoundedRect(badge, 3, 3)
             p.setPen(QColor(C["bg"]))
-            p.drawText(QRectF(0, y - 9, 39, 18), Qt.AlignCenter, now.strftime("%H:%M"))
+            p.drawText(badge, Qt.AlignCenter, now.strftime("%H:%M"))
         p.end()
 
     def mouseReleaseEvent(self, event):

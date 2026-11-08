@@ -250,10 +250,35 @@ class CalendarAndMapTests(unittest.TestCase):
             self.assertLessEqual(mini.grid.geometry().bottom(), mini.height())
             self.assertGreaterEqual(week.width(), 490)
             self.assertEqual(week.start.weekday(), 6)
-            self.assertLessEqual(week.header.band, 96)
-            self.assertGreaterEqual(week.header.band, 48)
+            header = week.header
+            self.assertGreaterEqual(header.row_height, header.fontMetrics().height() + 4)
+            self.assertLessEqual(header.band, header.MAX_LANES * header.row_height + 8)
         self.assertGreaterEqual(len(faces), 3)
         self.assertEqual(len(radii), 4)
+
+    def test_all_day_chips_fit_their_row_and_overflow_shows_more(self):
+        day = D.day_key(self.s.settings()["timezone"])
+        for n in range(6):
+            self.event(title="All day %d" % n, date=day, start_time="", end_time="")
+        w = self.window()
+        for scale in (90, 100, 125):
+            self.s.settings({"textScale": scale})
+            apply_theme(self.s.settings())
+            w.build_shell()
+            w.navigate("Calendar")
+            QTest.qWait(50)
+            header = w.week_calendar.header
+            header.repaint()
+            line = header.fontMetrics().height()
+            self.assertEqual(header.lanes, 6)
+            self.assertEqual(len(header.regions), header.MAX_LANES - 1)
+            for rect, _ in header.regions:
+                self.assertGreaterEqual(rect.height(), line + 2)
+                self.assertLessEqual(rect.bottom(), header.height())
+            self.assertEqual(len(header.more_regions), 1)
+            rect, _, hidden = header.more_regions[0]
+            self.assertEqual(len(hidden), 3)
+            self.assertLessEqual(rect.bottom(), header.height())
 
     def test_map_hold_preview_cancel_confirm_and_undo(self):
         a = self.s.command(

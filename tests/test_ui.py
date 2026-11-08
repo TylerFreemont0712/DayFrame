@@ -15,13 +15,15 @@ from PySide6.QtWidgets import (
     QTimeEdit,
     QTabBar,
     QTableWidget,
+    QStyle,
+    QStyleOptionComboBox,
 )
 from PySide6.QtWidgets import QMessageBox
 from dayframe.data.store import Store
 from dayframe.core import domain as D
 from dayframe.ui.window import DayFrame
 from dayframe.ui.views.kanban import TicketList
-from dayframe.ui.theme import icon
+from dayframe.ui.theme import apply_theme, icon
 
 APP = QApplication.instance() or QApplication([])
 
@@ -168,6 +170,25 @@ class NativeUiTests(unittest.TestCase):
         self.assertLessEqual(self.w.width(), 980)
         self.assertTrue(self.w.inspector.isVisible())
         self.assertTrue(self.w._today_narrow)
+
+    def test_footer_capture_type_fits_its_longest_choice_at_every_text_size(self):
+        w = self.w
+        for scale in (90, 100, 125):
+            self.s.settings({"textScale": scale})
+            apply_theme(self.s.settings())
+            w.build_shell()
+            APP.processEvents()
+            box = w.quick_type
+            metrics = box.fontMetrics()
+            longest = max(metrics.horizontalAdvance(box.itemText(i)) for i in range(box.count()))
+            option = QStyleOptionComboBox()
+            box.initStyleOption(option)
+            field = box.style().subControlRect(QStyle.CC_ComboBox, option, QStyle.SC_ComboBoxEditField, box)
+            # The area where the current choice is drawn must hold the longest choice.
+            self.assertGreaterEqual(field.width(), longest)
+            self.assertGreaterEqual(
+                w.timer_clock.width(), w.timer_clock.fontMetrics().horizontalAdvance("88:88:88")
+            )
 
     def test_options_logout_then_login_and_reopen(self):
         root = self.s.root

@@ -4,7 +4,7 @@ from __future__ import annotations
 import calendar
 from datetime import date, datetime, timedelta
 from PySide6.QtCore import Qt, QRectF, QPointF, QSize, QTimer, Signal
-from PySide6.QtGui import QColor, QPainter, QPen, QFont
+from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -42,15 +42,25 @@ def paint_item(p, rect, item, compact=False):
     font = QFont(p.font())
     font.setBold(True)
     p.setFont(font)
+    line = p.fontMetrics().height()
     title = p.fontMetrics().elidedText(item["title"], Qt.ElideRight, max(1, int(rect.width() - 13)))
+    if compact:
+        # One-line chips (all-day row, short events) center their title vertically.
+        p.drawText(rect.adjusted(8, 0, -4, 0), Qt.AlignVCenter | Qt.AlignLeft, title)
+        p.restore()
+        return
     p.drawText(rect.adjusted(8, 3, -4, -2), Qt.AlignTop, title)
-    if not compact and rect.height() >= 37:
+    if rect.height() >= 3 + 2 * line + 3:
         font.setBold(False)
         p.setFont(font)
         p.setPen(QColor(C["muted"]))
-        p.drawText(rect.adjusted(8, 19, -4, -2), Qt.AlignTop, item["start_time"] + "–" + item["end_time"])
-        if item.get("location") and rect.height() > 62:
-            p.drawText(rect.adjusted(8, 35, -4, -2), Qt.AlignTop | Qt.TextWordWrap, item["location"])
+        p.drawText(
+            rect.adjusted(8, 3 + line, -4, -2), Qt.AlignTop, item["start_time"] + "–" + item["end_time"]
+        )
+        if item.get("location") and rect.height() > 3 + 3 * line + 8:
+            p.drawText(
+                rect.adjusted(8, 3 + 2 * line, -4, -2), Qt.AlignTop | Qt.TextWordWrap, item["location"]
+            )
     p.restore()
 
 
@@ -317,6 +327,7 @@ class WeekHeader(QWidget):
         super().__init__()
         self.week = week
         self.regions = []
+        self.more_regions = []
         self.setMouseTracking(True)
         self.pending_day = week.day
         self.selection_timer = QTimer(self)
@@ -336,13 +347,38 @@ class WeekHeader(QWidget):
             else:
                 ends[lane] = end
             self.rows.append((item, start, end, lane))
-        self.band = max(48, min(96, len(ends) * 18 + 10))
-        self.setFixedHeight(46 + self.band)
+        self.lanes = len(ends)
+        # Every size follows the font, so chips and day numbers fit at any text scale.
+        metrics = self.fontMetrics()
+        self.row_height = metrics.height() + 6
+        self.name_height = metrics.height() + 4
+        number = self.number_font()
+        self.number_height = QFontMetrics(number).height() + 2
+        self.top = 3 + self.name_height + self.number_height + 2
+        # Up to MAX_LANES rows are drawn; with more, the last row says "+N more" for each day.
+        self.visible_lanes = self.lanes if self.lanes <= self.MAX_LANES else self.MAX_LANES - 1
+        shown = max(1, min(self.lanes, self.MAX_LANES))
+        self.band = shown * self.row_height + 8
+        self.hidden = {}
+        for item, start, end, lane in self.rows:
+            if lane >= self.visible_lanes:
+                for n in range(start, end + 1):
+                    self.hidden.setdefault(n, []).append(item)
+        self.setFixedHeight(self.top + self.band)
+
+    MAX_LANES = 4
+
+    def number_font(self):
+        font = QFont(self.font())
+        font.setPointSizeF(font.pointSizeF() + 2)
+        font.setBold(True)
+        return font
 
     def paintEvent(self, event):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         self.regions = []
+        self.more_regions = []
         left = self.week.gutter
         width = (self.width() - left) / 7
         today = D.day_key(self.week.window.data["settings"]["timezone"])
@@ -355,28 +391,54 @@ class WeekHeader(QWidget):
                 fill.setAlpha(12)
                 p.fillRect(QRectF(x, 0, width, self.height()), fill)
             p.setPen(QColor(C["muted"]))
-            p.drawText(QRectF(x, 3, width, 16), Qt.AlignCenter, day.strftime("%a").upper())
-            font = QFont(self.font())
-            font.setPointSizeF(font.pointSizeF() + 2)
-            font.setBold(True)
-            p.setFont(font)
+            p.drawText(QRectF(x, 3, width, self.name_height), Qt.AlignCenter, day.strftime("%a").upper())
+            p.setFont(self.number_font())
             p.setPen(QColor(C["accent"] if day.isoformat() == today else C["text"]))
-            p.drawText(QRectF(x, 19, width, 23), Qt.AlignCenter, str(day.day))
+            p.drawText(
+                QRectF(x, 3 + self.name_height, width, self.number_height), Qt.AlignCenter, str(day.day)
+            )
             p.setFont(self.font())
             p.setPen(QPen(QColor(C["line"]), 0.6))
             p.drawLine(int(x), 0, int(x), self.height())
         p.setPen(QColor(C["muted"]))
-        p.drawText(QRectF(0, 48, left - 4, 35), Qt.AlignRight | Qt.AlignTop, "all day")
-        max_rows = max(1, int((self.band - 4) / 18))
+        p.drawText(
+            QRectF(0, self.top + 2, left - 4, self.row_height), Qt.AlignRight | Qt.AlignVCenter, "all day"
+        )
+        chip = self.row_height - 3
         for item, start, end, lane in self.rows:
-            if lane >= max_rows:
+            if lane >= self.visible_lanes:
                 continue
-            rect = QRectF(left + start * width + 3, 47 + lane * 18, (end - start + 1) * width - 6, 16)
+            rect = QRectF(
+                left + start * width + 3,
+                self.top + 2 + lane * self.row_height,
+                (end - start + 1) * width - 6,
+                chip,
+            )
             paint_item(p, rect, item, True)
             self.regions.append((rect, item))
+        for n, items in self.hidden.items():
+            rect = QRectF(
+                left + n * width + 3, self.top + 2 + self.visible_lanes * self.row_height, width - 6, chip
+            )
+            p.setPen(QColor(C["accent"]))
+            p.drawText(rect.adjusted(6, 0, -2, 0), Qt.AlignVCenter | Qt.AlignLeft, "+%d more" % len(items))
+            self.more_regions.append((rect, n, items))
         p.setPen(QPen(QColor(C["line"]), 1))
         p.drawLine(0, self.height() - 1, self.width(), self.height() - 1)
         p.end()
+
+    def mouseMoveEvent(self, event):
+        hidden = next(
+            (items for rect, _, items in self.more_regions if rect.contains(event.position())), None
+        )
+        item = next((x for rect, x in self.regions if rect.contains(event.position())), None)
+        self.setCursor(Qt.PointingHandCursor if item or hidden else Qt.ArrowCursor)
+        if hidden:
+            self.setToolTip("\n".join(x["title"] + " · " + readable(x) for x in hidden))
+        elif item:
+            self.setToolTip(item["title"] + "\n" + readable(item))
+        else:
+            self.setToolTip("")
 
     def mousePressEvent(self, event):
         for rect, item in reversed(self.regions):
@@ -450,7 +512,7 @@ class WeekCanvas(QWidget):
         for hour in range(24):
             y = hour * self.hour_height
             p.setPen(QColor(C["muted"]))
-            p.drawText(QRectF(0, y + 3, gutter - 7, 16), Qt.AlignRight, f"{hour:02}:00")
+            p.drawText(QRectF(0, y + 3, gutter - 7, p.fontMetrics().height()), Qt.AlignRight, f"{hour:02}:00")
             p.setPen(QPen(QColor(C["line"]), 0.7))
             p.drawLine(gutter, y, self.width(), y)
             p.setPen(QPen(QColor(C["line"]), 0.35, Qt.DotLine))
@@ -586,7 +648,10 @@ class WeekCalendar(QWidget):
         self.window = window
         self.day = day
         self.start = P.sunday(day)
-        self.gutter = 43
+        metrics = self.fontMetrics()
+        self.gutter = max(
+            43, metrics.horizontalAdvance("all day") + 12, metrics.horizontalAdvance("00:00") + 16
+        )
         self.items = P.items_between(window.data, self.start, self.start + timedelta(days=6))
         l = QVBoxLayout(self)
         l.setContentsMargins(0, 0, 0, 0)

@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QFrame, QHBoxLayout, QSizePolicy, QSplitter, QTabWidget
 from ...core import domain as D, planning as P
 from ..views.agenda import Agenda
-from ..widgets import button, column, ElidingLabel, label, panel, row, scroll
+from ..widgets import button, column, ElidingLabel, fit_text_width, label, panel, row, scroll
 
 
 class TodayPage:
@@ -50,7 +50,7 @@ class TodayPage:
         meta.setFixedWidth(max(66, meta.fontMetrics().horizontalAdvance(meta.text()) + 4))
         l.addWidget(meta)
         estimate = label(D.short_time(t["estimate_min"] * 60000), "muted")
-        estimate.setFixedWidth(31)
+        fit_text_width(estimate, "10h 0m", 2)
         l.addWidget(estimate)
         play = button(
             "", lambda: self.execute("timer.action", {"action": "start", "ticket_id": t["id"]}), "play"
@@ -113,7 +113,7 @@ class TodayPage:
         for item in majors:
             days = max(0, D.days_until(item["date"], today))
             count = label("Today" if not days else str(days) + " days", "badge")
-            count.setFixedWidth(70)
+            fit_text_width(count, "365 days", 12)
             event_row = row(self.event_button(item), count)
             event_row.layout().setStretch(0, 1)
             tl.addWidget(event_row)

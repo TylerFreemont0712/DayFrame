@@ -8,7 +8,7 @@ from ...core import domain as D
 from ..views.agenda import Agenda
 from ..views.calendar import WeekCalendar
 from ..theme import app_icon, icon
-from ..widgets import button, column, combo, label
+from ..widgets import button, column, combo, fit_combo_width, fit_text_width, label
 
 
 class ShellMixin:
@@ -123,7 +123,7 @@ class ShellMixin:
         self.timer_title = label("No timer", "section")
         self.timer_title.setMaximumWidth(120)
         self.timer_clock = label("00:00:00", "clock")
-        self.timer_clock.setFixedWidth(88)
+        fit_text_width(self.timer_clock, "88:88:88", 8)
         self.timer_toggle = button("", self.toggle_timer, "play")
         self.timer_toggle.setFixedWidth(27)
         self.timer_toggle.setToolTip("Start / pause timer")
@@ -137,7 +137,7 @@ class ShellMixin:
         for w in (timer_icon, self.timer_title, self.timer_clock, self.timer_toggle, stop):
             fl.addWidget(w)
         self.today_total = label("Today 0m", "section")
-        self.today_total.setMinimumWidth(85)
+        fit_text_width(self.today_total, "Today 10h 59m", 4, fixed=False)
         fl.addWidget(self.today_total)
         fl.addSpacing(8)
         self.quick_input = QLineEdit()
@@ -147,7 +147,8 @@ class ShellMixin:
         self.quick_input.returnPressed.connect(self.inline_add)
         fl.addWidget(self.quick_input, 1)
         self.quick_type = combo([("ticket", "Ticket"), ("event", "Event")])
-        self.quick_type.setFixedWidth(78)
+        self.quick_type.setAccessibleName("Capture type")
+        fit_combo_width(self.quick_type)
         fl.addWidget(self.quick_type)
         add = button("", self.inline_add, "plus")
         add.setFixedWidth(27)
