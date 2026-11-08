@@ -21,6 +21,9 @@ dayframe/
 │   ├── store.py         Store: migrations, accounts, commands, snapshot, outbox, backup/import
 │   ├── schema.sql       initial SQLite schema
 │   └── schema_definitions.json   entity field definitions used by validation and sync
+├── code/                version control for the Code page: no Qt, no SQLite
+│   ├── git.py           GitRepo: status, shelve/restore changesets, branches, commit, fetch/pull/push
+│   └── github.py        GitHub REST client (overview, pull requests, issues) and TokenStore (keyring)
 ├── sync/                networking: no Qt (the hub runs with requirements-hub.txt only)
 │   ├── client.py        Sync: pairing, push/pull, certificate pinning, keyring, conflict resolution
 │   └── hub.py           Hub: private HTTPS change feed and device registry; main() for the service
@@ -38,7 +41,7 @@ dayframe/
     └── dragdrop.py      TICKET_MIME, the drag contract shared by Kanban, Map and Unsorted
 ```
 
-Import direction is one way: `ui → sync → data → core`, and `ui → data`, `ui → core`. Nothing in `core`, `data` or `sync` imports Qt or anything from `ui`. Keep it that way so the hub stays headless and the domain rules stay testable without a display.
+Import direction is one way: `ui → sync → data → core`, `ui → code → core`, and `ui → data`, `ui → core`. Nothing in `core`, `data`, `sync` or `code` imports Qt or anything from `ui`. Keep it that way so the hub stays headless and the domain rules stay testable without a display.
 
 ## The main window
 

@@ -16,6 +16,7 @@ The package is split by layer. Lower layers never import higher ones: `core` has
 | data/store.py, schema.sql, schema_definitions.json | SQLite migrations, account scope, normalized relations, transactions/outbox, backup/import |
 | sync/client.py | Authenticated push/pull, certificate pinning, OS keyring, conflict reconciliation |
 | sync/hub.py | Optional private HTTP/TLS service with SQLite change feed and device registry |
+| code/git.py, code/github.py | Git subprocess runner for local checkouts (never prompts, never force-pushes, fast-forward pulls only); GitHub REST client and keyring token storage |
 | ui/window/ | Main window: `main.py` owns state, async jobs and refresh; one mixin module per page or concern |
 | ui/views/ | Painted view widgets: Kanban lanes, project Map, Calendar, Today agenda, Settings panel |
 | ui/dialogs.py, widgets.py, labels.py | Quick Add/section/conflict dialogs, small widget helpers, label chip editor and painting |

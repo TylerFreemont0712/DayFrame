@@ -52,6 +52,7 @@ The following are intentionally preserved:
 | timemanager.db and native-desktop.lock | Preserve database identity and mutual exclusion with earlier clients |
 | .local-session.json | Retain remembered local sign-in |
 | TimeManager.native.sync | Reuse registered device credentials in the OS keyring |
+| DayFrame.github | OS keyring entry holding the GitHub access token, keyed by account ID |
 | TM_HUB_* variables and timemanager-hub data/config paths | Existing Linux service configuration continues to work |
 | application/x-timemanager-ticket | Stable internal drag format |
 | Schema 5 / sync protocol 1 | Stable data and synchronization format |
