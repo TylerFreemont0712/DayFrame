@@ -46,7 +46,7 @@ An explicitly requested validation build stays in dist/build output and does not
 | Build tools | Python 3.13.5, PyInstaller 6.22.3 |
 | DayFrame.exe SHA-256 | 1322b1d5bcac956b21dc2b4840f27982a24b6a4c108377a677e4a06864ed3a21 |
 | Windows installer | Not built for 0.6.0: NSIS is not installed on this machine. The 0.5.2 installer remains the last one built |
-| Source review and CI | Release pull request from the release-0.6.0 branch |
+| Source review and CI | [Release pull request #2](https://github.com/TylerFreemont0712/DayFrame/pull/2) |
 | Linux Mint | The owner's exact installation has not been verified |
 | GitHub publication | No GitHub Release or release tag created for this package |
 
