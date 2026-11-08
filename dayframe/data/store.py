@@ -486,7 +486,7 @@ class Store:
             for title,n in (("Project launch",14),("Weekend trip",18),("Annual review",30)):
                 self._save("event",{"title":title,"date":day(n),"major":1})
             front=next(sec for sec in self.list("section") if sec["project_id"]==website["id"] and sec["name"]=="Frontend")
-            calendar=self._save("section",{"project_id":website["id"],"name":"Calendar","parent_id":front["id"],"rule_field":"label","rule_value":"calendar","sort_order":2})
+            self._save("section",{"project_id":website["id"],"name":"Calendar","parent_id":front["id"],"rule_field":"label","rule_value":"calendar","sort_order":2})
             calendar_ticket=self._save("ticket",{"project_id":website["id"],"title":"Build week timeline","component":"Frontend","labels":["calendar"],"parent_id":active["id"],"estimate_min":60})
             self.auto_placement(calendar_ticket)
             for title,n,kind,length in (("Family birthday",2,"birthday",0),("Weekend away",3,"trip",2)):

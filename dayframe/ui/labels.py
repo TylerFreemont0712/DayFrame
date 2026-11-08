@@ -2,7 +2,7 @@
 import hashlib
 from PySide6.QtCore import Qt,QSize,QRect,Signal,QEvent,QTimer
 from PySide6.QtGui import QColor,QPainter,QPen,QPixmap,QIcon
-from PySide6.QtWidgets import QWidget,QFrame,QLayout,QVBoxLayout,QHBoxLayout,QLabel,QLineEdit,QPushButton,QMenu,QCompleter
+from PySide6.QtWidgets import QWidget,QFrame,QLayout,QVBoxLayout,QHBoxLayout,QLineEdit,QPushButton,QMenu,QCompleter
 from .theme import CURRENT as C
 from .widgets import button,label
 

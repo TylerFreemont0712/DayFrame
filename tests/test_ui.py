@@ -12,8 +12,7 @@ from dayframe.data.store import Store
 from dayframe.core import domain as D
 from dayframe.ui.window import DayFrame
 from dayframe.ui.views.kanban import TicketList
-from dayframe.ui.views.project_map import TicketNode
-from dayframe.ui.theme import apply_theme,icon
+from dayframe.ui.theme import icon
 APP=QApplication.instance() or QApplication([])
 class NativeUiTests(unittest.TestCase):
     def setUp(self):

@@ -3,7 +3,7 @@ import unittest,uuid
 from pathlib import Path
 from PySide6.QtCore import Qt,QTimer,QPoint
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication,QWidget,QVBoxLayout,QComboBox,QSpinBox,QTabWidget,QLabel,QFrame
+from PySide6.QtWidgets import QApplication,QWidget,QVBoxLayout,QComboBox,QSpinBox,QTabWidget,QFrame
 from dayframe.data.store import Store
 from dayframe.ui.window import DayFrame
 from dayframe.ui.widgets import ElidingLabel

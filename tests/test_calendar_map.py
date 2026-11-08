@@ -5,10 +5,10 @@ import uuid
 from datetime import date
 from pathlib import Path
 from unittest.mock import patch
-from PySide6.QtCore import Qt,QDate,QTime,QTimer,QPointF,QEvent
+from PySide6.QtCore import Qt,QTime,QTimer,QPointF,QEvent
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication,QPushButton,QMessageBox,QStyle,QTableWidget
+from PySide6.QtWidgets import QApplication,QPushButton,QMessageBox
 from dayframe.core import domain as D, planning as P
 from dayframe.data.store import Store
 from dayframe.ui.window import DayFrame
@@ -89,7 +89,7 @@ class CalendarAndMapTests(unittest.TestCase):
         QTest.mousePress(canvas,Qt.LeftButton,pos=start);move=QMouseEvent(QEvent.MouseMove,QPointF(end),QPointF(canvas.mapToGlobal(end)),Qt.NoButton,Qt.LeftButton,Qt.NoModifier);APP.sendEvent(canvas,move);QTest.mouseRelease(canvas,Qt.LeftButton,pos=end);APP.processEvents()
         self.assertEqual(self.s.read("event",e["id"])["end_time"],"12:00")
     def test_home_timer_new_ticket_event_and_calendar_geometry_across_themes(self):
-        day=D.day_key(self.s.settings()["timezone"]);t=self.ticket(title="Unscheduled new ticket");e=self.event(title="Ordinary event",date=day)
+        day=D.day_key(self.s.settings()["timezone"]);t=self.ticket(title="Unscheduled new ticket");self.event(title="Ordinary event",date=day)
         w=self.window()
         self.assertNotIn("Notes",w.nav);self.assertEqual(w.quick_type.findData("note"),-1)
         self.assertTrue(any(b.text()==t["title"] for b in w.workspace.findChildren(QPushButton)))
@@ -142,7 +142,7 @@ class CalendarAndMapTests(unittest.TestCase):
         with patch.object(QMessageBox,"question",return_value=QMessageBox.Yes):view.finish_hover("section",section["id"],at)
         APP.processEvents();self.assertEqual(self.s.read("section",section["id"])["predecessor_ids"],[front["id"]]);self.assertTrue(w.map.edges)
     def test_ticket_edge_gesture_links_without_blocking_and_can_be_undone(self):
-        section=self.s.command("section.save",{"project_id":self.p["id"],"name":"All tickets","rule_field":"component","rule_value":"UI"})
+        self.s.command("section.save",{"project_id":self.p["id"],"name":"All tickets","rule_field":"component","rule_value":"UI"})
         parent=self.ticket(title="Parent",component="UI",labels=["shared"]);child=self.ticket(title="Child",component="UI")
         w=self.window();w.page="Projects";w.choose_project(self.p["id"]);APP.processEvents();view=w.map
         target=view.nodes[parent["id"]].sceneBoundingRect();at=QPointF(target.right()+5,target.center().y())

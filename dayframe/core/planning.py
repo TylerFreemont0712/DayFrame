@@ -1,7 +1,7 @@
 """Shared calendar projections used by Home, month, upcoming and week views."""
 from __future__ import annotations
 from calendar import monthrange
-from datetime import date,datetime,timedelta
+from datetime import date,timedelta
 from . import domain as D
 
 EVENT_TYPES=(

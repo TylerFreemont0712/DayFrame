@@ -1,10 +1,9 @@
 """Geometry and type-switch coverage for the compact native forms."""
 import unittest
-from unittest.mock import patch
-from PySide6.QtCore import Qt,QRect,QTime
-from PySide6.QtWidgets import QApplication,QDialog,QLineEdit,QDialogButtonBox
+from PySide6.QtCore import QRect,QTime
+from PySide6.QtWidgets import QApplication,QDialog,QLineEdit
 from dayframe.ui.dialogs import AddDialog,SectionDialog
-from dayframe.ui.widgets import FormDialog,label
+from dayframe.ui.widgets import FormDialog
 from dayframe.ui.theme import apply_theme
 
 APP=QApplication.instance() or QApplication([])

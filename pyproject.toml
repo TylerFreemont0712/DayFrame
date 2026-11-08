@@ -30,3 +30,13 @@ include = ["dayframe*"]
 [tool.setuptools.package-data]
 dayframe = ["resources/*.svg", "resources/*.png"]
 "dayframe.data" = ["*.json", "*.sql"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["build", "dist"]
+
+[tool.ruff.lint]
+# Pyflakes plus syntax errors. Import sorting stays off: theme.py must import
+# PySide6 before qtawesome so qtpy binds to PySide6.
+select = ["E9", "F"]

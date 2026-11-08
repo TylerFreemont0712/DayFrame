@@ -3,10 +3,10 @@ from __future__ import annotations
 import calendar
 from datetime import date,datetime,timedelta
 from PySide6.QtCore import Qt,QRectF,QPointF,QSize,QTimer,Signal
-from PySide6.QtGui import QColor,QPainter,QPen,QFont,QPolygonF
-from PySide6.QtWidgets import QWidget,QVBoxLayout,QHBoxLayout,QLabel,QListWidget,QListWidgetItem,QStyledItemDelegate,QScrollArea,QFrame,QSizePolicy,QStyle
-from ..theme import CURRENT as C,icon
-from ..widgets import label,button,row,combo,column
+from PySide6.QtGui import QColor,QPainter,QPen,QFont
+from PySide6.QtWidgets import QWidget,QVBoxLayout,QListWidget,QListWidgetItem,QStyledItemDelegate,QScrollArea,QFrame,QSizePolicy,QStyle
+from ..theme import CURRENT as C
+from ..widgets import label,button,row,combo
 from ...core import planning as P,domain as D
 
 def readable(item):
@@ -144,7 +144,7 @@ class WeekHeader(QWidget):
         self.pending_day=week.day;self.selection_timer=QTimer(self);self.selection_timer.setSingleShot(True)
         self.selection_timer.timeout.connect(lambda:self.week.window.calendar_selected(self.pending_day))
         self.rows=[];ends=[]
-        first=week.start;last=first+timedelta(days=6)
+        first=week.start
         for item in week.items:
             if not item["all_day"]:continue
             start=max(0,(date.fromisoformat(item["date"])-first).days);end=min(6,(date.fromisoformat(item["end_date"])-first).days)
