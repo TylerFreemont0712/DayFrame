@@ -2,7 +2,7 @@
 
 Version: 0.5, calendar and nested-map baseline
 Date: 2026-11-04
-Status: product/infrastructure decisions confirmed; runnable DayFrame 0.5.2 foundation exists; see docs/CURRENT_STATUS.md for delivered scope
+Status: product/infrastructure decisions confirmed; runnable DayFrame 0.5.2 foundation exists; see docs/status/CURRENT_STATUS.md for delivered scope
 Owner: personal application for the requesting user
 Project destination: C:\Apps\TimeManager on Windows; a normal user-owned project directory on Linux
 
@@ -306,7 +306,7 @@ Use bounded native modal forms with scrolling content and a fixed action footer.
 
 ## Calendar and map refinement — 2026-11-04
 
-Latest owner instructions override earlier Notes UI/simple calendar/palette-only concepts. Exact behavior: docs/CALENDAR_AND_MAP.md and docs/DESIGN_SYSTEM.md.
+Latest owner instructions override earlier Notes UI/simple calendar/palette-only concepts. Exact behavior: docs/product/CALENDAR_AND_MAP.md and docs/product/DESIGN_SYSTEM.md.
 
 - Month, Upcoming/details/presets, Sunday–Saturday Week; ordered color/duration marks.
 - Click event/work editing; 15-minute single-day move/resize and Undo; independent deadlines.
@@ -324,4 +324,4 @@ Correct rounded native control artifacts, bright tab lines and clipped row badge
 
 Preset labels include red bug and teal feature. Enter/comma/Add commits a typed label without submitting the modal; chips are removable and saved custom names appear in suggestions. Use consistent colors across editor/cards, with visible text.
 
-Apply theme-matched native Windows caption/text/border colors on supported systems, preserving ordinary OS window behavior. Exact scope and platform limits: docs/QUICK_ADD_AND_LABELS.md.
+Apply theme-matched native Windows caption/text/border colors on supported systems, preserving ordinary OS window behavior. Exact scope and platform limits: docs/product/QUICK_ADD_AND_LABELS.md.

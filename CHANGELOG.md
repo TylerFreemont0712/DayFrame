@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Reorganize the source into layered subpackages (core, data, sync, ui) with one module per main-window page; no behavior change. Format the code with Ruff and add Pyflakes linting.
+- Organize documentation into product, engineering, operations and status folders, with an index and writing rules, a code map, CLAUDE.md and a collected ideas list.
 - Rename the themes Graphite, Terminal, Paper and Midnight and add color schemes to each (Terminal now has Amber, Green, Ice, Magenta and Mono). A Colors section in Settings > Theme follows the selected theme and remembers a scheme per theme. Saved Terminal/Amber preferences carry over.
 
 ## 0.5.2 — 2026-11-05

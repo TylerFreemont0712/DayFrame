@@ -117,7 +117,7 @@ D-060: The owner requested removal of obsolete implementations, source/version a
 
 D-061: Use natural, concrete language in commits and comments, with no unnecessary assistant/tool attribution or automatic generation trailers. Preserve required third-party attribution. Commit regularly in small, complete units with one purpose so earlier behavior is easy to trace and recover; preserve shared history.
 
-D-062: Ship releases in deliberate waves only on the owner's instruction. Routine source commits and CI do not rebuild packages, replace the current release or bump versions. Suggest a release at task completion for significant unreleased changes, or after 14 days with source changes waiting; documentation/comment-only work does not trigger a suggestion. Ask once, respect a deferral and wait for explicit authorization. The 14-day threshold is the initial project default for "a while". Track the actual packaged baseline in RELEASES.md.
+D-062: Ship releases in deliberate waves only on the owner's instruction. Routine source commits and CI do not rebuild packages, replace the current release or bump versions. Suggest a release at task completion for significant unreleased changes, or after 14 days with source changes waiting; documentation/comment-only work does not trigger a suggestion. Ask once, respect a deferral and wait for explicit authorization. The 14-day threshold is the initial project default for "a while". Track the actual packaged baseline in [RELEASES.md](../operations/RELEASES.md).
 
 ## Kanban refinement — 2026-11-04
 

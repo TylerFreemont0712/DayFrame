@@ -16,7 +16,7 @@ Ask once per task and respect a deferral. A suggestion, elapsed time, passing CI
 
 ## Source work and CI
 
-- Keep useful changes under Unreleased in CHANGELOG.md. Leave application and installer versions unchanged until a release is requested.
+- Keep useful changes under Unreleased in [CHANGELOG.md](../../CHANGELOG.md). Leave application and installer versions unchanged until a release is requested.
 - Preview development through app.py. Start DayFrame.cmd prefers the existing packaged version when present.
 - Pushes, PRs and default manual workflow runs perform Windows/Ubuntu source tests only.
 - The Native desktop checks workflow has a boolean Build and verify portable packages input, off by default. Enable it only after the owner requests a release or validation build. It builds portable bundles and runs packaged smoke checks; it does not build an NSIS installer or publish a GitHub Release.
@@ -30,7 +30,7 @@ An explicitly requested validation build stays in dist/build output and does not
 2. Review the diff since the last packaged source commit. Select a coherent wave and summarize user-visible changes, compatibility concerns and known limitations.
 3. Align pyproject.toml, dayframe/__init__.py, scripts/installer.nsi and Start DayFrame.cmd. Move the included Unreleased notes into a dated version entry. Commit the release preparation separately from feature work.
 4. Run the functional suite. Build on each requested target OS and run packaged smoke checks with a fresh isolated profile. Check affected themes/window sizes and account/data continuity. Ubuntu CI does not verify the owner's specific Mint installation.
-5. Follow [the packaging commands](../CONTRIBUTING.md#version-and-release). Verify the complete portable folder and any requested installer before replacing the local stable package. Preserve user profiles and runtime data.
+5. Follow [the packaging commands](../../CONTRIBUTING.md#version-and-release). Verify the complete portable folder and any requested installer before replacing the local stable package. Preserve user profiles and runtime data.
 6. Record the version, build date, exact source commit, artifacts and validation below only after the requested package exists and checks pass. Keep binaries, runtime data and credentials out of Git.
 7. Tag or publish only if the owner requested it. A request for a local package alone does not authorize GitHub publication. When requested, upload binaries as GitHub Release assets and keep release notes concrete.
 

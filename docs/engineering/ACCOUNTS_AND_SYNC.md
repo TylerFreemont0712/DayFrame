@@ -1,6 +1,6 @@
 # Accounts, Local Sync, and Recovery
 
-Status: agreed design with an initial working account/sync implementation. CURRENT_STATUS.md distinguishes implemented protocol features from hardening and UX work that remains.
+Status: agreed design with an initial working account/sync implementation. [CURRENT_STATUS.md](../status/CURRENT_STATUS.md) distinguishes implemented protocol features from hardening and UX work that remains.
 
 ## Objectives
 

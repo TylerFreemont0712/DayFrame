@@ -1,6 +1,6 @@
 # Persistent Data Model
 
-Status: complete-product logical model. The current normalized foundation schema is implemented in dayframe/data/schema.sql and dayframe/data/store.py, migration version 4. Entity families listed here include future features; CURRENT_STATUS.md identifies what is delivered. The hub stores validated canonical entity revisions separately from client projections.
+Status: complete-product logical model. The current normalized foundation schema is implemented in dayframe/data/schema.sql and dayframe/data/store.py, migration version 4. Entity families listed here include future features; [CURRENT_STATUS.md](../status/CURRENT_STATUS.md) identifies what is delivered. The hub stores validated canonical entity revisions separately from client projections.
 
 ## Global conventions
 

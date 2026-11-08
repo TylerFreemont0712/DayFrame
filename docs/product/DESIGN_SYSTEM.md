@@ -1,6 +1,6 @@
 # DayFrame native design system — 0.5.2
 
-The app identity is DayFrame; the image-generated open-frame D icon and wordmark are defined in BRANDING.md. Current UI references are in screenshots/current/.
+The app identity is DayFrame; the image-generated open-frame D icon and wordmark are defined in [BRANDING.md](../operations/BRANDING.md). Current UI references are in [docs/screenshots/current/](../screenshots/current/).
 
 Graphite with the Cyan scheme is the default theme.
 
@@ -46,7 +46,7 @@ Calendar clicks edit actual records. Map changes require a 1.5-second target hol
 
 Preserve drafts through refresh; navigation uses Save/Discard/Cancel. Timer stays live. Theme changes must not duplicate status widgets.
 
-Appearance/geometry/density/text scale/panel widths are device-local. Project/account entities sync; future repository paths stay device-local. Exact interactions are in CALENDAR_AND_MAP.md.
+Appearance/geometry/density/text scale/panel widths are device-local. Project/account entities sync; future repository paths stay device-local. Exact interactions are in [CALENDAR_AND_MAP.md](CALENDAR_AND_MAP.md).
 
 Settings uses a 168px category menu beside one scrollable page: View, Theme, Local data, Sync or Account. Forms stop at 820px wide. View and Theme have separate Apply actions; the Theme page's Colors section lists the schemes of whichever theme is selected, remembers one choice per theme, and hides its selector for System; switching categories keeps field entries. The selected section survives appearance changes and navigation during the session. Sync shows its unresolved conflict count in the menu. Keep section controls reachable at the minimum window size and 125% text scale.
 
@@ -57,4 +57,4 @@ Combo/calendar/spin subcontrols use SVG chevrons generated for the active scheme
 
 Quick Add has title-first capture, preset/context controls, optional detail tabs and a fixed footer with batch capture. Label inputs commit on Enter without submitting the form; removable colored chips wrap in narrow layouts. Bug is red, Feature teal, with stable colors for other presets/custom names. Color accompanies visible text.
 
-Windows captions/text/borders use supported native theme attributes; unsupported platforms retain OS decoration. See QUICK_ADD_AND_LABELS.md.
+Windows captions/text/borders use supported native theme attributes; unsupported platforms retain OS decoration. See [QUICK_ADD_AND_LABELS.md](QUICK_ADD_AND_LABELS.md).

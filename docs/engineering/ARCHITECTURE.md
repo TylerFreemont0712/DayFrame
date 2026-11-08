@@ -38,7 +38,7 @@ The hub synchronizes application-level changes between independent databases. Th
 
 ## Packaging and icons
 
-PySide6-Essentials supplies Qt Widgets, Gui, Core and Svg without WebEngine. QtAwesome supplies bundled scalable navigation icon fonts. assets/DayFrame.png and .ico are exported from the image-generated DayFrame icon master, and the PNG is packaged as a Python resource. The original master, logo and prompts are retained; see BRANDING.md.
+PySide6-Essentials supplies Qt Widgets, Gui, Core and Svg without WebEngine. QtAwesome supplies bundled scalable navigation icon fonts. assets/DayFrame.png and .ico are exported from the image-generated DayFrame icon master, and the PNG is packaged as a Python resource. The original master, logo and prompts are retained; see [BRANDING.md](../operations/BRANDING.md).
 
 PyInstaller builds a standalone platform-specific folder. Windows gets a per-user NSIS installer; Linux must be built/tested on Linux. requirements.txt pins direct dependencies; requirements-windows.lock.txt records the tested Windows environment. The headless hub only needs its own smaller requirements file.
 
@@ -59,6 +59,6 @@ The current window defaults to1280×800 with980×640 minimum and8.5pt base text.
 
 Store.restore_session() reads a local account/device marker, register/login remember it, and logout removes it. The marker contains no password and lives outside SQLite backups/outbox. This implements the owner's preference for local convenience, not a new encryption boundary. Short/blank passwords use the same verifier format.
 
-Home/Calendar share planning.py. Map hierarchy/rules/sequence are validated in domain.py and enforced by Store/Hub. Confirmed map changes and Undo restore transactional records. UI history is session-local. See CALENDAR_AND_MAP.md.
+Home/Calendar share planning.py. Map hierarchy/rules/sequence are validated in domain.py and enforced by Store/Hub. Confirmed map changes and Undo restore transactional records. UI history is session-local. See [CALENDAR_AND_MAP.md](../product/CALENDAR_AND_MAP.md).
 
 The local ticket.capture action composes existing ticket/relationship/placement commands under one outer transaction and uses existing outbox fields. Labels are ordinary ticket labels; color presets are UI definitions. Native frame theming is a guarded application event filter and has no account/profile access.
