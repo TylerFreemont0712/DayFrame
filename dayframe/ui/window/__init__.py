@@ -15,6 +15,7 @@ same ``self`` and reach data through ``self.store`` / ``self.data``:
 - settings.py   Settings page host, backup, conflicts, sync
 - capture.py    Quick Add dialog wiring
 """
+
 from .main import DayFrame
 
 __all__ = ["DayFrame"]

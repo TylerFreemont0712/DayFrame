@@ -1,13 +1,20 @@
 import unittest
 
-from dayframe.core.palettes import (LEGACY_THEMES, THEMES, THEME_IDS, default_scheme, scheme_colors,
-                               schemes, valid_theme_colors)
+from dayframe.core.palettes import (
+    LEGACY_THEMES,
+    THEMES,
+    THEME_IDS,
+    default_scheme,
+    scheme_colors,
+    schemes,
+    valid_theme_colors,
+)
 
 COLOR_KEYS = {"bg", "panel", "raised", "line", "text", "muted", "accent", "danger", "rail"}
 
 
 def luminance(color):
-    channels = [int(color[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+    channels = [int(color[i : i + 2], 16) / 255 for i in (1, 3, 5)]
     r, g, b = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
     return 0.2126 * r + 0.7152 * g + 0.0722 * b
 
@@ -41,8 +48,9 @@ class PaletteTests(unittest.TestCase):
         names = [label for _, label in schemes("terminal")]
         self.assertIn("Amber", names)
         self.assertGreaterEqual(len(names), 4)
-        self.assertEqual(len({scheme_colors("terminal", key)["accent"] for key, _ in schemes("terminal")}),
-                         len(names))
+        self.assertEqual(
+            len({scheme_colors("terminal", key)["accent"] for key, _ in schemes("terminal")}), len(names)
+        )
 
     def test_text_and_accents_stay_readable_in_every_scheme(self):
         for theme in THEMES:
