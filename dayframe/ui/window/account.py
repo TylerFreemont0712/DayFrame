@@ -76,6 +76,14 @@ class AccountMixin:
             self.data = self.store.snapshot()
             apply_theme(self.data["settings"])
             self.resize(1280, 800)
+        if self.data["settings"].get("layoutRevision", 0) < 4:
+            # 90% became the base text size; move profiles still on the old 100% default once.
+            patch = {"layoutRevision": 4}
+            if self.data["settings"].get("textScale") == 100:
+                patch["textScale"] = 90
+            self.store.settings(patch)
+            self.data = self.store.snapshot()
+            apply_theme(self.data["settings"])
         self.build_shell()
         geometry = self.data["settings"].get("windowGeometry")
         if geometry:

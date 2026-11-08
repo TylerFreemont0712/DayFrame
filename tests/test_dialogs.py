@@ -1,8 +1,12 @@
 """Geometry and type-switch coverage for the compact native forms."""
 
 import unittest
-from PySide6.QtCore import QRect, QTime
-from PySide6.QtWidgets import QApplication, QDialog, QLineEdit
+from unittest.mock import patch
+from PySide6.QtCore import QPoint, QRect, Qt, QTime
+from PySide6.QtGui import QColor
+from PySide6.QtTest import QTest
+from PySide6.QtWidgets import QApplication, QDialog, QDialogButtonBox, QLineEdit, QPushButton
+from dayframe.ui.color_picker import ColorPickerDialog, ColorSwatchButton
 from dayframe.ui.dialogs import AddDialog, SectionDialog
 from dayframe.ui.widgets import FormDialog
 from dayframe.ui.theme import apply_theme
@@ -110,6 +114,47 @@ class CompactDialogTests(unittest.TestCase):
         d.field.setCurrentIndex(d.field.findData(""))
         self.assertFalse(d.value.isEnabled())
         self.assertEqual(d.payload()["rule_value"], "")
+
+
+class ColorPickerTests(unittest.TestCase):
+    def setUp(self):
+        apply_theme({"theme": "catppuccin", "textScale": 90})
+
+    def test_wheel_hex_and_swatches_set_the_color(self):
+        dialog = ColorPickerDialog(None, "Accent", "#cba6f7", [("Peach", "#fab387")])
+        dialog.show()
+        APP.processEvents()
+        self.assertEqual(dialog.color(), "#cba6f7")
+        self.assertEqual(dialog.buttons.button(QDialogButtonBox.Save).text(), "Use color")
+        swatch = next(b for b in dialog.findChildren(QPushButton) if b.accessibleName() == "Peach")
+        QTest.mouseClick(swatch, Qt.LeftButton)
+        self.assertEqual(dialog.color(), "#fab387")
+        self.assertEqual(dialog.hex.text(), "#fab387")
+        QTest.keyClicks(dialog.hex, "")
+        dialog.hex.clear()
+        QTest.keyClicks(dialog.hex, "#336699")
+        self.assertEqual(dialog.color(), "#336699")
+        # The wheel's center is white at full brightness, its right edge pure red.
+        wheel = dialog.wheel
+        dialog.brightness.setValue(1000)
+        QTest.mouseClick(wheel, Qt.LeftButton, pos=wheel.rect().center())
+        self.assertLess(QColor(dialog.color()).saturation(), 8)
+        center, radius = wheel._geometry()
+        QTest.mouseClick(wheel, Qt.LeftButton, pos=QPoint(int(center.x() + radius - 1), int(center.y())))
+        self.assertEqual(QColor(dialog.color()).hue(), 0)
+        self.assertGreater(QColor(dialog.color()).saturation(), 240)
+        dialog.reject()
+
+    def test_swatch_button_reports_the_chosen_color(self):
+        button = ColorSwatchButton("#112233", "Accent")
+        picked = []
+        button.colorPicked.connect(picked.append)
+        with patch("dayframe.ui.color_picker.pick_color", return_value="#445566"):
+            button.click()
+        self.assertEqual((button.color(), picked), ("#445566", ["#445566"]))
+        with patch("dayframe.ui.color_picker.pick_color", return_value=None):
+            button.click()
+        self.assertEqual(button.color(), "#445566")
 
 
 if __name__ == "__main__":

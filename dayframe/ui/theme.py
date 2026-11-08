@@ -1,4 +1,9 @@
-"""Compact native palettes and typography; theme colors and color schemes live in palettes.py."""
+"""Applies a theme to the running QApplication: palette, fonts, sizes and the shared style sheet.
+
+Colors come from core/palettes.py (theme, preset scheme or custom colors). Preferences
+from core/preferences.py add text and heading scale, density, corner style and font
+overrides. CURRENT holds the resolved values so painted widgets can read them.
+"""
 
 import os
 import sys
@@ -6,12 +11,83 @@ import tempfile
 from importlib.resources import files
 from pathlib import Path
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QFont, QIcon, QPalette
+from PySide6.QtGui import QColor, QFont, QFontDatabase, QIcon, QPalette
 from PySide6.QtWidgets import QApplication
 import qtawesome as qta
-from ..core.palettes import THEMES, LEGACY_THEMES, scheme_colors, schemes, default_scheme
+from ..core.palettes import (
+    CUSTOM,
+    LEGACY_THEMES,
+    THEMES,
+    default_scheme,
+    is_dark,
+    palette,
+    schemes,
+)
 
-CURRENT = scheme_colors("graphite").copy()
+CURRENT = palette("graphite")
+# Values apply_theme() also sets, so painted widgets can read them before the first call.
+CURRENT.update(
+    theme="graphite",
+    scheme="cyan",
+    dark=True,
+    scale=0.9,
+    font="Segoe UI",
+    heading="Segoe UI",
+    mono="Consolas",
+)
+DESIGN_POINT_SIZE = 8.5
+DENSITY_PADDING = {"compact": 3, "comfortable": 5, "spacious": 7}
+# Fallbacks tried after a theme's own fonts; the first installed family wins.
+UI_FALLBACKS = ("Segoe UI", "Noto Sans", "Cantarell", "Ubuntu", "DejaVu Sans")
+MONO_FALLBACKS = (
+    "Cascadia Mono",
+    "Cascadia Code",
+    "Consolas",
+    "JetBrains Mono",
+    "Fira Code",
+    "Ubuntu Mono",
+    "DejaVu Sans Mono",
+    "Liberation Mono",
+)
+# Suggested choices shown first in the font pickers when they are installed.
+SUGGESTED_UI_FONTS = (
+    "Segoe UI",
+    "Segoe UI Variable Text",
+    "Inter",
+    "Aptos",
+    "Atkinson Hyperlegible",
+    "Lexend",
+    "IBM Plex Sans",
+    "Source Sans 3",
+    "Roboto",
+    "Noto Sans",
+    "Ubuntu",
+    "Cantarell",
+    "Verdana",
+    "Trebuchet MS",
+    "Bahnschrift",
+    "Georgia",
+    "Calibri",
+)
+SUGGESTED_MONO_FONTS = MONO_FALLBACKS + ("IBM Plex Mono", "Source Code Pro", "Iosevka", "Lucida Console")
+
+
+def installed_families():
+    return {name.casefold(): name for name in QFontDatabase.families()}
+
+
+def pick_font(*candidates):
+    """First installed family among candidates.
+
+    When none is installed (for example under Qt's offscreen platform, which lists no
+    fonts) the first candidate is returned and Qt substitutes its own match.
+    """
+    names = [c for c in candidates if c]
+    installed = installed_families()
+    for name in names:
+        if name.casefold() in installed:
+            return installed[name.casefold()]
+    return names[0] if names else QApplication.font().family()
 
 
 def resolve_theme(settings):
@@ -24,9 +100,16 @@ def resolve_theme(settings):
         name = "graphite"
     colors = settings.get("themeColors")
     scheme = colors.get(name) if isinstance(colors, dict) else None
-    if scheme not in dict(schemes(name)):
+    if scheme != CUSTOM and scheme not in dict(schemes(name)):
         scheme = default_scheme(name)
     return name, scheme
+
+
+def resolve_palette(settings):
+    """Complete color palette (advanced roles included) for saved preferences."""
+    name, scheme = resolve_theme(settings)
+    custom = settings.get("customColors")
+    return palette(name, scheme, custom.get(name) if isinstance(custom, dict) else None)
 
 
 def chevron(direction, color):
@@ -53,26 +136,49 @@ def chevron(direction, color):
     return str(path).replace("\\", "/")
 
 
+def _fonts(c, settings):
+    windows = sys.platform == "win32"
+    own = (c["font_win"], c["font_linux"]) if windows else (c["font_linux"], c["font_win"])
+    ui = pick_font(settings.get("fontFamily"), *own, *UI_FALLBACKS)
+    if c["mode"] == "paper" and not windows:
+        heading_own = ("DejaVu Serif", c["heading"])
+    elif c["mode"] in ("terminal", "editor"):
+        heading_own = (c["heading"],) + MONO_FALLBACKS
+    else:
+        heading_own = (c["heading"],) + own
+    heading = pick_font(settings.get("headingFamily"), *heading_own, *UI_FALLBACKS)
+    mono_own = own if c["mode"] == "terminal" else ()
+    mono = pick_font(settings.get("monoFamily"), *mono_own, *MONO_FALLBACKS)
+    return ui, heading, mono
+
+
 def apply_theme(settings):
     name, scheme = resolve_theme(settings)
     CURRENT.clear()
-    CURRENT.update(scheme_colors(name, scheme))
+    CURRENT.update(resolve_palette(settings))
     c = CURRENT
     c["theme"] = name
     c["scheme"] = scheme
+    c["dark"] = is_dark(c)
+    scale = settings.get("textScale", 90) / 100
+    heading_scale = settings.get("headingScale", 100) / 100
+    c["scale"] = scale
+    corner = settings.get("cornerRadius", -1)
+    if isinstance(corner, int) and corner >= 0:
+        c["radius"] = corner
     app = QApplication.instance()
     app.setStyle("Fusion")
-    palette = QPalette()
+    colors = QPalette()
     for role, color in [
         (QPalette.Window, c["bg"]),
         (QPalette.WindowText, c["text"]),
-        (QPalette.Base, c["panel"]),
+        (QPalette.Base, c["input"]),
         (QPalette.AlternateBase, c["raised"]),
         (QPalette.Text, c["text"]),
-        (QPalette.Button, c["raised"]),
-        (QPalette.ButtonText, c["text"]),
-        (QPalette.Highlight, c["accent"]),
-        (QPalette.HighlightedText, c["bg"]),
+        (QPalette.Button, c["button"]),
+        (QPalette.ButtonText, c["button_text"]),
+        (QPalette.Highlight, c["selection"]),
+        (QPalette.HighlightedText, c["accent_text"]),
         (QPalette.ToolTipBase, c["panel"]),
         (QPalette.ToolTipText, c["text"]),
         (QPalette.PlaceholderText, c["muted"]),
@@ -82,20 +188,31 @@ def apply_theme(settings):
         (QPalette.Dark, c["bg"]),
         (QPalette.Shadow, c["bg"]),
     ]:
-        palette.setColor(role, QColor(color))
-    app.setPalette(palette)
-    font = QFont(c["font_win"] if sys.platform == "win32" else c["font_linux"])
-    font.setPointSizeF(8.5 * settings.get("textScale", 100) / 100)
+        colors.setColor(role, QColor(color))
+    app.setPalette(colors)
+    ui_font, heading_font, mono_font = _fonts(c, settings)
+    c["font"], c["heading"], c["mono"] = ui_font, heading_font, mono_font
+    font = QFont(ui_font)
+    font.setPointSizeF(DESIGN_POINT_SIZE * scale)
     app.setFont(font)
-    c["heading"] = (
-        c["heading"]
-        if sys.platform == "win32"
-        else ("DejaVu Serif" if c["mode"] == "paper" else c["font_linux"])
-    )
     c["down"] = chevron("down", c["muted"])
     c["up"] = chevron("up", c["muted"])
-    pad = 3 if settings.get("density", "compact") == "compact" else 5
-    app.setStyleSheet(
+    pad = DENSITY_PADDING.get(settings.get("density", "compact"), 3)
+
+    def px(size, factor=1.0):
+        return max(6, round(size * scale * factor))
+
+    values = {
+        **c,
+        "pad": pad,
+        "item_pad": pad + 1,
+        "heading_px": px(23 if c["mode"] == "paper" else 20, heading_scale),
+        "capture_px": px(15, heading_scale),
+        "title_px": px(13),
+        "clock_px": px(13),
+        "status_px": px(10),
+    }
+    sheet = [
         """
     QWidget { color:%(text)s; }
     QMainWindow,QDialog { background:%(bg)s; }
@@ -105,28 +222,31 @@ def apply_theme(settings):
     QWidget#contextPane { background:%(rail)s; border-right:1px solid %(line)s; }
     QWidget#ticketInspector,QWidget#agendaPane { border-left:1px solid %(line)s; }
     QFrame#panel { background:%(panel)s; border:1px solid %(line)s; border-radius:%(radius)spx; }
-    QFrame#focusPanel { background:%(raised)s; border:1px solid %(accent)s; border-radius:%(radius)spx; }\n    QFrame#taskRow { background:%(panel)s; border:1px solid %(line)s; border-radius:%(radius)spx; }
-    QFrame#overdueRow { background:%(raised)s; border:1px solid #8e7446; border-radius:%(radius)spx; }
+    QFrame#focusPanel { background:%(raised)s; border:1px solid %(accent)s; border-radius:%(radius)spx; }
+    QFrame#taskRow { background:%(panel)s; border:1px solid %(line)s; border-radius:%(radius)spx; }
+    QFrame#overdueRow { background:%(raised)s; border:1px solid %(warning)s; border-radius:%(radius)spx; }
     QLabel#captureError { color:%(danger)s; }
     QLabel#muted { color:%(muted)s; }
-    QLabel#warning { color:#d4b16c; }
-    QLabel#captureHeading { font-size:15px; font-weight:650; }
-    QLineEdit#captureTitle { font-size:13px; padding:7px 8px; }
-    QLabel#heading { font-size:20px; font-weight:700; font-family:"%(heading)s"; }
-    QLabel#section { font-weight:%(weight)s; font-family:"%(heading)s"; }
+    QLabel#warning { color:%(warning)s; }
+    QLabel#captureHeading { font-size:%(capture_px)spx; font-weight:650; color:%(heading_text)s; font-family:"%(heading)s"; }
+    QLineEdit#captureTitle { font-size:%(title_px)spx; padding:7px 8px; }
+    QLabel#heading { font-size:%(heading_px)spx; font-weight:700; font-family:"%(heading)s"; color:%(heading_text)s; }
+    QLabel#section { font-weight:%(weight)s; font-family:"%(heading)s"; color:%(heading_text)s; }
     QLabel#badge { background:%(raised)s; color:%(accent)s; padding:1px 5px; border-radius:%(radius)spx; }
     QLabel#count { background:%(raised)s; color:%(muted)s; padding:1px 4px; border-radius:%(radius)spx; }
-    QLabel#clock { font-family:Consolas,monospace; font-size:13px; font-weight:650; color:%(accent)s; }
-    QPushButton,QToolButton { background:%(raised)s; border:1px solid transparent; border-radius:%(radius)spx; padding:%(pad)spx 7px; }
-    QPushButton:hover,QToolButton:hover { border-color:%(accent)s; }
+    QLabel#clock { font-family:"%(mono)s",monospace; font-size:%(clock_px)spx; font-weight:650; color:%(clock)s; }
+    QLabel#worldClock { font-family:"%(mono)s",monospace; color:%(muted)s; }
+    QPushButton,QToolButton { background:%(button)s; color:%(button_text)s; border:1px solid transparent; border-radius:%(radius)spx; padding:%(pad)spx 7px; }
+    QPushButton:hover,QToolButton:hover { border-color:%(button_hover)s; }
     QPushButton:checked,QToolButton:checked { color:%(accent)s; border-color:%(accent)s; }
-    QPushButton#accent { background:%(accent)s; color:%(bg)s; font-weight:650; }
-    QPushButton#rowTitle { background:transparent; border:0; text-align:left; padding:1px 2px; }
+    QPushButton#accent { background:%(accent)s; color:%(accent_text)s; font-weight:650; }
+    QPushButton#rowTitle { background:transparent; color:%(text)s; border:0; text-align:left; padding:1px 2px; }
     QPushButton#rowTitle:hover { color:%(accent)s; }
     QPushButton#iconOnly { background:transparent; padding:1px; border:0; }
+    QPushButton#colorSwatch { border:1px solid %(line)s; padding:0; }
     QPushButton:disabled { color:%(muted)s; }
     QLineEdit,QPlainTextEdit,QComboBox,QSpinBox,QDateEdit,QTimeEdit,QDateTimeEdit {
-      background:%(panel)s; border:1px solid %(line)s; border-radius:%(radius)spx; padding:%(pad)spx 5px; selection-background-color:%(accent)s; }
+      background:%(input)s; border:1px solid %(line)s; border-radius:%(radius)spx; padding:%(pad)spx 5px; selection-background-color:%(selection)s; selection-color:%(accent_text)s; }
     QComboBox { padding-right:24px; }
     QAbstractSpinBox QLineEdit,QComboBox QLineEdit { background:transparent; border:0; padding:0; }
     QComboBox::drop-down { subcontrol-origin:padding; subcontrol-position:top right; width:20px; border:0; background:transparent; }
@@ -134,11 +254,11 @@ def apply_theme(settings):
     QComboBox QAbstractItemView { background:%(panel)s; color:%(text)s; border:1px solid %(line)s; outline:0; selection-background-color:%(raised)s; selection-color:%(accent)s; }
     QToolButton::menu-indicator,QPushButton::menu-indicator { image:url("%(down)s"); width:9px; height:7px; }
     QLineEdit:focus,QPlainTextEdit:focus { border-color:%(accent)s; }
-    QLineEdit#ticketTitle { font-size:13px; font-weight:650; }
+    QLineEdit#ticketTitle { font-size:%(title_px)spx; font-weight:650; }
     QListWidget,QTreeWidget,QTableWidget,QScrollArea { background:%(panel)s; border:1px solid %(line)s; border-radius:%(radius)spx; }
     QScrollArea { border:0; background:transparent; }
     QScrollArea#dialogContent { background:transparent; }
-    QListWidget::item,QTreeWidget::item { padding:3px 4px; }
+    QListWidget::item,QTreeWidget::item { padding:%(item_pad)spx 4px; }
     QListWidget::item:selected,QTreeWidget::item:selected { background:%(raised)s; color:%(accent)s; }
     QListWidget#settingsNavigation { background:transparent; border:0; }
     QListWidget#settingsNavigation::item { padding:10px 8px; margin-bottom:4px; border:1px solid transparent; border-radius:%(radius)spx; }
@@ -158,79 +278,92 @@ def apply_theme(settings):
     QScrollBar:vertical { background:%(panel)s; width:7px; }
     QScrollBar::handle:vertical { background:%(line)s; min-height:22px; border-radius:2px; }
     QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical { height:0; }
+    QSlider::groove:horizontal { height:6px; background:%(raised)s; border:1px solid %(line)s; border-radius:3px; }
+    QSlider::handle:horizontal { width:12px; margin:-5px 0; background:%(accent)s; border-radius:6px; }
     QGroupBox { border:1px solid %(line)s; border-radius:%(radius)spx; margin-top:10px; padding-top:10px; }
     QGroupBox::title { subcontrol-origin:margin; left:8px; padding:0 4px; }
     QMenu { background:%(panel)s; border:1px solid %(line)s; }
     QMenu::item { padding:5px 18px; }
     QMenu#optionsMenu::icon { left:6px; }
     QMenu::item:selected { background:%(raised)s; color:%(accent)s; }
-    QStatusBar { color:%(muted)s; font-size:10px; border-top:1px solid %(line)s; }
+    QStatusBar { color:%(muted)s; font-size:%(status_px)spx; border-top:1px solid %(line)s; }
     QToolTip { background:%(panel)s; color:%(text)s; border:1px solid %(line)s; padding:4px; }
     """
-        % {**c, "pad": pad}
-    )
-    if c["mode"] == "terminal":
-        app.setStyleSheet(
-            app.styleSheet()
-            + "QFrame#taskRow {border:0;border-bottom:1px solid "
-            + c["line"]
-            + ";} QLabel#heading {letter-spacing:1px;} QTabBar::tab:selected {background:"
-            + c["raised"]
-            + ";}"
-        )
-    elif c["mode"] == "paper":
-        app.setStyleSheet(
-            app.styleSheet()
-            + "QFrame#taskRow {border:0;border-bottom:1px solid "
-            + c["line"]
-            + ";} QLabel#heading {font-size:23px;} QTabBar::tab:selected {background:"
-            + c["raised"]
-            + ";} QHeaderView::section {font-weight:600;}"
-        )
-    elif c["mode"] == "studio":
-        app.setStyleSheet(
-            app.styleSheet()
-            + "QFrame#masthead {background:"
-            + c["rail"]
-            + ";} QFrame#taskRow {border:1px solid "
-            + c["line"]
-            + ";border-left:3px solid "
-            + c["accent"]
-            + ";} QPushButton:checked {background:"
-            + c["panel"]
-            + ";} QTabBar::tab {border-radius:7px;}"
-        )
-
-    app.setStyleSheet(
-        app.styleSheet()
-        + """
+    ]
+    sheet.append(PROFILE_RULES.get(c["mode"], ""))
+    sheet.append(
+        """
     QPushButton:pressed,QToolButton:pressed { background:%(line)s; border-color:%(accent)s; }
     QPushButton#accent:pressed { background:%(line)s; color:%(text)s; }
     QPushButton#rowTitle:pressed,QPushButton#iconOnly:pressed { background:%(line)s; color:%(text)s; }
     """
-        % c
     )
-
     controls = ("QSpinBox", "QDoubleSpinBox", "QDateEdit", "QTimeEdit", "QDateTimeEdit")
-    rules = []
     for control in controls:
-        rules.extend(
+        sheet.extend(
             [
                 control + " {padding-right:24px;}",
                 control
                 + "::up-button {subcontrol-origin:border;subcontrol-position:top right;width:18px;height:10px;top:2px;right:3px;border:0;background:transparent;}",
                 control
                 + "::down-button {subcontrol-origin:border;subcontrol-position:bottom right;width:18px;height:10px;bottom:2px;right:3px;border:0;background:transparent;}",
-                control + '::up-arrow {image:url("' + c["up"] + '");width:8px;height:6px;}',
-                control + '::down-arrow {image:url("' + c["down"] + '");width:8px;height:6px;}',
+                control + '::up-arrow {image:url("%(up)s");width:8px;height:6px;}',
+                control + '::down-arrow {image:url("%(down)s");width:8px;height:6px;}',
                 control
                 + "::drop-down {subcontrol-origin:padding;subcontrol-position:top right;width:20px;border:0;background:transparent;}",
             ]
         )
-    app.setStyleSheet(app.styleSheet() + "\n" + "\n".join(rules))
+    app.setStyleSheet("\n".join(part % values for part in sheet))
     from .window_frame import install_frame_theming
 
     install_frame_theming()
+
+
+# Extra rules that give each theme profile its own shape, on top of the shared sheet.
+PROFILE_RULES = {
+    "terminal": """
+    QFrame#taskRow { border:0; border-bottom:1px solid %(line)s; }
+    QLabel#heading { letter-spacing:1px; }
+    QTabBar::tab:selected { background:%(raised)s; }
+    """,
+    "paper": """
+    QFrame#taskRow { border:0; border-bottom:1px solid %(line)s; }
+    QTabBar::tab:selected { background:%(raised)s; }
+    QHeaderView::section { font-weight:600; }
+    """,
+    "studio": """
+    QFrame#masthead { background:%(rail)s; }
+    QFrame#taskRow { border:1px solid %(line)s; border-left:3px solid %(accent)s; }
+    QPushButton:checked { background:%(panel)s; }
+    QTabBar::tab { border-radius:7px; }
+    """,
+    # Nord: flat, quiet surfaces with underlined tabs.
+    "arctic": """
+    QFrame#masthead { background:%(bg)s; }
+    QFrame#taskRow { border:1px solid transparent; background:%(panel)s; }
+    QFrame#taskRow:hover { border-color:%(line)s; }
+    QTabBar::tab { background:transparent; border:0; border-bottom:2px solid transparent; padding:5px 12px; }
+    QTabBar::tab:selected { border-bottom:2px solid %(accent)s; }
+    QHeaderView::section { background:%(panel)s; }
+    """,
+    # Catppuccin: soft pill-shaped controls and roomy rows.
+    "pastel": """
+    QPushButton,QToolButton { padding:%(pad)spx 10px; }
+    QFrame#taskRow { border:1px solid %(line)s; }
+    QFrame#focusPanel { border:2px solid %(accent)s; }
+    QTabBar::tab { border-radius:9px; margin-right:3px; padding:5px 12px; }
+    QLabel#badge,QLabel#count { padding:1px 7px; }
+    """,
+    # Editor: monospace identifiers, editor-style tabs and a gutter line on rows.
+    "editor": """
+    QFrame#masthead { background:%(rail)s; }
+    QFrame#taskRow { border:0; border-left:2px solid %(line)s; border-bottom:1px solid %(raised)s; border-radius:0; }
+    QFrame#taskRow:hover { border-left-color:%(accent)s; }
+    QTabBar::tab { background:%(raised)s; border:0; border-top:2px solid transparent; padding:5px 12px; }
+    QTabBar::tab:selected { background:%(panel)s; border-top:2px solid %(accent)s; }
+    QLabel#badge,QLabel#count { font-family:"%(mono)s",monospace; }
+    """,
+}
 
 
 def icon(name, color=None):

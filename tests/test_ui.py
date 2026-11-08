@@ -173,7 +173,7 @@ class NativeUiTests(unittest.TestCase):
 
     def test_footer_capture_type_fits_its_longest_choice_at_every_text_size(self):
         w = self.w
-        for scale in (90, 100, 125):
+        for scale in (75, 90, 140):
             self.s.settings({"textScale": scale})
             apply_theme(self.s.settings())
             w.build_shell()

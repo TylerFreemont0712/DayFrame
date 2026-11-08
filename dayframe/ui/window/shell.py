@@ -5,6 +5,8 @@ import time
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QMenu, QMessageBox, QSplitter, QWidget
 from ...core import domain as D
+from ...core import timezones as TZ
+from ...core.preferences import valid_zone
 from ..views.agenda import Agenda
 from ..views.calendar import WeekCalendar
 from ..theme import app_icon, icon
@@ -139,6 +141,10 @@ class ShellMixin:
         self.today_total = label("Today 0m", "section")
         fit_text_width(self.today_total, "Today 10h 59m", 4, fixed=False)
         fl.addWidget(self.today_total)
+        self.world_clock = label("", "worldClock")
+        self.world_clock.setAccessibleName("World clocks")
+        self.world_clock.setVisible(False)
+        fl.addWidget(self.world_clock)
         fl.addSpacing(8)
         self.quick_input = QLineEdit()
         self.quick_input.setPlaceholderText("Add a ticket or event…")
@@ -220,6 +226,7 @@ class ShellMixin:
         if t and t["start_at"]:
             total += max(0, min(now, end) - max(t["start_at"], start))
         self.today_total.setText("Today " + D.short_time(total))
+        self.show_world_clocks()
         self.sync_label.setText(
             "Sync: attention"
             if self.sync.state.get("error")
@@ -247,6 +254,15 @@ class ShellMixin:
             agenda.update()
         for week in self.findChildren(WeekCalendar):
             week.canvas.update()
+
+    def show_world_clocks(self):
+        """Current time in each configured world-clock zone, refreshed by tick()."""
+        zones = [z for z in self.data["settings"].get("worldClocks", []) if valid_zone(z)]
+        self.world_clock.setVisible(bool(zones))
+        if not zones:
+            return
+        self.world_clock.setText("   ".join(TZ.place(z) + " " + TZ.local_time(z) for z in zones))
+        self.world_clock.setToolTip("\n".join(TZ.describe(z) for z in zones))
 
     def inline_add(self):
         title = self.quick_input.text().strip()

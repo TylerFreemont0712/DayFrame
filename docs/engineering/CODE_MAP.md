@@ -14,7 +14,9 @@ dayframe/
 ├── core/                pure Python: no Qt, no SQLite
 │   ├── domain.py        validation, dates, password hashing, field merges, map rules, cycle checks
 │   ├── planning.py      calendar projections shared by Today and Calendar (Sunday-first weeks)
-│   └── palettes.py      theme and color-scheme definitions
+│   ├── palettes.py      themes, color schemes, custom/advanced color roles, contrast helpers
+│   ├── preferences.py   device preference defaults and validation (used by Store.settings)
+│   └── timezones.py     time zone list, UTC offsets and labels for pickers and world clocks
 ├── data/                persistence: no Qt
 │   ├── store.py         Store: migrations, accounts, commands, snapshot, outbox, backup/import
 │   ├── schema.sql       initial SQLite schema
@@ -28,7 +30,9 @@ dayframe/
     ├── dialogs.py       Quick Add (AddDialog), SectionDialog, ConflictDialog
     ├── widgets.py       label/button/row/column/panel helpers, FormDialog, ElidingLabel, error()
     ├── labels.py        LabelsEditor chip input, preset label colors, label pill painting
-    ├── theme.py         apply_theme(), CURRENT palette, Qt style sheet, icon(), app_icon()
+    ├── theme.py         apply_theme(), CURRENT palette, fonts and sizes, Qt style sheet, icon()
+    ├── color_picker.py  color wheel dialog, swatch buttons and the palette preview
+    ├── zone_picker.py   searchable time zone drop-down with offsets and current times
     ├── window_frame.py  Windows-only DWM title-bar colors (guarded; no-op elsewhere)
     ├── workers.py       Worker / WorkerSignals for QThreadPool jobs
     └── dragdrop.py      TICKET_MIME, the drag contract shared by Kanban, Map and Unsorted
@@ -45,7 +49,7 @@ Import direction is one way: `ui → sync → data → core`, and `ui → data`,
 | main.py | `DayFrame` | window state, `run_async`, `execute`, `refresh`/`refresh_page`, `navigate`, Undo, draft guard (`has_draft`/`leave_editor`), close/resize events |
 | records.py | `RecordLookups` | read-only lookups on `self.data`: `find_ticket`, `ticket_key`, `blocked`, `project_name`, `tracked_ms` |
 | account.py | `AccountMixin` | sign-in screen, register/login, database and LAN imports, local password, logout |
-| shell.py | `ShellMixin` | navigation rail, masthead, utility bar, search, inline capture, the one-second `tick` |
+| shell.py | `ShellMixin` | navigation rail, masthead, utility bar (timer, totals, world clocks), search, inline capture, the one-second `tick` |
 | today.py | `TodayPage` | `show_today`, ticket rows, major-event countdowns, completion |
 | projects.py | `ProjectsPage` | `show_projects`, project tree, Map/Kanban/Details, filters, sections, rules, milestones, Code placeholder |
 | inspector.py | `InspectorMixin` | ticket inspector panel and its draft, archive, work-block scheduling |
@@ -107,4 +111,4 @@ The window refuses to close or log out while `self.jobs` is non-empty, so a work
 
 ## Tests
 
-`tests/` mirrors the layers: `test_store.py`, `test_sync.py` (client and hub together), `test_palettes.py` for core/data; `test_ui.py`, `test_kanban.py`, `test_map_ui.py`, `test_calendar_map.py`, `test_dialogs.py`, `test_settings.py`, `test_capture_polish.py` for the window and views; `test_branding.py` for stable runtime identifiers. `check_native_frame.py` is a manual Windows check, not part of discovery. Every test creates its own profile under `build/test-data/`.
+`tests/` mirrors the layers: `test_store.py`, `test_sync.py` (client and hub together), `test_palettes.py`, `test_preferences.py` (preferences, custom colors, time zones) for core/data; `test_ui.py`, `test_kanban.py`, `test_map_ui.py`, `test_calendar_map.py`, `test_dialogs.py`, `test_settings.py`, `test_capture_polish.py` for the window and views; `test_branding.py` for stable runtime identifiers. `check_native_frame.py` is a manual Windows check, not part of discovery. Every test creates its own profile under `build/test-data/`.

@@ -13,7 +13,7 @@ from datetime import date, timedelta
 from importlib.resources import files
 from pathlib import Path
 from ..core import domain as D
-from ..core.palettes import LEGACY_THEMES, THEME_IDS, valid_theme_colors
+from ..core import preferences
 
 
 class Store:
@@ -350,62 +350,15 @@ class Store:
         with self.lock:
             account = self.auth()
             row = self.db.execute("SELECT data FROM settings WHERE account_id=?", (account["id"],)).fetchone()
-            current = json.loads(row[0]) if row else {}
-            defaults = {
-                "theme": "graphite",
-                "density": "compact",
-                "textScale": 100,
-                "timezone": "Asia/Tokyo",
-                "sidebarWidth": 164,
-                "inspectorWidth": 280,
-                "layoutRevision": 0,
-                "themeColors": {},
-            }
-            if current.get("theme") in LEGACY_THEMES:
-                current["theme"] = LEGACY_THEMES[current["theme"]]
-            if not valid_theme_colors(current.get("themeColors", {})):
-                current.pop("themeColors")
+            current = preferences.sanitize(json.loads(row[0]) if row else {})
             if patch is None:
-                return {**defaults, **current}
-            allowed = set(defaults) | {
-                "syncUrl",
-                "syncEnabled",
-                "syncFingerprint",
-                "windowGeometry",
-                "windowState",
-            }
-            if set(patch) - allowed:
-                raise ValueError("Unknown preference.")
-            if "theme" in patch and patch["theme"] not in THEME_IDS:
-                raise ValueError("Invalid theme.")
-            if "themeColors" in patch and not valid_theme_colors(patch["themeColors"]):
-                raise ValueError("Invalid theme colors.")
-            if "density" in patch and patch["density"] not in ("comfortable", "compact"):
-                raise ValueError("Invalid density.")
-            for key, low, high in (
-                ("textScale", 90, 125),
-                ("sidebarWidth", 140, 280),
-                ("inspectorWidth", 240, 420),
-            ):
-                if key in patch and (
-                    isinstance(patch[key], bool)
-                    or not isinstance(patch[key], (float, int))
-                    or not low <= patch[key] <= high
-                ):
-                    raise ValueError("Invalid " + key + ".")
-            if "layoutRevision" in patch and (
-                type(patch["layoutRevision"]) is not int or not 0 <= patch["layoutRevision"] <= 3
-            ):
-                raise ValueError("Invalid layout revision.")
-            if "timezone" in patch:
-                D.ZoneInfo(patch["timezone"])
-            if "syncEnabled" in patch and not isinstance(patch["syncEnabled"], bool):
-                raise ValueError("Invalid sync switch.")
+                return {**preferences.DEFAULTS, **current}
+            preferences.validate(patch)
             self.db.execute(
                 "INSERT INTO settings VALUES(?,?) ON CONFLICT(account_id) DO UPDATE SET data=excluded.data",
                 (account["id"], json.dumps({**current, **patch})),
             )
-            return {**defaults, **current, **patch}
+            return {**preferences.DEFAULTS, **current, **patch}
 
     def snapshot(self):
         with self.lock:

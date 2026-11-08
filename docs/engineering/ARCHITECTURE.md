@@ -12,14 +12,15 @@ The package is split by layer. Lower layers never import higher ones: `core` has
 | hub.py | Stable `python -m dayframe.hub` launch path for installed hub services |
 | core/domain.py | Shared validation, dates, password hashing, rules, dependencies, field comparisons |
 | core/planning.py | Shared calendar projections for Home and Calendar (Sunday-first weeks, occurrences, overlap lanes) |
-| core/palettes.py | Theme and color-scheme definitions used by Store validation and the Qt theme |
+| core/palettes.py, preferences.py, timezones.py | Themes, color schemes and custom color roles; preference defaults/validation; time zone lists for pickers and world clocks |
 | data/store.py, schema.sql, schema_definitions.json | SQLite migrations, account scope, normalized relations, transactions/outbox, backup/import |
 | sync/client.py | Authenticated push/pull, certificate pinning, OS keyring, conflict reconciliation |
 | sync/hub.py | Optional private HTTP/TLS service with SQLite change feed and device registry |
 | ui/window/ | Main window: `main.py` owns state, async jobs and refresh; one mixin module per page or concern |
 | ui/views/ | Painted view widgets: Kanban lanes, project Map, Calendar, Today agenda, Settings panel |
 | ui/dialogs.py, widgets.py, labels.py | Quick Add/section/conflict dialogs, small widget helpers, label chip editor and painting |
-| ui/theme.py, window_frame.py | Semantic palette application, Qt style rules, QtAwesome glyphs; guarded Windows DWM frame colors |
+| ui/theme.py, window_frame.py | Palette, font and size application, Qt style rules, QtAwesome glyphs; guarded Windows DWM frame colors |
+| ui/color_picker.py, zone_picker.py | Color wheel and swatches for custom colors; searchable time zone picker |
 | ui/workers.py, dragdrop.py | QThreadPool worker delivery; the shared ticket drag MIME type |
 
 Qt style sheets provide the native control appearance. User content is displayed as plain text or edited in QPlainTextEdit.
@@ -55,7 +56,7 @@ The current in-memory snapshots rebuild native views after committed changes. Th
 
 ## Compact window and trusted local session
 
-The current window defaults to1280×800 with980×640 minimum and8.5pt base text. Layout revision3 replaces old oversized geometry once. The inspector preserves small-window usability and Today can use Tasks/Agenda tabs.
+The current window defaults to 1280×800 with a 980×640 minimum. Text uses an 8.5 pt design size scaled by the text-size preference, which defaults to 90%. Layout revision 3 replaced old oversized geometry once; revision 4 moved profiles on the old 100% default to 90%. The inspector preserves small-window usability and Today can use Tasks/Agenda tabs.
 
 Store.restore_session() reads a local account/device marker, register/login remember it, and logout removes it. The marker contains no password and lives outside SQLite backups/outbox. This implements the owner's preference for local convenience, not a new encryption boundary. Short/blank passwords use the same verifier format.
 

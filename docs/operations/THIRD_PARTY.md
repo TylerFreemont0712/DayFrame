@@ -20,4 +20,17 @@ Source/project references:
 - [PyInstaller license and bootloader exception](https://pyinstaller.org/en/stable/license.html)
 - [NSIS license notices](https://nsis.sourceforge.io/License)
 
+Several color schemes adapt published palettes; colors were adjusted where needed for contrast. These projects are MIT-licensed, and DayFrame includes only color values, not their code or assets:
+
+- [Nord](https://www.nordtheme.com/) by Arctic Ice Studio and Sven Greb
+- [Catppuccin](https://catppuccin.com/)
+- [Dracula](https://draculatheme.com/)
+- [Tokyo Night](https://github.com/tokyo-night/tokyo-night-vscode-theme)
+- [One Dark](https://github.com/atom/atom/tree/master/packages/one-dark-syntax) from Atom
+- [Monokai](https://monokai.pro/) palette by Wimer Hazenberg
+- [Gruvbox](https://github.com/morhetz/gruvbox) by Pavel Pertsev
+- [Solarized](https://ethanschoonover.com/solarized/) by Ethan Schoonover
+- [Rosé Pine](https://rosepinetheme.com/)
+- [Everforest](https://github.com/sainnhe/everforest) by sainnhe
+
 Dependencies retain their own licenses. No public project license has been selected for the owner's DayFrame source.

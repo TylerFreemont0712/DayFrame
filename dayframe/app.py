@@ -12,6 +12,7 @@ from .data.store import Store
 from .ui.window import DayFrame
 from .ui.dialogs import AddDialog
 from .ui.theme import apply_theme
+from .core.palettes import THEME_ORDER
 from . import __version__
 
 
@@ -136,12 +137,43 @@ def main():
                 window.build_shell()
                 window.navigate("Today")
                 grab("native-light")
-                for theme in ("terminal", "studio"):
+                for theme in ("terminal", "studio", "nord", "catppuccin", "editor"):
                     window.store.settings({"theme": theme})
                     apply_theme(window.store.settings())
                     window.build_shell()
                     window.navigate("Calendar")
                     grab("native-" + theme)
+                # Light variants of the new themes, world clocks and the custom color editor.
+                window.store.settings(
+                    {
+                        "theme": "catppuccin",
+                        "themeColors": {"catppuccin": "latte", "editor": "solarized_light"},
+                        "worldClocks": ["Europe/London", "America/New_York"],
+                    }
+                )
+                apply_theme(window.store.settings())
+                window.build_shell()
+                window.navigate("Today")
+                grab("native-catppuccin-latte")
+                window.store.settings({"theme": "editor"})
+                apply_theme(window.store.settings())
+                window.build_shell()
+                window.navigate("Projects")
+                grab("native-editor-solarized-light")
+                window.store.settings(
+                    {
+                        "theme": "nord",
+                        "themeColors": {"nord": "custom"},
+                        "customColors": {"nord": {"accent": "#d08770", "heading_text": "#ebcb8b"}},
+                    }
+                )
+                apply_theme(window.store.settings())
+                window.build_shell()
+                window.navigate("Settings")
+                window.settings_panel.navigation.setCurrentRow(1)
+                window.settings_panel.advanced_toggle.setChecked(True)
+                grab("native-settings-custom-colors")
+                window.store.settings({"themeColors": {}, "customColors": {}, "worldClocks": []})
                 window.store.settings({"theme": "graphite"})
                 apply_theme(window.store.settings())
                 window.build_shell()
@@ -206,8 +238,8 @@ def main():
                         capture.grab().save(str(path))
                         screens.append(str(path))
                     capture.reject()
-                for theme in ("graphite", "terminal", "light", "studio"):
-                    for width, height, scale in ((1280, 800, 100), (980, 640, 125)):
+                for theme in THEME_ORDER:
+                    for width, height, scale in ((1280, 800, 90), (980, 640, 125)):
                         window.store.settings(
                             {
                                 "theme": theme,

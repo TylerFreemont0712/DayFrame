@@ -73,6 +73,12 @@ Collected from [SPEC.md](../../SPEC.md), [DECISIONS.md](../product/DECISIONS.md)
 - **planned** Tested Linux Mint installer or AppImage; live check on the owner's Mint machine.
 - **proposed** Signed Windows installer.
 
+### Appearance
+- **proposed** Bundle a few open-licensed fonts (for example Inter, JetBrains Mono, Atkinson Hyperlegible) so font choices look the same on every machine; needs OFL notices and a packaged check.
+- **proposed** Import and export custom color schemes as small JSON files, and share them between devices through sync.
+- **proposed** Contrast warnings in the Custom color editor when text or accents fall below the preset schemes' ratios.
+- **proposed** 12-hour clock option for world clocks and agenda times.
+
 ## Engineering ideas
 
 - **proposed** Add Ruff linting to CI once the formatted baseline has settled, so unused imports and undefined names are caught before review.

@@ -261,7 +261,7 @@ class CalendarAndMapTests(unittest.TestCase):
         for n in range(6):
             self.event(title="All day %d" % n, date=day, start_time="", end_time="")
         w = self.window()
-        for scale in (90, 100, 125):
+        for scale in (75, 90, 140):
             self.s.settings({"textScale": scale})
             apply_theme(self.s.settings())
             w.build_shell()

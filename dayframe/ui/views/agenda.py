@@ -56,7 +56,7 @@ class Agenda(QWidget):
             badge_height = p.fontMetrics().height() + 4
             badge = QRectF(0, y - badge_height / 2, left - 4, badge_height)
             p.drawRoundedRect(badge, 3, 3)
-            p.setPen(QColor(C["bg"]))
+            p.setPen(QColor(C["accent_text"]))
             p.drawText(badge, Qt.AlignCenter, now.strftime("%H:%M"))
         p.end()
 

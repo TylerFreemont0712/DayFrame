@@ -24,7 +24,7 @@ Routine CI runs source tests only. Package builds and packaged smoke checks requ
 
 ## Application rules
 
-Default Graphite/Cyan uses the compact dashboard layout in a compact 1280x800 resizable window, minimum980x640. 1920x1200 is the owner's display size, not the application size. Themes, density, font scale and panel
+Default Graphite/Cyan uses the compact dashboard layout in a compact 1280x800 resizable window, minimum980x640. 1920x1200 is the owner's display size, not the application size. Text size defaults to 90%. Themes, density, font scale and panel
 sizes are independent. Today has no contextual sidebar. Navigation glyphs use bundled scalable fonts; the application icon is a packaged DayFrame raster asset.
 
 Tickets are shared records across all views. Preserve deadlines, manual map placement,

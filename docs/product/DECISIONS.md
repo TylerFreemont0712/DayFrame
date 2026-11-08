@@ -134,3 +134,17 @@ D-066: Remove the redundant project List view; use Details for ticket tables and
 D-067: Replace the long Settings form with View, Theme, Local data, Sync and Account categories. Keep all existing controls and actions, with bounded scrollable forms and independent View/Theme saves. Preserve field entries between categories and appearance changes; remember the selected category for the session. Show unresolved conflict counts beside Sync.
 
 D-068: Themes are renamed Graphite, Terminal, Paper and Midnight so each can offer several color schemes (Graphite: Cyan, Azure, Mint, Orange, Rose; Terminal: Amber, Green, Ice, Magenta, Mono; Paper: Sage, Clay, Ocean, Plum; Midnight: Lavender, Ocean, Forest, Wine, Ember). The first scheme of each theme is the previous look. A dynamic Colors section in Settings > Theme lists the schemes of the theme being chosen, and every theme remembers its own scheme (`themeColors` preference, device-local). The saved theme id `amber` is now `terminal` and old values are read as such. System has no scheme of its own and uses the choices for Paper and Graphite.
+
+## Appearance and time customization — 2026-11-08
+
+D-069: 90% is the base text size. New profiles start at 90%, and a profile still on the old 100% default moves to 90% once (layout revision 4). The text scale range is 75–140%, with a separate 80–160% heading size. Density gains Spacious, and a corner style can override the theme radius.
+
+D-070: Add the Nord, Catppuccin and Editor themes. Editor collects popular code-editor palettes (Dracula, Tokyo Night, One Dark, Monokai, Gruvbox, Solarized, Rosé Pine, Everforest). New themes include light schemes, so light/dark behavior follows each palette's background instead of the theme name.
+
+D-071: Every theme offers a Custom scheme with a color wheel for its main colors and an Advanced section for per-element colors (buttons, button text, hover outline, accent-button text, headings and bold labels, inputs, selection, warnings, clocks). Unset advanced colors follow the main colors. Custom colors are device-local and stored per theme.
+
+D-072: Interface, heading and number fonts can be chosen from installed fonts, defaulting to the theme's own with fallbacks. Fonts are not bundled or downloaded.
+
+D-073: The time zone is chosen from a searchable list sorted by UTC offset that shows each zone's current time, including whole-hour fixed UTC offsets. Up to three world clocks show the current time elsewhere in the bottom bar.
+
+D-074: Bottom-bar controls and calendar all-day chips size themselves from the active font; the all-day band shows up to four rows and summarizes the rest as "+N more".

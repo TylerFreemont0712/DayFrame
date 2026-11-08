@@ -54,8 +54,8 @@ def label_choices(snapshot):
 def colors(name):
     base = QColor(label_color(name))
     fill = QColor(base)
-    fill.setAlpha(35 if C.get("mode") != "paper" else 30)
-    return base, base.darker(175) if C.get("mode") == "paper" else base.lighter(115), fill
+    fill.setAlpha(35 if C.get("dark", True) else 30)
+    return base, base.lighter(115) if C.get("dark", True) else base.darker(175), fill
 
 
 def paint_label_pills(p, rect, names, max_count=2):

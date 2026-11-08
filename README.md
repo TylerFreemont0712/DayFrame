@@ -14,7 +14,8 @@ Version **0.5.2**. See [branding and storage identifiers](docs/operations/BRANDI
 - Map: inherited classification, parent/child tickets, section sequence links, hover ghosts, confirmation, Undo and Unsorted tray.
 - Time: persistent ticket/unassigned timer, manual entries and overlap review.
 - Rich Quick Add, colored preset/custom labels, private accounts and remembered login until Logout.
-- Graphite, Terminal, Paper, Midnight and System themes, each with its own color schemes (Terminal: Amber, Green, Ice, Magenta, Mono), plus separate density and text scale.
+- Graphite, Terminal, Paper, Midnight, Nord, Catppuccin, Editor and System themes, each with its own color schemes (Editor: Dracula, Tokyo Night, One Dark, Gruvbox, Solarized and more) plus a Custom scheme with a color wheel and advanced element colors; font, corner, density, text and heading size choices.
+- Time zone picker with UTC offsets and current times, and world clocks in the bottom bar.
 - Settings organized into View, Theme, Local data, Sync and Account, with independent View/Theme saves.
 - SQLite backup/import, transactional sync outbox, private LAN hub, certificate pinning, field merges and conflict review.
 

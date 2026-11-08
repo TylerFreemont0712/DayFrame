@@ -37,7 +37,7 @@ def apply_native_frame(widget):
     from .theme import CURRENT
 
     values = {
-        20: 0 if CURRENT["mode"] == "paper" else 1,
+        20: 1 if CURRENT.get("dark", True) else 0,
         34: colorref(CURRENT["line"]),
         35: colorref(CURRENT["bg"]),
         36: colorref(CURRENT["text"]),

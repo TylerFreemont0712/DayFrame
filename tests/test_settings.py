@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QApplication, QPushButton, QCheckBox, QLineEdit
 
 from dayframe.data.store import Store
 from dayframe.ui.window import DayFrame
-from dayframe.core.palettes import THEMES, schemes
+from dayframe.core.palettes import THEME_ORDER, THEMES, schemes
 from dayframe.ui.theme import apply_theme, CURRENT
 
 APP = QApplication.instance() or QApplication([])
@@ -60,12 +60,12 @@ class SettingsTests(unittest.TestCase):
             self.assertLess(
                 nav.visualItemRect(nav.item(i)).bottom(), nav.visualItemRect(nav.item(i + 1)).top()
             )
-        self.settings.fields["timezone"].setText("Europe/London")
+        self.settings.fields["timezone"].set_zone("Europe/London")
         self.section("sync")
         self.settings.fields["syncUrl"].setText("https://private-hub:47831")
         self.settings.fields["password"].setText("draft password")
         self.section("view")
-        self.assertEqual(self.settings.fields["timezone"].text(), "Europe/London")
+        self.assertEqual(self.settings.fields["timezone"].zone(), "Europe/London")
         nav.setFocus()
         QTest.keyClick(nav, Qt.Key_Down)
         self.assertEqual(self.window.settings_section, "theme")
@@ -83,9 +83,11 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(self.settings.navigation.currentItem().data(Qt.UserRole), "sync")
 
     def test_theme_and_view_save_independently_and_keep_other_entries(self):
-        self.settings.fields["density"].setCurrentIndex(0)
+        self.settings.fields["density"].setCurrentIndex(
+            self.settings.fields["density"].findData("comfortable")
+        )
         self.settings.fields["textScale"].setValue(125)
-        self.settings.fields["timezone"].setText("Europe/London")
+        self.settings.fields["timezone"].set_zone("Europe/London")
         self.settings.fields["syncUrl"].setText("https://private-hub:47831")
         self.settings.fields["password"].setText("unsent")
         self.section("theme")
@@ -94,12 +96,12 @@ class SettingsTests(unittest.TestCase):
         saved = self.store.settings()
         self.assertEqual(saved["theme"], "light")
         self.assertEqual(
-            (saved["density"], saved["textScale"], saved["timezone"]), ("compact", 100, "Asia/Tokyo")
+            (saved["density"], saved["textScale"], saved["timezone"]), ("compact", 90, "Asia/Tokyo")
         )
         self.assertEqual(self.window.settings_section, "theme")
         self.assertEqual(self.settings.fields["password"].text(), "unsent")
         self.section("view")
-        self.assertEqual(self.settings.fields["timezone"].text(), "Europe/London")
+        self.assertEqual(self.settings.fields["timezone"].zone(), "Europe/London")
         self.assertEqual(self.settings.fields["textScale"].value(), 125)
         self.settings.fields["theme"].setCurrentIndex(self.settings.fields["theme"].findData("terminal"))
         self.click("Apply view settings")
@@ -121,12 +123,14 @@ class SettingsTests(unittest.TestCase):
         fields = self.settings.fields
         theme, scheme = fields["theme"], fields["themeColor"]
         self.assertEqual(
-            [scheme.itemData(i) for i in range(scheme.count())], ["cyan", "azure", "mint", "orange", "rose"]
+            [scheme.itemData(i) for i in range(scheme.count())],
+            ["cyan", "azure", "mint", "orange", "rose", None, "custom"],
         )
         self.choose(scheme, "mint")
         self.choose(theme, "terminal")
         self.assertEqual(
-            [scheme.itemData(i) for i in range(scheme.count())], ["amber", "green", "ice", "magenta", "mono"]
+            [scheme.itemData(i) for i in range(scheme.count())],
+            ["amber", "green", "ice", "magenta", "mono", None, "custom"],
         )
         self.assertEqual(scheme.currentData(), "amber")
         self.assertEqual(self.settings.color_title.text(), "Terminal colors")
@@ -201,14 +205,14 @@ class SettingsTests(unittest.TestCase):
                         self.assertIn(CURRENT["muted"], text)
 
     def test_invalid_view_settings_keep_values_and_leave_saved_preferences_intact(self):
-        self.settings.fields["timezone"].setText("Invalid/TimeZone")
+        self.settings.fields["timezone"].set_zone("Invalid/TimeZone")
         self.settings.fields["textScale"].setValue(110)
         with patch("dayframe.ui.window.main.error") as error:
             self.click("Apply view settings")
         error.assert_called_once()
         self.assertEqual(self.store.settings()["timezone"], "Asia/Tokyo")
-        self.assertEqual(self.store.settings()["textScale"], 100)
-        self.assertEqual(self.settings.fields["timezone"].text(), "Invalid/TimeZone")
+        self.assertEqual(self.store.settings()["textScale"], 90)
+        self.assertEqual(self.settings.fields["timezone"].zone(), "Invalid/TimeZone")
         self.assertEqual(self.settings.fields["textScale"].value(), 110)
 
     def test_backup_examples_password_and_logout_actions_still_work(self):
@@ -286,8 +290,8 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(self.settings.navigation.currentItem().text(), "Sync")
 
     def test_pages_fit_themes_sizes_and_larger_text(self):
-        for theme in ("graphite", "terminal", "light", "studio"):
-            for scale in (100, 125):
+        for theme in THEME_ORDER:
+            for scale in (90, 125):
                 self.store.settings({"theme": theme, "textScale": scale, "density": "comfortable"})
                 apply_theme(self.store.settings())
                 self.window.build_shell()
@@ -317,15 +321,100 @@ class SettingsTests(unittest.TestCase):
                             page = self.section(section)
                             self.assertEqual(self.window.size().width(), width)
                             self.assertEqual(page.horizontalScrollBar().maximum(), 0)
-                            for control in page.findChildren(QPushButton) + page.findChildren(QLineEdit):
+                            controls = page.findChildren(QPushButton) + page.findChildren(QLineEdit)
+                            # Hidden controls (the custom color editor) cannot be reached and are skipped.
+                            for control in [c for c in controls if c.isVisibleTo(page)]:
                                 point = control.mapTo(page.widget(), control.rect().topLeft())
                                 self.assertGreaterEqual(point.x(), 0)
                                 self.assertLessEqual(point.x() + control.width(), page.viewport().width())
-                            for control in page.findChildren(QPushButton):
+                            for control in [c for c in page.findChildren(QPushButton) if c.isVisibleTo(page)]:
                                 page.ensureWidgetVisible(control)
                                 APP.processEvents()
                                 point = control.mapTo(page.viewport(), control.rect().center())
                                 self.assertTrue(page.viewport().rect().contains(point), control.text())
+
+    def test_custom_colors_start_from_the_scheme_and_advanced_roles_apply(self):
+        self.section("theme")
+        fields = self.settings.fields
+        self.choose(fields["theme"], "nord")
+        self.choose(fields["themeColor"], "aurora")
+        self.choose(fields["themeColor"], "custom")
+        self.assertFalse(self.settings.custom_editor.isHidden())
+        self.assertEqual(self.settings.pending_custom["nord"]["accent"], "#a3be8c")
+        self.settings.set_custom_color("accent", "#ff8800")
+        self.settings.advanced_toggle.setChecked(True)
+        self.settings.set_custom_color("heading_text", "#123456")
+        self.assertEqual(self.settings.role_values["heading_text"].text(), "#123456")
+        self.assertEqual(self.settings.role_values["button_text"].text(), "Automatic")
+        self.click("Apply theme")
+        saved = self.store.settings()
+        self.assertEqual(saved["themeColors"], {"nord": "custom"})
+        self.assertEqual(saved["customColors"]["nord"]["accent"], "#ff8800")
+        self.assertEqual(saved["customColors"]["nord"]["heading_text"], "#123456")
+        self.assertEqual(
+            (CURRENT["theme"], CURRENT["scheme"], CURRENT["accent"], CURRENT["heading_text"]),
+            ("nord", "custom", "#ff8800", "#123456"),
+        )
+        # Unset advanced roles follow their main color.
+        self.assertEqual(CURRENT["button_hover"], "#ff8800")
+        self.assertTrue(self.settings.advanced_toggle.isChecked())
+        self.settings.reset_custom_color("heading_text")
+        self.click("Apply theme")
+        self.assertNotIn("heading_text", self.store.settings()["customColors"]["nord"])
+        self.assertEqual(CURRENT["heading_text"], CURRENT["text"])
+
+    def test_fonts_corners_and_sizes_are_saved_and_applied(self):
+        self.section("theme")
+        fields = self.settings.fields
+        fields["cornerRadius"].setCurrentIndex(fields["cornerRadius"].findData(14))
+        fields["fontFamily"].addItem("Verdana", "Verdana")
+        fields["fontFamily"].setCurrentIndex(fields["fontFamily"].findData("Verdana"))
+        self.click("Apply theme")
+        saved = self.store.settings()
+        self.assertEqual((saved["cornerRadius"], saved["fontFamily"]), (14, "Verdana"))
+        self.assertEqual((CURRENT["radius"], CURRENT["font"]), (14, "Verdana"))
+        self.section("view")
+        fields = self.settings.fields
+        fields["textScale"].setValue(120)
+        fields["headingScale"].setValue(150)
+        fields["density"].setCurrentIndex(fields["density"].findData("spacious"))
+        fields["inspectorWidth"].setValue(360)
+        self.click("Apply view settings")
+        saved = self.store.settings()
+        self.assertEqual(
+            (saved["textScale"], saved["headingScale"], saved["density"], saved["inspectorWidth"]),
+            (120, 150, "spacious", 360),
+        )
+        self.assertAlmostEqual(APP.font().pointSizeF(), 8.5 * 1.2, places=1)
+        self.assertIn("font-size:%dpx" % round(20 * 1.2 * 1.5), APP.styleSheet())
+        self.assertEqual(self.settings.fields["fontFamily"].currentData(), "Verdana")
+
+    def test_time_zone_picker_lists_offsets_and_world_clocks_show_in_the_bar(self):
+        zone = self.settings.fields["timezone"]
+        zone.load()
+        labels = [zone.itemText(i) for i in range(zone.count())]
+        self.assertGreater(len(labels), 300)
+        tokyo = next(text for text in labels if "Asia/Tokyo" in text)
+        self.assertTrue(tokyo.startswith("UTC+09:00"))
+        self.assertIn("Fixed offset", labels[zone.findData("Etc/GMT-5")])
+        zone.set_zone("Etc/GMT-5")
+        self.assertIn("UTC+05:00", self.settings.zone_now.text())
+        self.settings.fields["worldClock0"].set_zone("Europe/London")
+        self.settings.fields["worldClock1"].set_zone("America/New_York")
+        self.click("Apply view settings")
+        saved = self.store.settings()
+        self.assertEqual(saved["timezone"], "Etc/GMT-5")
+        self.assertEqual(saved["worldClocks"], ["Europe/London", "America/New_York"])
+        self.window.tick()
+        self.assertTrue(self.window.world_clock.isVisible())
+        self.assertIn("London", self.window.world_clock.text())
+        self.assertIn("New York", self.window.world_clock.text())
+        self.settings.fields["worldClock0"].set_zone("")
+        self.settings.fields["worldClock1"].set_zone("")
+        self.click("Apply view settings")
+        self.window.tick()
+        self.assertEqual(self.store.settings()["worldClocks"], [])
+        self.assertFalse(self.window.world_clock.isVisible())
 
 
 if __name__ == "__main__":

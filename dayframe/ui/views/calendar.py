@@ -30,7 +30,7 @@ def readable(item):
 def paint_item(p, rect, item, compact=False):
     color = QColor(P.event_color(item))
     fill = QColor(color)
-    fill.setAlpha(53 if C.get("mode") != "paper" else 43)
+    fill.setAlpha(53 if C.get("dark", True) else 43)
     p.setPen(QPen(color, 0.9))
     p.setBrush(fill)
     radius = min(7, C.get("radius", 4))

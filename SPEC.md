@@ -208,9 +208,9 @@ Current search covers ticket titles, descriptions, labels, keys and project name
 
 Accepted baseline: Graphite / Cyan, using the first combined concept, adapted to a normal compact window used as a dashboard.
 
-Separate color palette, density, typography scale, and panel layout. Provide themes from the first implementation slice. Current set: Graphite, Terminal, Paper, Midnight and System. Profiles change typography, shape and surfaces; each theme also offers several color schemes (default Graphite/Cyan, Terminal/Amber, Paper/Sage, Midnight/Lavender) chosen in a Theme-tab section that follows the selected theme.
+Separate color palette, density, typography scale, and panel layout. Provide themes from the first implementation slice. Current set: Graphite, Terminal, Paper, Midnight, Nord, Catppuccin, Editor and System. Profiles change typography, shape and surfaces; each theme also offers several color schemes (default Graphite/Cyan, Terminal/Amber, Paper/Sage, Midnight/Lavender, Nord/Polar Night, Catppuccin/Mocha, Editor/Dracula) chosen in a Theme-tab section that follows the selected theme, plus a Custom scheme whose main and advanced element colors the user picks with a color wheel. Interface, heading and number fonts and the corner style can be overridden.
 
-Support resizable contextual panel and ticket inspector, saved widths, flexible main canvas, Comfortable and Compact density, and text scaling. On a large screen, use available width for useful information rather than oversized padding or huge KPI cards.
+Support resizable contextual panel and ticket inspector, saved widths, flexible main canvas, Compact/Comfortable/Spacious density, text scaling with 90% as the base, a separate heading size, and window-size presets. On a large screen, use available width for useful information rather than oversized padding or huge KPI cards.
 
 Detailed values and breakpoints are in the design-system document.
 
