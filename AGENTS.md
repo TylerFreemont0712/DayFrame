@@ -1,6 +1,7 @@
 # DayFrame development
 
-Read SPEC.md, docs/DECISIONS.md, docs/ARCHITECTURE.md, and docs/CURRENT_STATUS.md before changing behavior.
+Read SPEC.md, docs/product/DECISIONS.md, docs/engineering/ARCHITECTURE.md, and docs/status/CURRENT_STATUS.md before changing behavior.
+docs/engineering/CODE_MAP.md maps the package layout; docs/README.md holds the documentation layout and rules. Future ideas go in docs/status/IDEAS.md.
 Use Python, PySide6 Qt Widgets and QGraphicsView for the application.
 
 ## Writing and commit history
@@ -15,7 +16,7 @@ Follow existing session authorization for committing and pushing. These conventi
 
 ## Release cadence
 
-Ordinary development changes source only. Keep useful Unreleased changelog notes, but do not bump versions, build installers/portable bundles, replace the current release, tag or publish unless the owner explicitly requests that action. Ship releases in deliberate waves. See docs/RELEASES.md for the current packaged baseline and release checklist.
+Ordinary development changes source only. Keep useful Unreleased changelog notes, but do not bump versions, build installers/portable bundles, replace the current release, tag or publish unless the owner explicitly requests that action. Ship releases in deliberate waves. See docs/operations/RELEASES.md for the current packaged baseline and release checklist.
 
 At a natural completion point, suggest a release if significant unreleased work is ready, or if the last package is at least 14 calendar days old and source changes are waiting. Summarize the changes and validation first, then ask whether to prepare a release. Documentation/comment-only work does not need a release suggestion. Ask once per task; respect a deferral and wait for an explicit answer. Age or significance is a reason to ask, never permission to build. This is a check during active work, not a background reminder.
 
@@ -23,7 +24,7 @@ Routine CI runs source tests only. Package builds and packaged smoke checks requ
 
 ## Application rules
 
-Default Graphite/Cyan uses the compact dashboard layout in a compact 1280x800 resizable window, minimum980x640. 1920x1200 is the owner's display size, not the application size. Themes, density, font scale and panel
+Default Graphite/Cyan uses the compact dashboard layout in a compact 1280x800 resizable window, minimum980x640. 1920x1200 is the owner's display size, not the application size. Text size defaults to 90%. Themes, density, font scale and panel
 sizes are independent. Today has no contextual sidebar. Navigation glyphs use bundled scalable fonts; the application icon is a packaged DayFrame raster asset.
 
 Tickets are shared records across all views. Preserve deadlines, manual map placement,
@@ -45,10 +46,10 @@ implied by source work. Preserve provided third-party notices when packaging.
 The owner authorized the private TylerFreemont0712/DayFrame GitHub source repository.
 Follow CONTRIBUTING.md for iterations. The application package is dayframe.
 Keep established runtime paths, database filename, keyring service and sync identifiers unchanged;
-see docs/BRANDING.md. Never commit live data, local sessions, private keys or generated builds.
+see docs/operations/BRANDING.md. Never commit live data, local sessions, private keys or generated builds.
 
 The owner explicitly allows simple passwords without a minimum length. Local auto-login persists until Options → Log out. Keep local remembering outside SQLite backups/sync and preserve old verifiers.
 
-Home/Calendar share planning.py and Sunday-first weeks. Keep events/tickets/blocks/timer connected; deadlines stay separate. Notes UI is hidden; preserve data. Map classification/linking/nesting requires a 1.5s target hold, ghost preview and release confirmation. Preserve placement/Undo; reject cycles/cross-project links; separate parentage/dependencies. Update hub with synchronized fields. See docs/CALENDAR_AND_MAP.md.
+Home/Calendar share planning.py and Sunday-first weeks. Keep events/tickets/blocks/timer connected; deadlines stay separate. Notes UI is hidden; preserve data. Map classification/linking/nesting requires a 1.5s target hold, ghost preview and release confirmation. Preserve placement/Undo; reject cycles/cross-project links; separate parentage/dependencies. Update hub with synchronized fields. See docs/product/CALENDAR_AND_MAP.md.
 
 Label inputs use the shared chip editor; Enter adds a label without saving the ticket. Keep preset colors consistent, preserve custom names and saved suggestions, and prevent chip/control overlap. Quick Add capture/classification must be atomic. Native frame theming is Windows-guarded and must preserve standard OS controls.

@@ -2,7 +2,7 @@
 
 Version: 0.5, calendar and nested-map baseline
 Date: 2026-11-04
-Status: product/infrastructure decisions confirmed; runnable DayFrame 0.5.2 foundation exists; see docs/CURRENT_STATUS.md for delivered scope
+Status: product/infrastructure decisions confirmed; runnable DayFrame 0.6.0 foundation exists; see docs/status/CURRENT_STATUS.md for delivered scope
 Owner: personal application for the requesting user
 Project destination: C:\Apps\TimeManager on Windows; a normal user-owned project directory on Linux
 
@@ -208,9 +208,9 @@ Current search covers ticket titles, descriptions, labels, keys and project name
 
 Accepted baseline: Graphite / Cyan, using the first combined concept, adapted to a normal compact window used as a dashboard.
 
-Separate color palette, density, typography scale, and panel layout. Provide themes from the first implementation slice. Current set: Graphite/Cyan, Terminal/Amber, Paper/Linen, Midnight/Studio and System. Profiles change typography, shape and surfaces.
+Separate color palette, density, typography scale, and panel layout. Provide themes from the first implementation slice. Current set: Graphite, Terminal, Paper, Midnight, Nord, Catppuccin, Editor and System. Profiles change typography, shape and surfaces; each theme also offers several color schemes (default Graphite/Cyan, Terminal/Amber, Paper/Sage, Midnight/Lavender, Nord/Polar Night, Catppuccin/Mocha, Editor/Dracula) chosen in a Theme-tab section that follows the selected theme, plus a Custom scheme whose main and advanced element colors the user picks with a color wheel. Interface, heading and number fonts and the corner style can be overridden.
 
-Support resizable contextual panel and ticket inspector, saved widths, flexible main canvas, Comfortable and Compact density, and text scaling. On a large screen, use available width for useful information rather than oversized padding or huge KPI cards.
+Support resizable contextual panel and ticket inspector, saved widths, flexible main canvas, Compact/Comfortable/Spacious density, text scaling with 90% as the base, a separate heading size, and window-size presets. On a large screen, use available width for useful information rather than oversized padding or huge KPI cards.
 
 Detailed values and breakpoints are in the design-system document.
 
@@ -306,7 +306,7 @@ Use bounded native modal forms with scrolling content and a fixed action footer.
 
 ## Calendar and map refinement — 2026-11-04
 
-Latest owner instructions override earlier Notes UI/simple calendar/palette-only concepts. Exact behavior: docs/CALENDAR_AND_MAP.md and docs/DESIGN_SYSTEM.md.
+Latest owner instructions override earlier Notes UI/simple calendar/palette-only concepts. Exact behavior: docs/product/CALENDAR_AND_MAP.md and docs/product/DESIGN_SYSTEM.md.
 
 - Month, Upcoming/details/presets, Sunday–Saturday Week; ordered color/duration marks.
 - Click event/work editing; 15-minute single-day move/resize and Undo; independent deadlines.
@@ -324,4 +324,4 @@ Correct rounded native control artifacts, bright tab lines and clipped row badge
 
 Preset labels include red bug and teal feature. Enter/comma/Add commits a typed label without submitting the modal; chips are removable and saved custom names appear in suggestions. Use consistent colors across editor/cards, with visible text.
 
-Apply theme-matched native Windows caption/text/border colors on supported systems, preserving ordinary OS window behavior. Exact scope and platform limits: docs/QUICK_ADD_AND_LABELS.md.
+Apply theme-matched native Windows caption/text/border colors on supported systems, preserving ordinary OS window behavior. Exact scope and platform limits: docs/product/QUICK_ADD_AND_LABELS.md.

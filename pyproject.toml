@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dayframe-desktop"
-version = "0.5.2"
+version = "0.6.0"
 description = "Private native desktop planning, tickets, and time tracking"
 readme = "README.md"
 requires-python = ">=3.12,<3.15"
@@ -18,7 +18,7 @@ dependencies = [
 
 [project.scripts]
 dayframe = "dayframe.app:main"
-dayframe-hub = "dayframe.hub:main"
+dayframe-hub = "dayframe.sync.hub:main"
 
 [project.urls]
 Repository = "https://github.com/TylerFreemont0712/DayFrame"
@@ -28,4 +28,15 @@ Issues = "https://github.com/TylerFreemont0712/DayFrame/issues"
 include = ["dayframe*"]
 
 [tool.setuptools.package-data]
-dayframe = ["*.json", "*.sql", "resources/*.svg", "resources/*.png"]
+dayframe = ["resources/*.svg", "resources/*.png"]
+"dayframe.data" = ["*.json", "*.sql"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["build", "dist"]
+
+[tool.ruff.lint]
+# Pyflakes plus syntax errors. Import sorting stays off: theme.py must import
+# PySide6 before qtawesome so qtpy binds to PySide6.
+select = ["E9", "F"]

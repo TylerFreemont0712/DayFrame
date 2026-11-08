@@ -13,9 +13,9 @@ for distribution in ("PySide6-Essentials","shiboken6","QtAwesome","QtPy","keyrin
     datas+=copy_metadata(distribution)
 python_license=Path(sys.base_prefix)/"LICENSE.txt"
 if python_license.exists():datas.append((str(python_license),"licenses/python"))
-datas.append(("docs/THIRD_PARTY.md","licenses"))
+datas.append(("docs/operations/THIRD_PARTY.md","licenses"))
 datas += [(str(p),"dayframe/resources") for p in Path("dayframe/resources").iterdir() if p.suffix in (".svg", ".png")]
-datas += [("dayframe/schema.sql","dayframe"),("dayframe/schema_definitions.json","dayframe")]
+datas += [("dayframe/data/schema.sql","dayframe/data"),("dayframe/data/schema_definitions.json","dayframe/data")]
 a=Analysis(["app.py"],pathex=[],binaries=[],datas=datas,
            hiddenimports=["keyring.backends.Windows","keyring.backends.SecretService","PySide6.QtSvg"],
            excludes=["PySide6.QtWebEngineCore","PySide6.QtWebEngineWidgets","PySide6.QtQml","PySide6.QtQuick"],

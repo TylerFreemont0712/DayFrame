@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 0.6.0 — 2026-11-08
+
+- Add the Nord, Catppuccin and Editor themes. Editor offers Dracula, Tokyo Night, One Dark, Monokai, Gruvbox, Solarized, Rosé Pine and Everforest schemes; Nord, Catppuccin and Editor include light schemes.
+- Add a Custom color scheme to every theme, with a color wheel for the main colors, Advanced per-element colors (buttons, button text, headings, inputs, selection, warnings, clocks) and a live preview.
+- Choose interface, heading and number fonts from installed fonts, and a corner style.
+- Make 90% the default text size (existing profiles on the old 100% default move once), widen text size to 75–140%, and add heading size, Spacious density, panel widths and window-size presets.
+- Pick the time zone from a searchable list sorted by UTC offset showing each zone's current time, including fixed UTC offsets, and show up to three world clocks in the bottom bar.
+- Fit the bottom bar's Ticket/Event selector, timer and totals to the text size, and size calendar all-day chips from the font with a "+N more" marker when a day has more than four rows.
+- Reorganize the source into layered subpackages (core, data, sync, ui) with one module per main-window page; no behavior change. Format the code with Ruff and add Pyflakes linting.
+- Organize documentation into product, engineering, operations and status folders, with an index and writing rules, a code map, CLAUDE.md and a collected ideas list.
+- Rename the themes Graphite, Terminal, Paper and Midnight and add color schemes to each (Terminal now has Amber, Green, Ice, Magenta and Mono). A Colors section in Settings > Theme follows the selected theme and remembers a scheme per theme. Saved Terminal/Amber preferences carry over.
+
 ## 0.5.2 — 2026-11-05
 
 - Organize Settings into View, Theme, Local data, Sync and Account, keeping every option in a focused page with independent View/Theme saves.
