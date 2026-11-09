@@ -14,7 +14,8 @@ same ``self`` and reach data through ``self.store`` / ``self.data``:
 - tracking.py   Time page
 - settings.py   Settings page host, backup, conflicts, sync
 - capture.py    Quick Add dialog wiring
-- code.py       Code page (repositories, ticket changesets, git actions, GitHub)
+- code.py       Code page shell, Tickets tab, git actions, changesets, GitHub tab
+- code_repo.py  Code page Working tree, History (commit graph) and Branches tabs
 """
 
 from .main import DayFrame

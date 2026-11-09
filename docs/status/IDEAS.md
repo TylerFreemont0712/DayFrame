@@ -68,7 +68,8 @@ Collected from [SPEC.md](../../SPEC.md), [DECISIONS.md](../product/DECISIONS.md)
 - **planned** Subversion support: per-project SVN checkouts with shelves stored as changesets (D-075).
 - **proposed** Use the GitHub token for git push and pull over HTTPS through a credential helper, so one sign-in covers both.
 - **proposed** Link tickets to GitHub issues and pull requests both ways, showing pull request state and checks on cards.
-- **proposed** File tree and per-file diff navigation on the Code page; side-by-side diffs.
+- **proposed** Blame view, file history and syntax highlighting in the change browser.
+- **proposed** Stage or discard single hunks and lines from the Working tree tab.
 - **proposed** Drop DayFrame's own git stash backups when a changeset is committed or deleted.
 - **planned** Team workspaces with memberships, explicit sharing and assignees (SPEC §13, D-015, D-016).
 

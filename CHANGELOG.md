@@ -6,6 +6,7 @@
 - Run fetch, fast-forward pull, commit, push and branch create/switch from the Code page in the background, with confirmations that show the command and outgoing commits. Push never forces.
 - Connect GitHub with an access token in Settings > Sync (kept in the OS credential store) to see checks, the latest release, pull requests and issues, open pull requests and issues, merge pull requests and create tickets from issues.
 - Open a ticket on the Code page from a code badge on Kanban and Map cards, their context menus, the inspector, and the work-block dialog in Calendar and Today.
+- Rework the Code page for development: tickets as outlined cards in a fixed column, a changeset strip, and a change browser with a changed-file tree, +/− counts per file and folder, and numbered unified or split diffs that highlight in-line edits and line-ending changes. Add Working tree (stage, unstage, discard), History (commit graph with merges, branches and tags, commit details) and Branches (tracking, ahead/behind, tags, stashes, create and safe delete) tabs.
 - Move the database to schema 5 for repositories and changesets. Update the hub before syncing from a client that uses the Code page.
 
 ## 0.6.0 — 2026-11-08

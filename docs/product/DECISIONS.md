@@ -158,3 +158,5 @@ D-076: Tickets own changesets: saved working-tree changes whose diff is stored i
 D-077: GitHub gets full read/write API access through a personal access token in Settings > Sync, kept only in the OS credential store. Commit, push, pull, branch switches, merges and deletions require confirmation; push never forces and pull only fast-forwards.
 
 D-078: Other views link to the Code page: a code badge on Kanban and Map cards, Open in Code in their context menus, a Code button in the inspector, and Open ticket / Open in Code in the work-block dialog used by Calendar and Today.
+
+D-079 (2026-11-09): The Code page is a developer workspace with as much detail as possible, all inside the Code section. Tickets show as outlined cards in a fixed-width column whose divider does not move. Changes open in a change browser (file tree, per-file and folder line counts, numbered diff with in-line edit highlighting, unified or split). Working tree, History (commit graph with merges and refs) and Branches tabs join Tickets and GitHub.

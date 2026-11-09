@@ -63,7 +63,8 @@ Import direction is one way: `ui → sync → data → core`, `ui → code → c
 | tracking.py | `TimePage` | `show_time`, manual time entry dialog |
 | settings.py | `SettingsPage` | Settings host, backup, conflict review, automatic and manual sync |
 | capture.py | `CaptureMixin` | `quick_add` for new and existing tickets/events |
-| code.py | `CodePage` | `show_code`, `open_code`, repository connection, status cache, git actions, changesets, GitHub tab |
+| code.py | `CodePage` | `show_code`, `open_code`, repository connection, status and `code_load` caches, git actions, Tickets tab and changesets, GitHub tab |
+| code_repo.py | `CodeRepoViews` | Code page Working tree (stage/unstage/discard), History (commit graph and commit details) and Branches tabs |
 
 Page dispatch is by name: `refresh_page()` calls `getattr(self, "show_" + self.page.lower())()`, so a page called "Time" must provide `show_time`. The navigation rail in `shell.py` lists the pages.
 
@@ -92,7 +93,9 @@ Each widget in `ui/views/` takes the window as its first argument and stores it 
 | project_map.py `ProjectMap`, `UnsortedList` | projects.py | `execute`, `refresh`, `select_ticket`, `edit_section`, `new_section`, `new_child_ticket`, `blocked`, `ticket_key`, `undo_action`, `toast`, `code_repo`, `changeset_count`, `open_code` |
 | calendar.py `MiniMonth`, `UpcomingPanel`, `WeekCalendar` | schedule.py | `open_calendar_item`, `move_calendar_item`, `quick_add`, `calendar_selected` |
 | agenda.py `Agenda` | today.py, shell.py (`tick`) | `open_calendar_item` |
-| diff_view.py `DiffView` | code.py | none (read-only text) |
+| diff_view.py `ChangeBrowser`, `DiffCanvas`, `StatBar` | code.py, code_repo.py | none; state dict owned by the page |
+| commit_graph.py `CommitGraph` | code_repo.py | none |
+| code_cards.py `TicketCards`, `ChangesetStrip` | code.py | `data`, `code_ticket`, `code_item` |
 | settings_panel.py `SettingsPanel` | settings.py | `execute`, `build_shell`, `refresh`, `backup`, `sync_now`, `sync_finished`, `run_async`, `review_conflict`, `change_local_password`, `logout`, `settings_section`, `github_token`, `set_github_token` |
 
 ## Writes: one path into the database

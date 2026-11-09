@@ -238,7 +238,11 @@ Each project chooses its version control: Git now, Subversion later. One active 
 
 ### CODE-02: ticket changesets
 
-The Code page lists the project's tickets. Each ticket keeps changesets: named snapshots of working-tree changes (untracked files included) with branch, base commit, a short stat and the unified diff. The diff is stored in the database and synced, so every device can see and restore it. New changeset and Save to selected capture the working tree and keep working; Shelve saves into the applied changeset (or a new one) and cleans the checkout; Switch to restores a changeset into a clean checkout, shelving uncommitted work first and optionally switching to the changeset's branch. Restores apply the stored patch, falling back to a three-way apply. A local git stash entry is kept as a device backup and is used when a diff was too large to store (about 200 KB encoded). Deleting a changeset archives it with Undo.
+The Code page's Tickets tab shows the project's tickets as a fixed-width column of outlined cards (project key, status, priority, labels, changeset count, applied marker) with a filter; the divider does not move. Each ticket keeps changesets: named snapshots of working-tree changes (untracked files included) with branch, base commit, a short stat and the unified diff. The diff is stored in the database and synced, so every device can see and restore it. New changeset and Save to selected capture the working tree and keep working; Shelve saves into the applied changeset (or a new one) and cleans the checkout; Switch to restores a changeset into a clean checkout, shelving uncommitted work first and optionally switching to the changeset's branch. Restores apply the stored patch, falling back to a three-way apply. A local git stash entry is kept as a device backup and is used when a diff was too large to store (about 200 KB encoded). Deleting a changeset archives it with Undo.
+
+### CODE-06: developer views
+
+Every diff (changeset, working tree, commit) opens in a change browser: a folder tree of changed files with status letters and +/− counts per file and folder, a total with a five-block change bar, and the selected file's diff painted with old and new line numbers, highlighted in-line edits, visible tab and line-ending changes, in a unified or split (side-by-side) layout. The Working tree tab separates staged, unstaged and untracked files and stages, unstages or (after confirmation) discards selected files or folders. The History tab draws the commit graph of all branches, remotes and tags with lanes, merges and branch/tag/HEAD badges, filterable by message, author, commit or branch; a selected commit shows its id, parents, author, committer, date and full message beside its change browser (merges against their first parent). The Branches tab lists local branches with tracking and ahead/behind, remote branches, tags and stashes (DayFrame shelves by changeset name), and switches, creates branches from any of them, deletes merged local branches and jumps to a branch in History.
 
 ### CODE-03: git actions with failsafes
 
@@ -252,7 +256,7 @@ Settings > Sync holds a GitHub access token (tested against the API before savin
 
 Kanban and Map cards of projects with a repository show a code badge with the ticket's changeset count; clicking it, or Open in Code in the card's context menu, opens the ticket on the Code page. The inspector has a Code button. Calendar and agenda work blocks open their schedule dialog with Open ticket and Open in Code.
 
-Subversion shelves, file trees and in-app editing remain outside the current Code area.
+Subversion shelves and in-app editing remain outside the current Code area.
 
 ## 15. Data reliability, accessibility, and quality
 

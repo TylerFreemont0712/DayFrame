@@ -12,11 +12,14 @@ import uuid
 from PySide6.QtCore import QTimer, QUrl, Qt
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
+    QHBoxLayout,
+    QLineEdit,
+    QVBoxLayout,
+    QWidget,
     QAbstractItemView,
     QCheckBox,
     QDialog,
     QHeaderView,
-    QListWidget,
     QListWidgetItem,
     QMenu,
     QSplitter,
@@ -39,12 +42,28 @@ from ..code_dialogs import (
     confirm,
 )
 from ..theme import CURRENT as C, icon
-from ..views.diff_view import DiffView
+from ..views.code_cards import (
+    CARD_LIST_WIDTH,
+    INFO_ROLE,
+    TICKET_ROLE,
+    ChangesetStrip,
+    TicketCards,
+    short_stat,
+)
+from ..views.diff_view import ChangeBrowser
 from ..views.kanban import project_color
 from ..widgets import ElidingLabel, ask_text, button, column, error, label, panel, row
 
 STATUS_TTL = 20
 WORKTREE = "worktree"
+# Code page tabs and the method that draws each; GitHub has its own data and loader.
+CODE_VIEWS = {
+    "Tickets": "show_code_tickets",
+    "Working tree": "show_code_working",
+    "History": "show_code_history",
+    "Branches": "show_code_branches",
+    "GitHub": "show_code_github",
+}
 
 
 def ago(ms):
@@ -68,10 +87,13 @@ class CodePage:
             self.code_project = None
             self.code_ticket = None
             self.code_item = None
-            self.code_view = "Changes"
+            self.code_view = "Tickets"
             self.code_show_done = False
+            self.code_filter = ""
+            self.code_sha = None
             self.code_status = {}
-            self.code_diffs = {}
+            self.code_cache = {}
+            self.code_ui = {}
             self.code_github = {}
             self.code_loading = set()
             self.code_busy = None
@@ -114,7 +136,7 @@ class CodePage:
         self.code_project = ticket["project_id"] if ticket else project_id or self.code_project
         self.code_ticket = ticket["id"] if ticket else None
         self.code_item = None
-        self.code_view = "Changes"
+        self.code_view = "Tickets"
         self.page = "Code"
         self.selected = None
         self.refresh_page()
@@ -182,7 +204,7 @@ class CodePage:
         if not repo:
             self.show_code_connect(project)
             return
-        views = ["Changes", "GitHub"]
+        views = list(CODE_VIEWS)
         tabs = QTabBar()
         tabs.setExpanding(False)
         for view in views:
@@ -205,8 +227,10 @@ class CodePage:
         self.work_layout.addWidget(self.code_toolbar(project, repo, path, entry))
         if self.code_view == "GitHub":
             self.show_code_github(project, repo, entry)
+        elif not path:
+            self.work_layout.addStretch()
         else:
-            self.show_code_changes(project, repo, path, entry)
+            getattr(self, CODE_VIEWS.get(self.code_view, "show_code_tickets"))(project, repo, path, entry)
 
     def change_code_view(self, view):
         self.code_view = view
@@ -284,7 +308,7 @@ class CodePage:
         def done(result):
             self.code_loading.discard(repo["id"])
             self.code_status[repo["id"]] = {**result, "path": path, "at": time.monotonic()}
-            self.code_diffs.pop(repo["id"], None)
+            self.code_cache.pop((repo["id"], "worktree"), None)
             if self.page == "Code" and self.code_project == repo["project_id"]:
                 QTimer.singleShot(0, self.refresh_page)
 
@@ -376,8 +400,7 @@ class CodePage:
         return box
 
     def refresh_code(self, repo):
-        self.code_status.pop(repo["id"], None)
-        self.code_diffs.pop(repo["id"], None)
+        self.forget_code(repo)
         self.code_github.pop(repo["id"], None)
         self.refresh_page()
 
@@ -406,8 +429,7 @@ class CodePage:
 
         def finished(result):
             self.code_busy = None
-            self.code_status.pop(repo["id"], None)
-            self.code_diffs.pop(repo["id"], None)
+            self.forget_code(repo)
             if "error" in result:
                 self.toast.setText(title + " failed")
                 error(self, result["error"])
@@ -537,75 +559,155 @@ class CodePage:
 
     # Changes view ---------------------------------------------------------------------------
 
-    def show_code_changes(self, project, repo, path, entry):
-        split = QSplitter(Qt.Horizontal)
-        split.setHandleWidth(3)
-        split.setChildrenCollapsible(False)
-        left, ll = column(spacing=4)
-        left.setMinimumWidth(200)
-        done_toggle = QCheckBox("Show completed")
+    def code_load(self, repo, key, fn, ttl=STATUS_TTL, done=None):
+        """Cached fn(GitRepo) result for a repository, loaded in the background when missing or old.
+
+        Returns the cached entry ({"data"} or {"error"}), possibly stale, or None. When a load
+        finishes the page is rebuilt, or done(entry) runs instead to update widgets in place.
+        """
+        cache_key = (repo["id"], key)
+        entry = self.code_cache.get(cache_key)
+        fresh = entry and time.monotonic() - entry["at"] < ttl
+        path = self.code_path(repo)
+        if fresh or not path or cache_key in self.code_loading:
+            return entry
+        self.code_loading.add(cache_key)
+
+        def work():
+            try:
+                return {"data": fn(G.GitRepo(path))}
+            except Exception as exc:
+                return {"error": str(exc)}
+
+        def finished(result):
+            self.code_loading.discard(cache_key)
+            self.code_cache[cache_key] = {**result, "at": time.monotonic()}
+            if done:
+                done(self.code_cache[cache_key])
+            elif self.page == "Code" and self.code_project == repo["project_id"]:
+                QTimer.singleShot(0, self.refresh_page)
+
+        self.run_async(work, finished)
+        return entry
+
+    def forget_code(self, repo):
+        """Drop cached git results after anything that may have changed the checkout."""
+        self.code_status.pop(repo["id"], None)
+        self.code_cache = {k: v for k, v in self.code_cache.items() if k[0] != repo["id"]}
+
+    def worktree_statuses(self, entry, detailed=False):
+        """Path → status code for the change tree: 'M', '?'… or, detailed, index/worktree 'M·'."""
+        result = {}
+        for f in ((entry or {}).get("status") or {}).get("files", []):
+            code = f["code"]
+            if code == "??":
+                result[f["path"]] = "?"
+            elif detailed:
+                result[f["path"]] = code.replace(".", "·")
+            else:
+                result[f["path"]] = next((c for c in reversed(code) if c not in ". "), "M")
+        return result
+
+    # Tickets view ---------------------------------------------------------------------------
+
+    def show_code_tickets(self, project, repo, path, entry):
+        body = QWidget()
+        layout = QHBoxLayout(body)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(8)
+        left = QVBoxLayout()
+        left.setSpacing(4)
+        tickets = [
+            t
+            for t in self.data["ticket"]
+            if t["project_id"] == project["id"]
+            and not t["archived"]
+            and (t["status"] != "done" or self.code_show_done or t["id"] == self.code_ticket)
+        ]
+        done_toggle = QCheckBox("Completed")
+        done_toggle.setToolTip("Show completed tickets")
         done_toggle.setChecked(self.code_show_done)
         done_toggle.toggled.connect(self.toggle_code_done)
-        ll.addWidget(row(label("Tickets", "section"), None, done_toggle))
-        tickets = QListWidget()
-        tickets.setObjectName("codeTickets")
-        tickets.setAccessibleName("Tickets in " + project["name"])
-        tickets.setWordWrap(True)
+        left.addWidget(row(label("Tickets", "section"), label(str(len(tickets)), "count"), None, done_toggle))
+        search = QLineEdit(self.code_filter)
+        search.setPlaceholderText("Filter tickets, labels, keys…")
+        search.setAccessibleName("Filter tickets")
+        search.setClearButtonEnabled(True)
+        search.setFixedWidth(CARD_LIST_WIDTH)
+        left.addWidget(search)
+        cards = TicketCards(self)
         applied = self.applied_changeset(repo)
-        for t in self.data["ticket"]:
-            if t["project_id"] != project["id"] or t["archived"]:
-                continue
-            if t["status"] == "done" and not self.code_show_done and t["id"] != self.code_ticket:
-                continue
+        current = None
+        for t in tickets:
             count = self.changeset_count(t["id"])
-            detail = D.STATUS_NAMES[t["status"]] + (
-                " · " + str(count) + " changeset" + ("s" if count != 1 else "") if count else ""
-            )
-            if applied and applied["ticket_id"] == t["id"]:
-                detail += " · applied here"
-            item = QListWidgetItem(self.ticket_key(t) + "  " + t["title"] + "\n" + detail)
+            here = bool(applied and applied["ticket_id"] == t["id"])
+            info = {
+                "changesets": count,
+                "applied": here,
+                "blocked": self.blocked(t),
+                "footer": bool(count or here or t["labels"] or self.blocked(t)),
+            }
+            item = QListWidgetItem(self.ticket_key(t) + " " + t["title"])
             item.setData(Qt.UserRole, t["id"])
+            item.setData(TICKET_ROLE, t)
+            item.setData(INFO_ROLE, info)
+            item.setData(Qt.UserRole + 3, " ".join([self.ticket_key(t), t["title"], *t["labels"]]).casefold())
             item.setToolTip(t["title"])
-            if count:
-                item.setIcon(icon("layer-group", C["accent"]))
-            tickets.addItem(item)
+            cards.addItem(item)
             if t["id"] == self.code_ticket:
-                item.setSelected(True)
-                tickets.setCurrentItem(item)
-        if not tickets.count():
-            ll.addWidget(label("No open tickets in this project.", "muted"))
-        tickets.itemClicked.connect(lambda item: self.choose_code_ticket(item.data(Qt.UserRole)))
-        ll.addWidget(tickets, 1)
-        split.addWidget(left)
-        right, rl = column(spacing=5)
+                current = item
+        if current:
+            cards.setCurrentItem(current)
+            cards.scrollToItem(current)
+
+        def apply_filter(text):
+            self.code_filter = text
+            needle = text.casefold().strip()
+            for i in range(cards.count()):
+                cards.item(i).setHidden(bool(needle) and needle not in cards.item(i).data(Qt.UserRole + 3))
+
+        search.textChanged.connect(apply_filter)
+        apply_filter(self.code_filter)
+        cards.itemClicked.connect(lambda item: self.choose_code_ticket(item.data(Qt.UserRole)))
+        left.addWidget(cards, 1)
+        if not tickets:
+            left.addWidget(label("No open tickets in this project.", "muted"))
+        layout.addLayout(left)
+        right = QVBoxLayout()
+        right.setSpacing(6)
         ticket = self.find_ticket(self.code_ticket) if self.code_ticket else None
         if ticket and ticket["project_id"] == project["id"]:
-            self.show_ticket_changes(rl, repo, ticket, entry)
+            self.show_ticket_changes(right, repo, ticket, entry)
         else:
             self.code_ticket = None
-            empty, el = panel("Choose a ticket")
+            intro, il = panel("Choose a ticket")
             text = label(
-                "Each ticket keeps its own changesets: shelved working-tree changes with their diff, "
-                "stored in DayFrame and synced to your other devices. Switching restores a ticket's "
-                "files into the checkout.",
+                "Each ticket keeps its own changesets: saved working-tree changes whose diff is stored "
+                "in DayFrame and synced to your other devices. Pick a ticket to save, shelve or switch "
+                "between them. Below are the checkout's uncommitted changes.",
                 "muted",
             )
             text.setWordWrap(True)
-            el.addWidget(text)
-            rl.addWidget(empty)
-            rl.addWidget(self.diff_panel(repo, WORKTREE, entry), 1)
-        split.addWidget(right)
-        split.setStretchFactor(0, 0)
-        split.setStretchFactor(1, 1)
-        split.setSizes([260, 700])
-        self.work_layout.addWidget(split, 1)
-        hint = label(
-            "Push, pull and fetch use git's own credentials (for example Git Credential Manager). "
-            "DayFrame never force-pushes and pulls only fast-forward.",
-            "muted",
-        )
-        hint.setWordWrap(True)
-        self.work_layout.addWidget(hint)
+            il.addWidget(text)
+            right.addWidget(intro)
+            right.addWidget(self.worktree_browser(repo, entry, ("tickets", repo["id"])), 1)
+        layout.addLayout(right, 1)
+        self.work_layout.addWidget(body, 1)
+
+    def worktree_browser(self, repo, entry, state_key, detailed=False):
+        browser = ChangeBrowser(self.code_ui.setdefault(state_key, {}), "The working tree is clean.")
+        if not (entry or {}).get("status"):
+            browser.set_files([])
+            browser.canvas.set_file(None, message="Choose a checkout folder to see uncommitted changes.")
+            return browser
+        loaded = self.code_load(repo, "worktree", lambda g: g.working_diff())
+        if loaded is None:
+            browser.canvas.set_file(None, message="Reading the working tree…")
+        elif loaded.get("error"):
+            browser.canvas.set_file(None, message="Could not read the working tree: " + loaded["error"])
+        else:
+            browser.set_diff(loaded["data"], self.worktree_statuses(entry, detailed))
+        return browser
 
     def toggle_code_done(self, checked):
         self.code_show_done = checked
@@ -625,68 +727,82 @@ class CodePage:
     def show_ticket_changes(self, rl, repo, ticket, entry):
         status = (entry or {}).get("status")
         branches = (entry or {}).get("branches", [])
-        header = row(
+        head, hl = panel()
+        title = ElidingLabel(ticket["title"], "captureHeading")
+        title_row = row(
             label(self.ticket_key(ticket), "badge"),
-            ElidingLabel(ticket["title"], "section"),
-            None,
+            title,
             button("Open ticket", lambda: self.open_ticket(ticket["id"]), "external-link-alt"),
         )
-        rl.addWidget(header)
+        title_row.layout().setStretchFactor(title, 1)
+        hl.addWidget(title_row)
+        facts = [
+            label(D.STATUS_NAMES[ticket["status"]] + (" · blocked" if self.blocked(ticket) else ""), "count"),
+            label(ticket["priority"].title() + " priority", "count"),
+        ]
+        if ticket["due_date"]:
+            facts.append(label("Due " + ticket["due_date"], "count"))
+        tracked = self.tracked_ms(ticket["id"])
+        facts.append(
+            label(
+                D.short_time(ticket["estimate_min"] * 60000)
+                + " estimate · "
+                + D.short_time(tracked)
+                + " tracked",
+                "count",
+            )
+        )
+        for name in ticket["labels"][:6]:
+            facts.append(label(name, "badge"))
+        hl.addWidget(row(*facts, None))
         suggested = self.ticket_branch(ticket)
         if status:
             if status["branch"] == suggested:
-                branch_row = row(label("On the ticket branch " + suggested, "muted"), None)
+                hl.addWidget(
+                    row(icon_label("code-branch"), label("On the ticket branch " + suggested, "muted"), None)
+                )
             elif suggested in branches:
-                branch_row = row(
-                    label("Ticket branch " + suggested, "muted"),
-                    None,
-                    button("Switch to it", lambda: self.code_switch_branch(repo, suggested), "code-branch"),
+                hl.addWidget(
+                    row(
+                        icon_label("code-branch"),
+                        label(
+                            "Ticket branch "
+                            + suggested
+                            + " · checked out: "
+                            + (status["branch"] or "detached"),
+                            "muted",
+                        ),
+                        None,
+                        button(
+                            "Switch to it", lambda: self.code_switch_branch(repo, suggested), "code-branch"
+                        ),
+                    )
                 )
             else:
-                branch_row = row(
-                    label("No ticket branch yet", "muted"),
-                    None,
-                    button(
-                        "Create " + suggested, lambda: self.code_new_branch(repo, suggested), "code-branch"
-                    ),
+                hl.addWidget(
+                    row(
+                        icon_label("code-branch"),
+                        label(
+                            "No ticket branch yet · checked out: " + (status["branch"] or "detached"), "muted"
+                        ),
+                        None,
+                        button(
+                            "Create " + suggested,
+                            lambda: self.code_new_branch(repo, suggested),
+                            "code-branch",
+                        ),
+                    )
                 )
-            rl.addWidget(branch_row)
+        rl.addWidget(head)
         changesets = self.ticket_changesets(ticket["id"])
         applied = self.applied_changeset(repo)
         ids = [c["id"] for c in changesets]
         if self.code_item not in [WORKTREE, *ids]:
             self.code_item = applied["id"] if applied and applied["id"] in ids else WORKTREE
-        items = QListWidget()
-        items.setObjectName("changesets")
-        items.setAccessibleName("Changesets")
-        files = len(status["files"]) if status else 0
-        worktree = QListWidgetItem(
-            icon("pen", C["accent"] if files else None),
-            "Working tree · "
-            + (str(files) + " uncommitted file(s)" if files else "clean" if status else "not loaded"),
-        )
-        worktree.setData(Qt.UserRole, WORKTREE)
-        items.addItem(worktree)
-        for c in changesets:
-            here = applied and applied["id"] == c["id"]
-            parts = [c["stat"] or "stored diff", c["branch"], ago(c["updated_at"])]
-            item = QListWidgetItem(
-                icon("layer-group", C["accent"] if here else None),
-                c["title"] + ("  · applied here" if here else "") + "\n" + " · ".join(p for p in parts if p),
-            )
-            item.setData(Qt.UserRole, c["id"])
-            item.setToolTip("Based on " + (c["base_commit"][:10] or "unknown commit"))
-            items.addItem(item)
-        for i in range(items.count()):
-            if items.item(i).data(Qt.UserRole) == self.code_item:
-                items.setCurrentRow(i)
-        items.setMaximumHeight(min(190, 30 + items.count() * 40))
-        items.itemClicked.connect(lambda item: self.choose_code_item(item.data(Qt.UserRole)))
-        rl.addWidget(row(label("Changesets", "section"), label(str(len(changesets)), "count"), None))
-        rl.addWidget(items)
         selected = next((c for c in changesets if c["id"] == self.code_item), None)
+        files = len(status["files"]) if status else 0
         ready = bool(status) and not self.code_busy
-        new = button("New changeset", lambda: self.code_capture(repo, ticket, None, keep=True), "plus")
+        new = button("New", lambda: self.code_capture(repo, ticket, None, keep=True), "plus")
         new.setToolTip("Save the working tree as a new changeset for this ticket and keep working")
         new.setEnabled(ready and bool(files))
         save = button(
@@ -710,55 +826,83 @@ class CodePage:
         remove.setToolTip("Delete the selected changeset")
         remove.setAccessibleName("Delete changeset")
         remove.setEnabled(bool(selected))
-        rl.addWidget(row(new, save, shelve, switch, None, remove))
-        rl.addWidget(self.diff_panel(repo, self.code_item, entry, selected), 1)
+        rl.addWidget(
+            row(
+                label("Changesets", "section"),
+                label(str(len(changesets)), "count"),
+                None,
+                new,
+                save,
+                shelve,
+                switch,
+                remove,
+            )
+        )
+        strip = ChangesetStrip(self)
+        worktree = QListWidgetItem("Working tree")
+        worktree.setData(Qt.UserRole, WORKTREE)
+        worktree.setData(
+            INFO_ROLE,
+            {
+                "kind": "worktree",
+                "title": "Working tree",
+                "files": files,
+                "line1": (str(files) + " uncommitted file" + ("" if files == 1 else "s"))
+                if files
+                else "clean"
+                if status
+                else "not loaded",
+                "line2": "on " + (status["branch"] or "detached HEAD") if status else "",
+            },
+        )
+        strip.addItem(worktree)
+        for c in changesets:
+            item = QListWidgetItem(c["title"])
+            item.setData(Qt.UserRole, c["id"])
+            item.setData(
+                INFO_ROLE,
+                {
+                    "kind": "changeset",
+                    "title": c["title"],
+                    "applied": bool(applied and applied["id"] == c["id"]),
+                    "line1": short_stat(c["stat"]) or "stored diff",
+                    "line2": " · ".join(
+                        x for x in (c["branch"], (c["base_commit"] or "")[:7], ago(c["updated_at"])) if x
+                    ),
+                },
+            )
+            item.setToolTip(
+                c["title"]
+                + "\n"
+                + (c["stat"] or "")
+                + "\nBased on "
+                + (c["base_commit"][:10] or "unknown commit")
+            )
+            strip.addItem(item)
+        for i in range(strip.count()):
+            if strip.item(i).data(Qt.UserRole) == self.code_item:
+                strip.setCurrentRow(i)
+                strip.scrollToItem(strip.item(i))
+        strip.itemClicked.connect(lambda item: self.choose_code_item(item.data(Qt.UserRole)))
+        rl.addWidget(strip)
+        if self.code_item == WORKTREE:
+            rl.addWidget(self.worktree_browser(repo, entry, ("tickets", repo["id"])), 1)
+        else:
+            browser = ChangeBrowser(self.code_ui.setdefault(("changeset", repo["id"]), {}))
+            record = self.store.read("changeset", selected["id"]) if selected else None
+            if record and record["diff"]:
+                browser.set_diff(record["diff"])
+            else:
+                browser.canvas.set_file(
+                    None,
+                    message="This changeset's diff was too large to store. It can be restored on the device "
+                    "that shelved it, from that device's git stash.",
+                )
+            rl.addWidget(browser, 1)
 
     def choose_code_item(self, item_id):
         self.code_item = item_id
         QTimer.singleShot(0, self.refresh_page)
-
-    def diff_panel(self, repo, item, entry, changeset=None):
-        view = DiffView()
-        if item == WORKTREE:
-            if repo["id"] in self.code_diffs:
-                view.show_diff(self.code_diffs[repo["id"]])
-                view.setPlaceholderText("The working tree is clean.")
-            elif (entry or {}).get("status"):
-                view.setPlaceholderText("Reading the working tree…")
-                self.load_worktree_diff(repo)
-            else:
-                view.setPlaceholderText("Choose a checkout folder to see uncommitted changes.")
-        elif changeset:
-            record = self.store.read("changeset", changeset["id"])
-            if record and record["diff"]:
-                view.show_diff(record["diff"])
-            else:
-                view.setPlaceholderText(
-                    "This changeset's diff was too large to store. It can be restored on the device "
-                    "that shelved it, from that device's git stash."
-                )
-        return view
-
-    def load_worktree_diff(self, repo):
-        key = ("diff", repo["id"])
-        if key in self.code_loading:
-            return
-        self.code_loading.add(key)
-        path = self.code_path(repo)
-
-        def work():
-            try:
-                return G.GitRepo(path).working_diff()
-            except Exception as exc:
-                return "Could not read the working tree: " + str(exc)
-
-        def done(text):
-            self.code_loading.discard(key)
-            self.code_diffs[repo["id"]] = text
-            if self.page == "Code" and self.code_view == "Changes":
-                QTimer.singleShot(0, self.refresh_page)
-
-        self.run_async(work, done)
 
     # Changeset actions ----------------------------------------------------------------------
 

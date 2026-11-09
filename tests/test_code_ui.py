@@ -9,17 +9,28 @@ from unittest.mock import patch
 
 from PySide6.QtCore import QEvent, QRectF, QThreadPool, Qt
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QDialog, QPushButton, QTableWidget
+from PySide6.QtWidgets import (
+    QApplication,
+    QDialog,
+    QLineEdit,
+    QPushButton,
+    QSplitter,
+    QTableWidget,
+    QTreeWidget,
+)
 
 from dayframe.code import git as G
 from dayframe.data.store import Store
 from dayframe.ui import code_dialogs
-from dayframe.ui.views.diff_view import DiffView
+from dayframe.ui.views.code_cards import TicketCards
+from dayframe.ui.views.commit_graph import CommitGraph
+from dayframe.ui.views.diff_view import ChangeBrowser
 from dayframe.ui.views.kanban import TicketList, code_badge_rect
 from dayframe.ui.views.project_map import ProjectMap, TicketNode
 from dayframe.ui.widgets import FormDialog
 from dayframe.ui.window import DayFrame
 from dayframe.ui.window import code as code_page
+from dayframe.ui.window import code_repo as code_repo_page
 from tests.test_code import FakeGitHub, make_repo
 
 APP = QApplication.instance() or QApplication([])
@@ -85,6 +96,9 @@ class CodeUiTests(unittest.TestCase):
     def repo(self):
         return self.w.code_repo(self.project["id"])
 
+    def visible(self, kind):
+        return next(w for w in self.w.workspace.findChildren(kind) if w.isVisible())
+
     def test_connect_panel_and_project_tree(self):
         self.w.navigate("Code")
         APP.processEvents()
@@ -107,9 +121,11 @@ class CodeUiTests(unittest.TestCase):
         app_py.write_text("print('ticket work')\n", encoding="utf-8")
         self.w.refresh_code(repo)
         self.wait()
-        self.assertIn("ticket work", self.w.code_diffs[repo["id"]])
-        diff_view = next(v for v in self.w.workspace.findChildren(DiffView) if v.isVisible())
-        self.assertIn("ticket work", diff_view.toPlainText())
+        self.assertIn("ticket work", self.w.code_cache[(repo["id"], "worktree")]["data"])
+        browser = self.visible(ChangeBrowser)
+        self.assertEqual([f["path"] for f in browser.files], ["app.py"])
+        self.assertEqual(browser.canvas.file["added"], 1)
+        self.assertEqual(browser.tree.topLevelItem(0).text(1), "M")
 
         with patch.object(code_page, "ask_text", return_value="First try"):
             self.w.code_capture(repo, self.ticket, None, keep=True)
@@ -296,6 +312,90 @@ class CodeUiTests(unittest.TestCase):
         finally:
             server.shutdown()
             server.server_close()
+
+    def test_ticket_cards_filter_and_fixed_width(self):
+        self.connect()
+        self.w.open_code(self.ticket["id"])
+        self.wait()
+        cards = self.visible(TicketCards)
+        self.assertEqual(cards.minimumWidth(), cards.maximumWidth())
+        self.assertTrue(cards.currentItem() and cards.currentItem().data(Qt.UserRole) == self.ticket["id"])
+        search = next(
+            e for e in self.w.workspace.findChildren(QLineEdit) if e.accessibleName() == "Filter tickets"
+        )
+        search.setText("navigation")
+        shown = [
+            cards.item(i).data(Qt.UserRole + 1)["title"]
+            for i in range(cards.count())
+            if not cards.item(i).isHidden()
+        ]
+        self.assertEqual(shown, ["Review navigation"])
+        self.assertFalse([s for s in self.w.workspace.findChildren(QSplitter) if s.isVisible()])
+
+    def test_working_tree_stage_unstage_and_discard(self):
+        repo = self.connect()
+        (self.work / "app.py").write_text("print('changed')\n", encoding="utf-8")
+        (self.work / "new.txt").write_text("new\n", encoding="utf-8")
+        self.w.open_code(self.ticket["id"])
+        self.w.change_code_view("Working tree")
+        self.wait()
+        browser = self.visible(ChangeBrowser)
+        self.assertEqual({f["path"] for f in browser.files}, {"app.py", "new.txt"})
+        self.assertEqual(browser.statuses, {"app.py": "·M", "new.txt": "?"})
+        self.w.code_index(repo, "stage", ["app.py"])
+        self.wait()
+        self.assertEqual(self.visible(ChangeBrowser).statuses["app.py"], "M·")
+        self.w.code_index(repo, "unstage", ["app.py"])
+        self.wait()
+        self.assertEqual(self.visible(ChangeBrowser).statuses["app.py"], "·M")
+        with patch.object(code_repo_page, "confirm", return_value=True):
+            self.w.code_index(repo, "discard", ["app.py", "new.txt"])
+            self.wait()
+        self.assertEqual((self.work / "app.py").read_text(encoding="utf-8"), "print('one')\n")
+        self.assertTrue((self.work / "new.txt").exists())
+
+    def test_history_graph_commit_details_and_branches(self):
+        repo = self.connect()
+        G.GitRepo(self.work).switch("feature", create=True)
+        (self.work / "feature.py").write_text("x = 1\n", encoding="utf-8")
+        G.GitRepo(self.work).commit("Add feature", ["feature.py"])
+        self.w.open_code(self.ticket["id"])
+        self.w.change_code_view("History")
+        self.wait()
+        graph = self.visible(CommitGraph)
+        self.assertEqual([c["subject"] for c in graph.commits], ["Add feature", "First"])
+        self.assertIn("HEAD -> feature", graph.commits[0]["refs"])
+        self.wait()
+        meta, browser = self.w.code_history_widgets
+        self.assertEqual(meta.current["message"], "Add feature")
+        self.assertEqual([f["path"] for f in browser.files], ["feature.py"])
+        graph.select_sha(graph.commits[1]["sha"])
+        self.wait()
+        self.assertEqual(self.w.code_history_widgets[0].current["sha"], graph.commits[1]["sha"])
+
+        self.w.change_code_view("Branches")
+        self.wait()
+        tree = next(
+            t for t in self.w.workspace.findChildren(QTreeWidget) if t.accessibleName().startswith("Branches")
+        )
+        groups = [tree.topLevelItem(i).text(0) for i in range(tree.topLevelItemCount())]
+        self.assertEqual(groups, ["Local branches  (2)", "Remote branches  (1)", "Tags  (0)", "Stashes  (0)"])
+        main = next(r for r in self.w.code_cache[(repo["id"], "refs")]["data"]["refs"] if r["name"] == "main")
+        with patch.object(code_repo_page, "confirm", return_value=True):
+            self.w.branch_action(repo, "delete", main)
+            self.wait()
+        self.assertNotIn("main", G.GitRepo(self.work).branches())
+        with patch.object(code_repo_page, "ask_text", return_value="hotfix"):
+            self.w.branch_action(
+                repo, "create", {"kind": "remote", "name": "origin/main", "sha": "", "head": False}
+            )
+            self.wait()
+        self.assertEqual(G.GitRepo(self.work).status()["branch"], "hotfix")
+        self.w.branch_action(
+            repo, "history", {"kind": "local", "name": "feature", "sha": graph.commits[0]["sha"]}
+        )
+        self.wait()
+        self.assertEqual(self.w.code_view, "History")
 
 
 if __name__ == "__main__":

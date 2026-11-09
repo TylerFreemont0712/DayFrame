@@ -25,6 +25,7 @@ from .tracking import TimePage
 from .settings import SettingsPage
 from .capture import CaptureMixin
 from .code import CodePage
+from .code_repo import CodeRepoViews
 
 
 class DayFrame(
@@ -38,6 +39,7 @@ class DayFrame(
     TimePage,
     SettingsPage,
     CodePage,
+    CodeRepoViews,
     CaptureMixin,
     QMainWindow,
 ):
