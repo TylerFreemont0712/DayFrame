@@ -20,6 +20,7 @@ dayframe/
 ├── data/                persistence: no Qt
 │   ├── store.py         Store: migrations, accounts, commands, snapshot, outbox, backup/import
 │   ├── schema.sql       initial SQLite schema
+│   ├── demo.py          seeded large demo workspace (Settings > Local data, scripts/seed-demo.py)
 │   └── schema_definitions.json   entity field definitions used by validation and sync
 ├── code/                version control for the Code page: no Qt, no SQLite
 │   ├── git.py           GitRepo: status, shelve/restore, stage/discard, history, refs, stashes, branches, commit, fetch/pull/push

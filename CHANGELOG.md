@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add a large demo workspace (Settings > Local data) with eight projects, about ninety tickets with history, comments and screenshots, three weeks of tracked time, scheduled work and events. `Preview DayFrame.cmd -Demo` opens a separate demo profile that also includes a git repository for the Code page.
 - Add the Code page. Each project connects a Git repository with a checkout folder per device, and each ticket keeps changesets: saved working-tree changes whose diff is stored and synced, with New changeset, Save to selected, Shelve and Switch to for moving between them.
 - Run fetch, fast-forward pull, commit, push and branch create/switch from the Code page in the background, with confirmations that show the command and outgoing commits. Push never forces.
 - Connect GitHub with an access token in Settings > Sync (kept in the OS credential store) to see checks, the latest release, pull requests and issues, open pull requests and issues, merge pull requests and create tickets from issues.

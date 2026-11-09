@@ -530,6 +530,10 @@ class Store:
             return self.timer_action(p["action"], p.get("ticket_id"))
         if method == "examples.load":
             return self.load_examples()
+        if method == "demo.load":
+            from .demo import load_demo
+
+            return load_demo(self)
         with self.atomic():
             direct = {
                 "project.save": "project",

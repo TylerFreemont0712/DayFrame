@@ -3,6 +3,7 @@
 #   sh scripts/preview.sh                 prepare .venv if needed and start the app
 #   sh scripts/preview.sh --copy-profile  first copy your real profile's data into the preview
 #   sh scripts/preview.sh --reset         delete the preview profile and start empty
+#   sh scripts/preview.sh --demo          use a separate demo profile with sample data
 # The real profile ($XDG_DATA_HOME/TimeManager) is never opened.
 set -eu
 cd "$(dirname "$0")/.."
@@ -14,9 +15,13 @@ preview="$data/TimeManager-preview"
     || .venv/bin/python -m pip install -r requirements.txt
 command -v git >/dev/null 2>&1 || echo 'Warning: git is not on PATH; the Code page needs it.' >&2
 for option in "$@"; do
+    if [ "$option" = "--demo" ]; then preview="$data/TimeManager-demo"; fi
+done
+for option in "$@"; do
     case "$option" in
         --reset) rm -rf "$preview"; echo "Removed the preview profile $preview" ;;
         --copy-profile) .venv/bin/python scripts/copy-profile.py "$real" "$preview" ;;
+        --demo) [ -f "$preview/timemanager.db" ] || .venv/bin/python scripts/seed-demo.py "$preview" ;;
         *) echo "Unknown option: $option" >&2; exit 2 ;;
     esac
 done

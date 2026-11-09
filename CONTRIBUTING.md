@@ -35,9 +35,10 @@ To try the current source as a user would, double-click **Preview DayFrame.cmd**
 scripts\preview.ps1 -CopyProfile   # copy the real profile's data into an empty preview first (read-only copy, automatic sync off)
 scripts\preview.ps1 -Reset         # delete the preview profile and start empty
 scripts\preview.ps1 -Console       # keep a console open to see errors
+scripts\preview.ps1 -Demo          # use a separate demo profile, filled with sample data on first run
 ```
 
-A copied preview does not carry the remembered sign-in; sign in with your usual password. Keep its sync off unless the hub has been updated to the same version.
+A copied preview does not carry the remembered sign-in; sign in with your usual password. The demo profile (`TimeManager-demo`, or `--demo` on Linux) is created by scripts/seed-demo.py: it opens signed in to a local demo account (its details are in that script), with the large demo workspace and, when git is installed, a demo repository with branches, a merge, tags and a saved changeset connected to the Website project. Delete it with `-Demo -Reset`. Keep its sync off unless the hub has been updated to the same version.
 
 ## Iteration workflow
 

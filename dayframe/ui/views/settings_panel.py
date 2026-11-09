@@ -546,6 +546,19 @@ class SettingsPanel(QWidget):
             row(button("Load example workspace", lambda: self.window.execute("examples.load")), None)
         )
         body.addWidget(card)
+        card, layout = panel("Demo workspace")
+        layout.addWidget(
+            label(
+                "A larger sample with eight projects, about ninety tickets with history, comments and "
+                "screenshots, three weeks of tracked time, scheduled work and events. Use it in an empty "
+                "workspace to explore the statistics and views.",
+                "muted",
+            )
+        )
+        layout.addWidget(
+            row(button("Load demo workspace", lambda: self.window.execute("demo.load"), "flask"), None)
+        )
+        body.addWidget(card)
 
     def build_sync(self, body):
         settings = self.window.data["settings"]
