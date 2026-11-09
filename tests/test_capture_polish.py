@@ -294,16 +294,26 @@ class CapturePolishTests(unittest.TestCase):
         from dayframe.ui.labels import LabelsEditor
         from PySide6.QtWidgets import QPushButton
 
+        from PySide6.QtWidgets import QDialog
+        from unittest.mock import patch
+        from dayframe.ui.ticket_editor import TicketEditDialog
+
         w = self.window()
         w.navigate("Projects")
         w.select_ticket(self.parent["id"])
         APP.processEvents()
-        editor = w.inspector.findChild(LabelsEditor)
-        QTest.keyClicks(editor.input, "my-custom-label")
-        QTest.keyClick(editor.input, Qt.Key_Return)
-        editor.toggle("feature")
-        save = next(b for b in w.inspector.findChildren(QPushButton) if b.text() == "Save ticket")
-        QTest.mouseClick(save, Qt.LeftButton)
+
+        def add_labels(dialog):
+            editor = dialog.findChild(LabelsEditor)
+            QTest.keyClicks(editor.input, "my-custom-label")
+            QTest.keyClick(editor.input, Qt.Key_Return)
+            editor.toggle("feature")
+            save = next(b for b in dialog.findChildren(QPushButton) if b.text() == "Save ticket")
+            QTest.mouseClick(save, Qt.LeftButton)
+            return QDialog.Accepted
+
+        with patch.object(TicketEditDialog, "exec", new=add_labels):
+            w.edit_ticket(self.parent["id"])
         APP.processEvents()
         values = self.s.read("ticket", self.parent["id"])["labels"]
         self.assertIn("my-custom-label", values)

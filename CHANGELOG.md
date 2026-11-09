@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add the Tickets page between Projects and Code: an overview with stat tiles, charts of completions, tracked time, created and completed per week, open work by stage and project, and estimate against tracked time, plus a sortable, filterable table of every ticket; and a forum-style ticket page with a Markdown description, comments, pasted or attached screenshots, activity, relations and in-place editing.
+- Make the board inspector a compact read-only summary with Edit, Track, Details, Schedule, Code and a status menu, and let Kanban lanes narrow so the Complete lane stays visible beside it.
+- Record when tickets are created and completed, and sync comments and screenshots (schema 6).
+- On the Map, drag a section together with its nested sections and cards, route links around unrelated cards (with portal markers where a link must pass under one), and highlight a card's links on hover.
+- Make the Code badge on cards a centred button with a hover ring and press animation.
 - Add a large demo workspace (Settings > Local data) with eight projects, about ninety tickets with history, comments and screenshots, three weeks of tracked time, scheduled work and events. `Preview DayFrame.cmd -Demo` opens a separate demo profile that also includes a git repository for the Code page.
 - Add the Code page. Each project connects a Git repository with a checkout folder per device, and each ticket keeps changesets: saved working-tree changes whose diff is stored and synced, with New changeset, Save to selected, Shelve and Switch to for moving between them.
 - Run fetch, fast-forward pull, commit, push and branch create/switch from the Code page in the background, with confirmations that show the command and outgoing commits. Push never forces.

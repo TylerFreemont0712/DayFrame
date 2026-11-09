@@ -50,7 +50,7 @@ Desktop is the initial priority. Windows and Linux must be first-class targets. 
 
 ### NAV-01: primary navigation
 
-A compact icon rail contains Home, Projects, Calendar, Time, Code, and Settings. Icons have labels for assistive technology, hover/focus tooltips, and a clear active state.
+A compact icon rail contains Home, Projects, Tickets, Code, Calendar, Time, and Settings, in that order. Icons have labels for assistive technology, hover/focus tooltips, and a clear active state.
 
 ### NAV-02: contextual navigation
 
@@ -112,7 +112,7 @@ Blocked is an independent indicator. When unfinished prerequisites block work, c
 
 ### TKT-03: editing and viewing
 
-Click a ticket to open a side inspector without losing board/map context. Provide a distinct full Details workspace with a ticket list/table and the selected ticket's richer detail.
+Click a ticket to open a side inspector without losing board/map context. The inspector is a compact, read-only summary (title, status menu, priority, project, due, estimate, tracked, checklist, relations, next work block, comment and changeset counts, labels and a description excerpt) with Edit, Track, Details, Schedule, Code and More; Edit opens the full form in a dialog. It is narrow enough that all five Kanban lanes stay visible beside it at the default window size. The full ticket page lives on the Tickets page (TKT-08).
 
 ### TKT-04: default ticket fields
 
@@ -133,6 +133,14 @@ Support create, edit, archive, restore, and recoverable deletion. Project archiv
 ### TKT-07: dependencies
 
 Disallow self-dependencies and dependency cycles. Relationship editing is validated in the authoritative data layer. Deleting or archiving a prerequisite must not silently claim its dependents are complete. Related-ticket links do not block work.
+
+### TKT-08: Tickets page
+
+Tickets sits between Projects and Code. Its contextual pane holds Overview/Details, quick views (All open, Assigned to me, Due this week, Overdue, Blocked, No due date, Completed this week, Everything) with counts, and a project filter.
+
+Overview shows stat tiles (open, completed this week with the change against last week, created this week, overdue, due in 7 days, blocked, tracked this week with its change, median cycle time over 30 days), six charts (completed per day and tracked time per day over 14 days, created and completed per Sunday-first week, open tickets by stage and by project, estimate and tracked by project) with hover values, and a sortable table of every ticket in the view: key, title, project, status, priority, assignee, labels, due, estimate, tracked, checklist, comments, changesets, created and completed. The table filters by text, stage and priority; double-click opens the ticket page. Assignee shows the signed-in person until Team workspaces add real assignment.
+
+Details is the ticket page, laid out like a forum thread: a header with status menu, priority, labels and actions (Edit, Track, Schedule, Code, Complete/Reopen, show on board, copy key, child ticket, archive); the description rendered from Markdown as the opening post with its screenshots; a checklist whose steps can be ticked; the activity thread of comments with screenshots, tracked time per day and completion; and a composer that takes Markdown text and pasted, dropped or chosen images (Ctrl+Enter posts). Comments can be edited (marked edited) or deleted with Undo. A sidebar lists every field, estimate use, relations (parent, children, depends on, blocks), upcoming work and the Code page link. Edit replaces the description with the full form in place; unsaved edits and unsent comments are protected like other drafts. Images are shrunk and recompressed to fit the sync limit and open full size on click.
 
 ## 7. Robust project Map
 

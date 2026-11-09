@@ -26,6 +26,7 @@ from .settings import SettingsPage
 from .capture import CaptureMixin
 from .code import CodePage
 from .code_repo import CodeRepoViews
+from .tickets import TicketsPage
 
 
 class DayFrame(
@@ -34,6 +35,7 @@ class DayFrame(
     ShellMixin,
     TodayPage,
     ProjectsPage,
+    TicketsPage,
     InspectorMixin,
     CalendarPage,
     TimePage,
@@ -140,13 +142,15 @@ class DayFrame(
         self.rebuilding = True
         self.clear_layout(self.work_layout)
         self.clear_layout(self.context_layout)
-        self.context.setVisible(self.page in ("Projects", "Code") and not self.context_collapsed)
+        self.context.setVisible(self.page in ("Projects", "Tickets", "Code") and not self.context_collapsed)
         for name, w in self.nav.items():
             w.setChecked(name == self.page)
         if self.page == "Projects":
             self.projects_context()
         elif self.page == "Code":
             self.code_context()
+        elif self.page == "Tickets":
+            self.tickets_context()
         title = self.page
         if self.page == "Projects":
             title = self.project_name(self.project_id) if self.project_id else "All tickets"
@@ -156,7 +160,7 @@ class DayFrame(
             dt = datetime.strptime(D.day_key(self.data["settings"]["timezone"]), "%Y-%m-%d")
             self.page_header.layout().addWidget(label(dt.strftime("%A, %b %d").replace(" 0", " "), "muted"))
         self.page_header.layout().addStretch()
-        if self.page in ("Projects", "Code") and self.context_collapsed:
+        if self.page in ("Projects", "Tickets", "Code") and self.context_collapsed:
             self.page_header.layout().addWidget(button("", self.toggle_context, "bars"))
         self.work_layout.addWidget(self.page_header)
         getattr(self, "show_" + self.page.lower())()
@@ -217,9 +221,10 @@ class DayFrame(
             try:
                 sizes = self.splitter.sizes()
                 patch = {"windowGeometry": bytes(self.saveGeometry().toBase64()).decode()}
-                if 140 <= sizes[0] <= 280:
+                # A hidden pane reports a meaningless size; keep the saved width instead.
+                if self.context.isVisible() and 140 <= sizes[0] <= 280:
                     patch["sidebarWidth"] = sizes[0]
-                if 240 <= sizes[2] <= 420:
+                if self.inspector.isVisible() and 240 <= sizes[2] <= 420:
                     patch["inspectorWidth"] = sizes[2]
                 self.store.settings(patch)
             except Exception:

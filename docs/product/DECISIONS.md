@@ -160,3 +160,15 @@ D-077: GitHub gets full read/write API access through a personal access token in
 D-078: Other views link to the Code page: a code badge on Kanban and Map cards, Open in Code in their context menus, a Code button in the inspector, and Open ticket / Open in Code in the work-block dialog used by Calendar and Today.
 
 D-079 (2026-11-09): The Code page is a developer workspace with as much detail as possible, all inside the Code section. Tickets show as outlined cards in a fixed-width column whose divider does not move. Changes open in a change browser (file tree, per-file and folder line counts, numbered diff with in-line edit highlighting, unified or split). Working tree, History (commit graph with merges and refs) and Branches tabs join Tickets and GitHub.
+
+## Tickets page and Map clarity — 2026-11-09
+
+D-080: Navigation order is Home, Projects, Tickets, Code, Calendar, Time. Tickets is a ticketing centre with an overview of efficiency statistics, charts and the full ticket table, and a forum-style ticket page with comments and screenshots. Assignee shows the signed-in person until Teams arrive.
+
+D-081: The board inspector becomes a compact read-only summary with all its actions; editing is an explicit Edit. It must not hide the Complete lane at the default window size.
+
+D-082: Tickets record when they were created and completed, and comments and screenshots are synced records (schema 6), so statistics and discussions are the same on every device.
+
+D-083: Dragging a section on the Map carries its nested sections and cards. Links route around unrelated cards; where they must pass under one, portal rings mark it, and hovering a card highlights its links.
+
+D-084: A large, seeded demo workspace and a separate demo preview profile exist for exploring the app without touching real data.

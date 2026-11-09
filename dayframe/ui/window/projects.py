@@ -233,6 +233,8 @@ class ProjectsPage:
             )
         )
         tickets = self.filtered_tickets()
+        project_keys = {p["id"]: p["project_key"] for p in self.data["project"]}
+        keys = {project_keys.get(t["project_id"], "T") for t in tickets}
         if self.project_view == "Kanban":
             board = QWidget()
             lanes = QHBoxLayout(board)
@@ -244,13 +246,10 @@ class ProjectsPage:
                 header = row(label(D.STATUS_NAMES[status], "section"), label(str(len(group)), "count"), None)
                 cl.addWidget(header)
                 lst = TicketList(self, status)
-                lst.setMinimumWidth(
-                    max(
-                        180,
-                        header.sizeHint().width(),
-                        lst.fontMetrics().horizontalAdvance("NEWPRO · FFFFFF") + 55,
-                    )
-                )
+                # Narrow enough that all five lanes fit beside the inspector; wide enough for the
+                # longest visible project key, the Code badge and the priority dot.
+                key_width = max([lst.fontMetrics().horizontalAdvance(k + " · FFFFFF") for k in keys] or [60])
+                lst.setMinimumWidth(max(150, header.sizeHint().width(), key_width + 70))
                 for t in group:
                     item = QListWidgetItem(t["title"])
                     item.setData(Qt.UserRole, t["id"])

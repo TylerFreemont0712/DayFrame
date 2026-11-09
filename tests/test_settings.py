@@ -344,6 +344,25 @@ class SettingsTests(unittest.TestCase):
                                 point = control.mapTo(page.viewport(), control.rect().center())
                                 self.assertTrue(page.viewport().rect().contains(point), control.text())
 
+    def test_wide_saved_inspector_narrows_once_for_the_compact_summary(self):
+        for saved, expected in ((280, 250), (240, 240)):
+            with self.subTest(saved=saved):
+                store = Store(Path("build/test-data") / uuid.uuid4().hex)
+                try:
+                    store.register("upgrade", "tyler")
+                    store.settings({"layoutRevision": 4, "inspectorWidth": saved})
+                    dispose(DayFrame(store))
+                    self.assertEqual(
+                        (store.settings()["inspectorWidth"], store.settings()["layoutRevision"]),
+                        (expected, 5),
+                    )
+                    # A width chosen afterwards is kept.
+                    store.settings({"inspectorWidth": 330})
+                    dispose(DayFrame(store))
+                    self.assertEqual(store.settings()["inspectorWidth"], 330)
+                finally:
+                    store.close()
+
     def test_old_default_text_size_moves_to_ninety_percent_once(self):
         for saved, expected in ((100, 90), (110, 110)):
             with self.subTest(saved=saved):
@@ -353,7 +372,7 @@ class SettingsTests(unittest.TestCase):
                     store.settings({"layoutRevision": 3, "textScale": saved})
                     dispose(DayFrame(store))
                     self.assertEqual(
-                        (store.settings()["textScale"], store.settings()["layoutRevision"]), (expected, 4)
+                        (store.settings()["textScale"], store.settings()["layoutRevision"]), (expected, 5)
                     )
                     # A size chosen after the upgrade is kept on later starts.
                     store.settings({"textScale": 100})

@@ -14,6 +14,7 @@ dayframe/
 ├── core/                pure Python: no Qt, no SQLite
 │   ├── domain.py        validation, dates, password hashing, field merges, map rules, cycle checks
 │   ├── planning.py      calendar projections shared by Today and Calendar (Sunday-first weeks)
+│   ├── ticket_stats.py  Tickets overview numbers, daily/weekly series, breakdowns and quick views
 │   ├── palettes.py      themes, color schemes, custom/advanced color roles, contrast helpers
 │   ├── preferences.py   device preference defaults and validation (used by Store.settings)
 │   └── timezones.py     time zone list, UTC offsets and labels for pickers and world clocks
@@ -35,6 +36,7 @@ dayframe/
     ├── views/           self-contained painted widgets
     ├── dialogs.py       Quick Add (AddDialog), SectionDialog, ConflictDialog
     ├── code_dialogs.py  Code page dialogs: RepoDialog, CommitDialog, SwitchDialog, GitHub forms, confirm()
+    ├── ticket_editor.py TicketEditor (every editable ticket field) and TicketEditDialog
     ├── widgets.py       label/button/row/column/panel helpers, FormDialog, ElidingLabel, error()
     ├── labels.py        LabelsEditor chip input, preset label colors, label pill painting
     ├── theme.py         apply_theme(), CURRENT palette, fonts and sizes, Qt style sheet, icon()
@@ -59,7 +61,8 @@ Import direction is one way: `ui → sync → data → core`, `ui → code → c
 | shell.py | `ShellMixin` | navigation rail, masthead, utility bar (timer, totals, world clocks), search, inline capture, the one-second `tick` |
 | today.py | `TodayPage` | `show_today`, ticket rows, major-event countdowns, completion |
 | projects.py | `ProjectsPage` | `show_projects`, project tree, Map/Kanban/Details, filters, sections, rules, milestones |
-| inspector.py | `InspectorMixin` | ticket inspector panel and its draft, archive, work-block scheduling, `open_ticket` |
+| inspector.py | `InspectorMixin` | compact read-only inspector, status menu, `edit_ticket` (Edit dialog), archive, work-block scheduling, `open_ticket` |
+| tickets.py | `TicketsPage` | `show_tickets`, `open_ticket_details`, quick views, overview tiles/charts/table, ticket page with comments, screenshots and in-place editing |
 | schedule.py | `CalendarPage` | `show_calendar`, opening and moving calendar items |
 | tracking.py | `TimePage` | `show_time`, manual time entry dialog |
 | settings.py | `SettingsPage` | Settings host, backup, conflict review, automatic and manual sync |
@@ -94,6 +97,8 @@ Each widget in `ui/views/` takes the window as its first argument and stores it 
 | project_map.py `ProjectMap`, `UnsortedList` | projects.py | `execute`, `refresh`, `select_ticket`, `edit_section`, `new_section`, `new_child_ticket`, `blocked`, `ticket_key`, `undo_action`, `toast`, `code_repo`, `changeset_count`, `open_code` |
 | calendar.py `MiniMonth`, `UpcomingPanel`, `WeekCalendar` | schedule.py | `open_calendar_item`, `move_calendar_item`, `quick_add`, `calendar_selected` |
 | agenda.py `Agenda` | today.py, shell.py (`tick`) | `open_calendar_item` |
+| charts.py `ColumnChart`, `BarList`, `stat_tile` | tickets.py | none |
+| ticket_thread.py `MarkdownView`, `Thumb`, `PasteEdit`, `prepare_image` | tickets.py | `store` (reads attachment images) |
 | diff_view.py `ChangeBrowser`, `DiffCanvas`, `StatBar` | code.py, code_repo.py | none; state dict owned by the page |
 | commit_graph.py `CommitGraph` | code_repo.py | none |
 | code_cards.py `TicketCards`, `ChangesetStrip` | code.py | `data`, `code_ticket`, `code_item` |

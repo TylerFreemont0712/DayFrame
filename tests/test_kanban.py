@@ -15,7 +15,7 @@ from PySide6.QtGui import (
     QPainter,
     QColor,
 )
-from PySide6.QtWidgets import QApplication, QComboBox, QLabel, QStyleOptionViewItem
+from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QStyleOptionViewItem
 
 from dayframe.core import domain as D, planning as P
 from dayframe.ui.dialogs import AddDialog
@@ -79,8 +79,11 @@ class KanbanTests(unittest.TestCase):
         finally:
             dialog.close()
         self.window.select_ticket(tickets[1]["id"])
-        choices = next(c for c in self.window.inspector.findChildren(QComboBox) if c.findData("inbox") >= 0)
-        self.assertEqual(choices.currentText(), "In Progress")
+        status = next(
+            b for b in self.window.inspector.findChildren(QPushButton) if b.objectName() == "statusButton"
+        )
+        self.assertEqual(status.text(), "In Progress")
+        self.assertEqual([a.text() for a in status.menu().actions()], names)
         self.window.complete_ticket(tickets[1])
         self.assertEqual(self.store.read("ticket", tickets[1]["id"])["status"], "done")
         self.window.undo()

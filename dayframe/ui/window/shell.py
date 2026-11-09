@@ -30,9 +30,10 @@ class ShellMixin:
         for page, glyph in (
             ("Today", "home"),
             ("Projects", "layer-group"),
+            ("Tickets", "ticket-alt"),
+            ("Code", "code"),
             ("Calendar", "calendar-alt"),
             ("Time", "clock"),
-            ("Code", "code"),
         ):
             b = button("", lambda checked=False, p=page: self.navigate(p), glyph)
             b.setCheckable(True)

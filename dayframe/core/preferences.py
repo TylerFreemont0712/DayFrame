@@ -41,7 +41,7 @@ DEFAULTS = {
     "timezone": "Asia/Tokyo",
     "worldClocks": [],
     "sidebarWidth": 164,
-    "inspectorWidth": 280,
+    "inspectorWidth": 250,
     "layoutRevision": 0,
     "themeColors": {},
     "customColors": {},
@@ -60,7 +60,7 @@ OPTIONAL = {
     "githubUser",
 }
 MAX_PATH = 1000
-LAYOUT_REVISION = 4
+LAYOUT_REVISION = 5
 NUMBER_RANGES = {
     "textScale": TEXT_SCALE,
     "headingScale": HEADING_SCALE,

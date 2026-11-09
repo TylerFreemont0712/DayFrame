@@ -255,6 +255,11 @@ def apply_theme(settings):
     QToolButton::menu-indicator,QPushButton::menu-indicator { image:url("%(down)s"); width:9px; height:7px; }
     QLineEdit:focus,QPlainTextEdit:focus { border-color:%(accent)s; }
     QLineEdit#ticketTitle { font-size:%(title_px)spx; font-weight:650; }
+    QLabel#inspectorTitle { font-size:%(title_px)spx; font-weight:650; color:%(heading_text)s; }
+    QLabel#ticketHeading { font-size:%(heading_px)spx; font-weight:700; font-family:"%(heading)s"; color:%(heading_text)s; }
+    QFrame#postCard { background:%(panel)s; border:1px solid %(line)s; border-radius:%(radius)spx; }
+    QFrame#statTile { background:%(panel)s; border:1px solid %(line)s; border-radius:%(radius)spx; }
+    QLabel#statValue { font-size:%(heading_px)spx; font-weight:650; color:%(heading_text)s; }
     QListWidget,QTreeWidget,QTableWidget,QScrollArea { background:%(panel)s; border:1px solid %(line)s; border-radius:%(radius)spx; }
     QScrollArea { border:0; background:transparent; }
     QScrollArea#dialogContent { background:transparent; }

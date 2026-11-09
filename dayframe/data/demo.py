@@ -296,12 +296,15 @@ def load_demo(store, now_ms=None):
             made = []
             for index, title in enumerate(titles):
                 status = weighted(rng, STATUS_WEIGHTS)
-                age = rng.uniform(2, 72)
+                # Skewed towards recent days so this week's numbers are never empty.
+                age = 0.05 + 72 * rng.random() ** 1.5
+                if status == "done" and age < 1.2:
+                    status = "review"
                 created = now - int(age * DAY_MS)
                 completed = 0
                 if status == "done":
                     # Mostly finished in the last few weeks, so weekly charts have something to show.
-                    completed = max(created + DAY_MS // 4, now - int(rng.uniform(0.05, 24) * DAY_MS))
+                    completed = max(created + DAY_MS // 4, now - int(24 * rng.random() ** 1.7 * DAY_MS))
                     completed = min(completed, now - 600_000)
                 steps = []
                 if rng.random() < 0.45:

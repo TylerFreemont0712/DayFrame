@@ -566,6 +566,14 @@ class Store:
                         },
                     )
                 return self.read("ticket", ticket["id"])
+            if method == "post.capture":
+                # A comment and its screenshots are saved together or not at all.
+                post = self._save("post", p["post"])
+                for attachment in p.get("attachments", []):
+                    self._save(
+                        "attachment", {**attachment, "ticket_id": post["ticket_id"], "post_id": post["id"]}
+                    )
+                return post
             if method == "ticket.relate":
                 child = self.read("ticket", p["child_id"])
                 parent = self.read("ticket", p["parent_id"])

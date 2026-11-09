@@ -18,12 +18,13 @@ from PySide6.QtWidgets import (
     QStyle,
     QStyleOptionComboBox,
 )
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QDialog, QMessageBox
 from dayframe.data.store import Store
 from dayframe.core import domain as D
 from dayframe.ui.window import DayFrame
 from dayframe.ui.views.kanban import TicketList
 from dayframe.ui.theme import apply_theme, icon
+from dayframe.ui.ticket_editor import TicketEditDialog
 
 APP = QApplication.instance() or QApplication([])
 
@@ -72,11 +73,18 @@ class NativeUiTests(unittest.TestCase):
         self.assertEqual(self.s.read("ticket", t["id"])["status"], "doing")
         self.w.select_ticket(t["id"])
         APP.processEvents()
-        title = next(
-            e for e in self.w.inspector.findChildren(QLineEdit) if e.accessibleName() == "Ticket title"
+        # The inspector is a read-only summary; Edit opens the full form.
+        self.assertFalse(
+            [e for e in self.w.inspector.findChildren(QLineEdit) if e.accessibleName() == "Ticket title"]
         )
-        title.setText("Native editor saved this")
-        self.click("Save ticket", self.w.inspector)
+
+        def edit_title(dialog):
+            dialog.editor.title.setText("Native editor saved this")
+            dialog.accept()
+            return QDialog.Accepted
+
+        with patch.object(TicketEditDialog, "exec", new=edit_title):
+            self.click("Edit", self.w.inspector)
         self.assertEqual(self.s.read("ticket", t["id"])["title"], "Native editor saved this")
         self.click("Track", self.w.inspector)
         self.assertEqual(self.s.read("timer", "active")["ticket_id"], t["id"])
@@ -130,21 +138,20 @@ class NativeUiTests(unittest.TestCase):
         self.assertEqual(tabs(), ["Map", "Kanban", "Details"])
 
     def test_draft_survives_refresh_and_saves_only_changed_fields(self):
-        self.w.navigate("Projects")
         t = next(t for t in self.w.data["ticket"] if t["status"] == "doing")
-        self.w.select_ticket(t["id"])
+        self.w.open_ticket_details(t["id"])
+        self.w.start_ticket_edit()
         APP.processEvents()
-        title = next(
-            e for e in self.w.inspector.findChildren(QLineEdit) if e.accessibleName() == "Ticket title"
-        )
+        APP.processEvents()
+        title = self.w.ticket_editor.title
         title.setText("Unsaved native draft")
         self.s.command("ticket.save", {"id": t["id"], "component": "Another device changed this"})
         self.w.refresh()
         self.assertEqual(title.text(), "Unsaved native draft")
         with patch.object(QMessageBox, "question", return_value=QMessageBox.Cancel):
             self.w.navigate("Settings")
-        self.assertEqual(self.w.page, "Projects")
-        self.click("Save ticket", self.w.inspector)
+        self.assertEqual(self.w.page, "Tickets")
+        self.click("Save ticket", self.w.workspace)
         saved = self.s.read("ticket", t["id"])
         self.assertEqual(saved["title"], "Unsaved native draft")
         self.assertEqual(saved["component"], "Another device changed this")
