@@ -113,6 +113,72 @@ class MapUiTests(unittest.TestCase):
         APP.processEvents()
         return self.view
 
+    def stack_three(self):
+        """a, b and c stacked in Frontend, with c depending on a across b."""
+        data = self.window.data
+        data["ticket"][2] = ticket("c", dependencies=["a"])
+        data["placement"][2]["section_id"] = "front"
+        data["section"].append(
+            {
+                "id": "inner",
+                "project_id": "p",
+                "name": "Inner",
+                "rule_field": "",
+                "rule_value": "",
+                "sort_order": 2,
+                "parent_id": "front",
+            }
+        )
+
+    def test_links_route_around_unrelated_cards(self):
+        self.stack_three()
+        view = self.show_map()
+        self.assertEqual(len(view.edge_records), 1)
+        record = view.edge_records[0]
+        others = [view.nodes["b"].sceneBoundingRect()]
+        self.assertEqual(view.crossings(record["path"].path(), others), 0)
+        self.assertEqual(len(record["items"]), 2)  # line and arrow, no portals needed
+        # When nothing can avoid a card, portals mark where the line passes under it.
+        blocked = view.portals(record["path"].path(), [record["path"].path().boundingRect()], "#ffffff")
+        self.assertTrue(blocked)
+
+    def test_hovering_a_card_focuses_its_links(self):
+        self.stack_three()
+        view = self.show_map()
+        view.focus_links("b")
+        self.assertLess(view.edge_records[0]["path"].opacity(), 0.5)
+        view.focus_links("c")
+        self.assertEqual(view.focus_ids, {"a", "c"})
+        self.assertEqual(view.edge_records[0]["path"].opacity(), 1.0)
+        self.assertTrue(view.ant_timer.isActive())
+        offset = view.edge_records[0]["path"].pen().dashOffset()
+        view.march()
+        self.assertNotEqual(view.edge_records[0]["path"].pen().dashOffset(), offset)
+        view.focus_links(None)
+        self.assertFalse(view.ant_timer.isActive())
+
+    def test_dragging_a_section_carries_nested_sections_and_cards(self):
+        self.stack_three()
+        view = self.show_map()
+        header = view.headers["front"]
+        inner = view.headers["inner"]
+        before = {
+            "inner": QPointF(inner.pos()),
+            "region": QPointF(view.region_items["inner"].pos()),
+            "a": QPointF(view.nodes["a"].pos()),
+        }
+        header.origin = QPointF(header.pos())
+        view.begin_carry(header)
+        view.carry_to(QPointF(90, 40))
+        self.assertEqual(inner.pos(), before["inner"] + QPointF(90, 40))
+        self.assertEqual(view.region_items["inner"].pos(), before["region"] + QPointF(90, 40))
+        self.assertEqual(view.nodes["a"].pos(), before["a"] + QPointF(90, 40))
+        self.assertLess(view.nodes["a"].opacity(), 1.0)
+        view.end_carry()
+        self.assertEqual(view.nodes["a"].pos(), before["a"])
+        self.assertEqual(view.nodes["a"].opacity(), 1.0)
+        self.assertEqual(inner.pos(), before["inner"])
+
     def test_compact_scene_and_zoom_fit(self):
         view = self.show_map()
         self.assertLess(view.sceneRect().width(), 700)
