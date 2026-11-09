@@ -7,7 +7,9 @@ import unittest
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from dayframe.code import diff as DIFF
 from dayframe.code import git as G
+from dayframe.code import graph as GRAPH
 from dayframe.code.github import GitHub, GitHubError, TokenStore
 from dayframe.core import domain as D
 from dayframe.core import preferences
@@ -197,11 +199,160 @@ class GitRepoTests(unittest.TestCase):
         self.repo.pull()
         self.assertEqual((self.work / "app.py").read_text(encoding="utf-8"), "print('five')\n")
 
+    def test_history_refs_stashes_and_index(self):
+        self.repo.switch("feature", create=True)
+        (self.work / "feature.py").write_text("x = 1\n", encoding="utf-8")
+        self.repo.commit("Add feature", ["feature.py"])
+        git(self.work, "tag", "v1")
+        self.repo.switch("main")
+        (self.work / "app.py").write_text("print('main')\n", encoding="utf-8")
+        self.repo.commit("Main change", ["app.py"])
+        git(self.work, "merge", "--no-ff", "-m", "Merge feature", "feature")
+        log = self.repo.graph_log()
+        self.assertEqual(log[0]["subject"], "Merge feature")
+        self.assertEqual(len(log[0]["parents"]), 2)
+        self.assertIn("HEAD -> main", log[0]["refs"])
+        self.assertTrue(any("tag: v1" in c["refs"] for c in log))
+        details = self.repo.commit_details(log[0]["sha"])
+        self.assertEqual(details["message"], "Merge feature")
+        self.assertEqual([f["path"] for f in DIFF.parse(details["diff"])], ["feature.py"])
+        refs = {(r["kind"], r["name"]): r for r in self.repo.refs()}
+        self.assertTrue(refs[("local", "main")]["head"])
+        self.assertEqual(refs[("local", "main")]["ahead"], 3)
+        self.assertIn(("tag", "v1"), refs)
+        self.assertIn(("remote", "origin/main"), refs)
+        (self.work / "app.py").write_text("print('wip')\n", encoding="utf-8")
+        self.repo.shelve("cs-1", "Keep")
+        self.assertEqual(self.repo.stashes()[0]["changeset"], "cs-1")
+        (self.work / "app.py").write_text("print('staged')\n", encoding="utf-8")
+        self.repo.stage(["app.py"])
+        self.assertEqual(self.repo.status()["files"][0]["code"], "M.")
+        self.repo.unstage(["app.py"])
+        self.assertEqual(self.repo.status()["files"][0]["code"], ".M")
+        self.repo.discard(["app.py"])
+        self.assertEqual(self.repo.status()["files"], [])
+        self.repo.branch_from("from-tag", "v1")
+        self.assertEqual(self.repo.status()["branch"], "from-tag")
+        self.repo.switch("main")
+        self.repo.delete_branch("from-tag")
+        self.repo.switch("unmerged", create=True)
+        (self.work / "u.txt").write_text("u\n", encoding="utf-8")
+        self.repo.commit("Unmerged", ["u.txt"])
+        self.repo.switch("main")
+        with self.assertRaisesRegex(G.GitError, "not fully merged"):
+            self.repo.delete_branch("unmerged")
+        for bad in ("-D", "a b", "x..y", ""):
+            with self.assertRaises(G.GitError):
+                G.check_branch(bad)
+        with self.assertRaises(G.GitError):
+            self.repo.commit_details("--output=x")
+
     def test_missing_folder_is_reported(self):
         with self.assertRaisesRegex(G.GitError, "does not exist"):
             G.GitRepo(self.root / "missing").status()
         self.assertFalse(G.GitRepo(self.origin).is_repository())
         self.assertTrue(self.repo.is_repository())
+
+
+SAMPLE_DIFF = """diff --git a/src/app.py b/src/app.py
+index 1111111..2222222 100644
+--- a/src/app.py
++++ b/src/app.py
+@@ -1,4 +1,4 @@
+ import os
+-value = 1\r
++value = 2
+ print(value)
+-- not a header
++-- still content
+diff --git a/old name.txt b/new name.txt
+similarity index 100%
+rename from old name.txt
+rename to new name.txt
+diff --git a/gone.txt b/gone.txt
+deleted file mode 100644
+index 3333333..0000000
+--- a/gone.txt
++++ /dev/null
+@@ -1 +0,0 @@
+-bye
+\\ No newline at end of file
+diff --git a/src/views/new.py b/src/views/new.py
+new file mode 100644
+index 0000000..4444444
+--- /dev/null
++++ b/src/views/new.py
+@@ -0,0 +1,2 @@
++a
++b
+diff --git a/logo.png b/logo.png
+index 5555555..6666666 100644
+Binary files a/logo.png and b/logo.png differ
+"""
+
+
+class DiffAndGraphTests(unittest.TestCase):
+    def test_parse_statuses_counts_and_line_numbers(self):
+        files = {f["path"]: f for f in DIFF.parse(SAMPLE_DIFF)}
+        self.assertEqual(
+            {p: f["status"] for p, f in files.items()},
+            {
+                "src/app.py": "M",
+                "new name.txt": "R",
+                "gone.txt": "D",
+                "src/views/new.py": "A",
+                "logo.png": "M",
+            },
+        )
+        app = files["src/app.py"]
+        self.assertEqual((app["added"], app["removed"]), (2, 2))
+        lines = app["hunks"][0]["lines"]
+        self.assertEqual(lines[1], ("del", 2, None, "value = 1\r"))
+        self.assertEqual(lines[2], ("add", None, 2, "value = 2"))
+        self.assertEqual(lines[4][0], "del")
+        self.assertEqual(files["new name.txt"]["old_path"], "old name.txt")
+        self.assertEqual(files["gone.txt"]["hunks"][0]["lines"][-1][0], "note")
+        self.assertTrue(files["logo.png"]["binary"])
+        self.assertEqual(DIFF.summary(DIFF.parse(SAMPLE_DIFF)), (5, 4, 3))
+        self.assertEqual(DIFF._strip_prefix(r'"a/sp\303\251 \"q\".txt"'), 'spé "q".txt')
+
+    def test_tree_merges_single_folders_and_sums(self):
+        root = DIFF.tree(DIFF.parse(SAMPLE_DIFF))
+        self.assertEqual(list(root["children"]), ["src", "gone.txt", "logo.png", "new name.txt"])
+        src = root["children"]["src"]
+        self.assertEqual((src["count"], src["added"], src["removed"]), (2, 4, 2))
+        self.assertEqual(list(src["children"]), ["views", "app.py"])
+        only = DIFF.tree(
+            DIFF.parse(
+                SAMPLE_DIFF[
+                    SAMPLE_DIFF.index("diff --git a/src/views") : SAMPLE_DIFF.index("diff --git a/logo")
+                ]
+            )
+        )
+        self.assertEqual(list(only["children"]), ["src/views"])
+
+    def test_inline_span_and_split_pairs(self):
+        self.assertEqual(DIFF.changed_span("value = 1", "value = 22"), (8, 9, 10))
+        lines = [("ctx", 1, 1, "a"), ("del", 2, None, "b"), ("del", 3, None, "c"), ("add", None, 2, "B")]
+        pairs = DIFF.pair_rows(lines)
+        self.assertEqual([(l and l[3], r and r[3]) for l, r in pairs], [("a", "a"), ("b", "B"), ("c", None)])
+
+    def test_graph_lanes_for_branch_and_merge(self):
+        commits = [
+            {"sha": "m", "parents": ["a", "f"]},
+            {"sha": "f", "parents": ["b"]},
+            {"sha": "a", "parents": ["b"]},
+            {"sha": "b", "parents": ["old"]},
+        ]
+        rows = GRAPH.layout(commits)
+        self.assertEqual([r["col"] for r in rows], [0, 1, 0, 0])
+        self.assertTrue(rows[0]["merge"])
+        self.assertEqual(sorted(rows[0]["bottom"]), [(0, 0), (0, 1)])
+        # a's parent b already waits in lane 1 (from f); it folds back into lane 0 below a.
+        self.assertIn((1, 0), rows[2]["bottom"])
+        self.assertEqual(rows[3]["top"], [(0, 0)])
+        self.assertEqual(rows[3]["dangling"], [0])
+        self.assertEqual(max(r["width"] for r in rows), 2)
 
 
 class FakeGitHub(BaseHTTPRequestHandler):

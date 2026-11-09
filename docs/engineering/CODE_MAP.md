@@ -22,7 +22,9 @@ dayframe/
 │   ├── schema.sql       initial SQLite schema
 │   └── schema_definitions.json   entity field definitions used by validation and sync
 ├── code/                version control for the Code page: no Qt, no SQLite
-│   ├── git.py           GitRepo: status, shelve/restore changesets, branches, commit, fetch/pull/push
+│   ├── git.py           GitRepo: status, shelve/restore, stage/discard, history, refs, stashes, branches, commit, fetch/pull/push
+│   ├── diff.py          unified diff parser: files, hunks, numbered lines, folder tree, in-line edit spans
+│   ├── graph.py         commit graph lane layout (rows, lanes, merge and fold segments)
 │   └── github.py        GitHub REST client (overview, pull requests, issues) and TokenStore (keyring)
 ├── sync/                networking: no Qt (the hub runs with requirements-hub.txt only)
 │   ├── client.py        Sync: pairing, push/pull, certificate pinning, keyring, conflict resolution

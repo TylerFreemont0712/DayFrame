@@ -264,9 +264,9 @@ class GitRepo:
 
     def switch(self, branch, create=False):
         if create:
-            self.run("switch", "-c", branch)
+            self.run("switch", "-c", check_branch(branch))
         else:
-            self.run("switch", branch)
+            self.run("switch", check_branch(branch))
 
     def commit(self, message, paths):
         if not message.strip():
@@ -293,3 +293,180 @@ class GitRepo:
         if status["upstream"]:
             return self.run("push", timeout=NETWORK_TIMEOUT)
         return self.run("push", "--set-upstream", "origin", status["branch"], timeout=NETWORK_TIMEOUT)
+
+    # History, refs and the index ---------------------------------------------------------------
+
+    def graph_log(self, limit=400):
+        """Commits on every branch, newest first in topological order, with their refs."""
+        raw = self.run(
+            "log",
+            # Branches, remotes, tags and HEAD; --all would also draw stash internals.
+            "--branches",
+            "--remotes",
+            "--tags",
+            "HEAD",
+            "--topo-order",
+            "-n",
+            str(limit),
+            "--format=%H%x1f%P%x1f%D%x1f%an%x1f%ae%x1f%at%x1f%s%x1e",
+            check=False,
+        )
+        commits = []
+        for record in raw.split("\x1e"):
+            fields = record.strip("\n").split("\x1f")
+            if len(fields) != 7:
+                continue
+            sha, parents, refs, author, email, when, subject = fields
+            commits.append(
+                {
+                    "sha": sha,
+                    "parents": parents.split(),
+                    "refs": [r.strip() for r in refs.split(",") if r.strip()],
+                    "author": author,
+                    "email": email,
+                    "time": int(when or 0),
+                    "subject": subject,
+                }
+            )
+        return commits
+
+    def commit_details(self, sha):
+        """Full details and patch of one commit; merges show their change against the first parent."""
+        sha = check_revision(sha)
+        raw = self.run(
+            "show", "-s", "--format=%H%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%cn%x1f%ce%x1f%ct%x1f%D%x1f%B", sha
+        )
+        fields = raw.split("\x1f", 9)
+        info = dict(
+            zip(
+                (
+                    "sha",
+                    "parents",
+                    "author",
+                    "email",
+                    "time",
+                    "committer",
+                    "committer_email",
+                    "commit_time",
+                    "refs",
+                    "message",
+                ),
+                fields,
+            )
+        )
+        info["parents"] = info["parents"].split()
+        info["refs"] = [r.strip() for r in info["refs"].split(",") if r.strip()]
+        info["time"], info["commit_time"] = int(info["time"] or 0), int(info["commit_time"] or 0)
+        info["message"] = info["message"].rstrip()
+        try:
+            info["diff"] = self.run("show", "--format=", "-p", "-M", "--diff-merges=first-parent", sha)
+        except GitError:
+            info["diff"] = self.run("show", "--format=", "-p", "-M", sha)
+        return info
+
+    def refs(self):
+        """Local branches, remote branches and tags with their tips, tracking and last commit."""
+        raw = self.run(
+            "for-each-ref",
+            "--sort=-committerdate",
+            "--format=%(refname)%1f%(refname:short)%1f%(objectname)%1f%(upstream:short)%1f"
+            "%(upstream:track)%1f%(committerdate:unix)%1f%(subject)%1f%(HEAD)%1f%(*objectname)",
+            "refs/heads",
+            "refs/remotes",
+            "refs/tags",
+        )
+        result = []
+        for line in raw.splitlines():
+            fields = line.split("\x1f")
+            if len(fields) != 9:
+                continue
+            full, name, sha, upstream, track, when, subject, head, peeled = fields
+            if full.endswith("/HEAD"):
+                continue
+            kind = (
+                "local"
+                if full.startswith("refs/heads/")
+                else "remote"
+                if full.startswith("refs/remotes/")
+                else "tag"
+            )
+            ahead = behind = 0
+            for part in track.strip("[]").split(","):
+                part = part.strip()
+                if part.startswith("ahead "):
+                    ahead = int(part[6:])
+                elif part.startswith("behind "):
+                    behind = int(part[7:])
+            result.append(
+                {
+                    "kind": kind,
+                    "name": name,
+                    "sha": peeled or sha,
+                    "upstream": upstream,
+                    "gone": "gone" in track,
+                    "ahead": ahead,
+                    "behind": behind,
+                    "time": int(when or 0),
+                    "subject": subject,
+                    "head": head == "*",
+                }
+            )
+        return result
+
+    def stashes(self):
+        raw = self.run("stash", "list", "--format=%gd%x1f%gs%x1f%ct%x1f%H", check=False)
+        result = []
+        for line in raw.splitlines():
+            fields = line.split("\x1f")
+            if len(fields) == 4:
+                ref, subject, when, sha = fields
+                marker = next((w for w in subject.split() if w.startswith(STASH_PREFIX)), "")
+                result.append(
+                    {
+                        "ref": ref,
+                        "subject": subject,
+                        "time": int(when or 0),
+                        "sha": sha,
+                        "changeset": marker[len(STASH_PREFIX) :] if marker else "",
+                    }
+                )
+        return result
+
+    def stage(self, paths):
+        self.run("add", "-A", "--", *check_paths(paths))
+
+    def unstage(self, paths):
+        if self.run("rev-parse", "--verify", "--quiet", "HEAD", check=False).strip():
+            self.run("restore", "--staged", "--", *check_paths(paths))
+        else:
+            self.run("rm", "--cached", "--quiet", "--", *check_paths(paths))
+
+    def discard(self, paths):
+        """Throw away tracked changes to these paths, staged and unstaged. Untracked files stay."""
+        self.run("restore", "--source=HEAD", "--staged", "--worktree", "--", *check_paths(paths))
+
+    def branch_from(self, name, start):
+        """Create a branch at another branch, tag or commit and check it out."""
+        self.run("switch", "-c", check_branch(name), check_branch(start))
+
+    def delete_branch(self, name):
+        """Delete a local branch only if it is merged (git branch -d), never forced."""
+        self.run("branch", "-d", "--", check_branch(name))
+
+
+def check_revision(value):
+    if not value or not all(c in "0123456789abcdef" for c in value.lower()) or len(value) > 64:
+        raise GitError("Not a commit id: " + str(value))
+    return value
+
+
+def check_branch(name):
+    if not name or name.startswith("-") or any(c in name for c in " ~^:?*[\\0") or ".." in name:
+        raise GitError("Not a valid branch name: " + str(name))
+    return name
+
+
+def check_paths(paths):
+    if not paths:
+        raise GitError("Choose at least one file.")
+    return list(paths)
