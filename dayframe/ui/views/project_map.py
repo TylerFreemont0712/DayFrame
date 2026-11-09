@@ -28,7 +28,7 @@ from ..theme import CURRENT as C
 from ...core import domain as D
 from ..labels import paint_label_pills
 from ..dragdrop import TICKET_MIME
-from .kanban import paint_code_badge
+from .kanban import BADGE_HEIGHT, PressAnimation, code_badge_rect, paint_code_badge
 
 CARD_WIDTH = 180
 CARD_HEIGHT = 74
@@ -92,11 +92,6 @@ class SectionHeader(QGraphicsObject):
         )
 
     def mousePressEvent(self, event):
-        if self.code and event.button() == Qt.LeftButton and self.code_rect.contains(event.pos()):
-            ticket_id = self.ticket["id"]
-            QTimer.singleShot(0, lambda: self.view.window.open_code(ticket_id))
-            event.accept()
-            return
         self.origin = QPointF(self.pos())
         self.view.begin_hover("section", self.section["id"])
         super().mousePressEvent(event)
@@ -167,7 +162,12 @@ class TicketNode(QGraphicsObject):
         self.setZValue(10)
         self.origin = QPointF()
         self.code = bool(view.window.code_repo(ticket["project_id"]))
-        self.code_rect = QRectF(CARD_WIDTH - 52, 4, 32, 16)
+        count = view.window.changeset_count(ticket["id"]) if self.code else 0
+        self.code_rect = code_badge_rect(QRectF(0, 1, CARD_WIDTH - 2, BADGE_HEIGHT + 4), count)
+        self.badge_hover = False
+        self.badge_pressed = False
+        self.badge_press = PressAnimation(self.update)
+        self.setAcceptHoverEvents(True)
 
     def boundingRect(self):
         return QRectF(0, 0, CARD_WIDTH, CARD_HEIGHT)
@@ -186,14 +186,20 @@ class TicketNode(QGraphicsObject):
         key = self.view.window.ticket_key(self.ticket)
         if self.placement and self.placement["manual"]:
             key += " · pin"
-        key_width = CARD_WIDTH - (66 if self.code else 34)
+        key_width = (self.code_rect.left() - 16) if self.code else CARD_WIDTH - 34
         p.drawText(
             QRectF(10, 5, key_width, 15),
             Qt.AlignVCenter,
             QFontMetricsF(p.font()).elidedText(key, Qt.ElideRight, key_width),
         )
         if self.code:
-            paint_code_badge(p, self.code_rect, self.view.window.changeset_count(self.ticket["id"]))
+            paint_code_badge(
+                p,
+                self.code_rect,
+                self.view.window.changeset_count(self.ticket["id"]),
+                1.0 if self.badge_hover else 0.0,
+                self.badge_press.level,
+            )
         colors = {"urgent": C["danger"], "high": "#edba71", "medium": "#86c99a", "low": C["muted"]}
         p.setPen(Qt.NoPen)
         p.setBrush(QColor(colors.get(self.ticket["priority"], C["muted"])))
@@ -216,10 +222,29 @@ class TicketNode(QGraphicsObject):
                 p, QRectF(18 + footer_width, 54, CARD_WIDTH - 28 - footer_width, 16), self.ticket["labels"], 1
             )
 
+    def on_badge(self, pos):
+        return self.code and self.code_rect.adjusted(-2, -2, 2, 2).contains(pos)
+
+    def hoverMoveEvent(self, event):
+        hover = self.on_badge(event.pos())
+        if hover != self.badge_hover:
+            self.badge_hover = hover
+            self.setCursor(Qt.PointingHandCursor if hover else Qt.OpenHandCursor)
+            self.update()
+        super().hoverMoveEvent(event)
+
+    def hoverLeaveEvent(self, event):
+        if self.badge_hover:
+            self.badge_hover = False
+            self.setCursor(Qt.OpenHandCursor)
+            self.update()
+        super().hoverLeaveEvent(event)
+
     def mousePressEvent(self, event):
-        if self.code and event.button() == Qt.LeftButton and self.code_rect.contains(event.pos()):
-            ticket_id = self.ticket["id"]
-            QTimer.singleShot(0, lambda: self.view.window.open_code(ticket_id))
+        if event.button() == Qt.LeftButton and self.on_badge(event.pos()):
+            self.badge_pressed = True
+            self.badge_hover = True
+            self.badge_press.press()
             event.accept()
             return
         self.origin = QPointF(self.pos())
@@ -229,15 +254,32 @@ class TicketNode(QGraphicsObject):
         self.update()
 
     def mouseMoveEvent(self, event):
+        if self.badge_pressed:
+            self.badge_hover = self.on_badge(event.pos())
+            self.update()
+            return
         super().mouseMoveEvent(event)
         self.view.consider_hover("ticket", self.ticket["id"], event.scenePos())
 
     def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionHasChanged and not self.view.building:
+        if (
+            change == QGraphicsItem.ItemPositionHasChanged
+            and not self.view.building
+            and not self.view.carrying
+        ):
             self.view.redraw_edges()
         return super().itemChange(change, value)
 
     def mouseReleaseEvent(self, event):
+        if self.badge_pressed:
+            self.badge_pressed = False
+            ticket_id = self.ticket["id"]
+            window = self.view.window
+            inside = self.on_badge(event.pos())
+            self.badge_press.release(
+                (lambda: QTimer.singleShot(0, lambda: window.open_code(ticket_id))) if inside else None
+            )
+            return
         super().mouseReleaseEvent(event)
         if (self.pos() - self.origin).manhattanLength() < 4:
             self.view.clear_hover()

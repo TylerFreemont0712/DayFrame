@@ -2,8 +2,8 @@
 
 import hashlib
 
-from PySide6.QtCore import Qt, QMimeData, QSize, QRectF, QPointF, QTimer
-from PySide6.QtGui import QColor, QPainter, QPen, QDrag, QFont, QTextLayout, QTextOption
+from PySide6.QtCore import QEasingCurve, QMimeData, QPointF, QRectF, QSize, Qt, QTimer, QVariantAnimation
+from PySide6.QtGui import QColor, QDrag, QFont, QFontMetricsF, QPainter, QPen, QTextLayout, QTextOption
 from PySide6.QtWidgets import (
     QApplication,
     QStyledItemDelegate,
@@ -60,25 +60,85 @@ def paint_project_key(p, rect, project_id, prefix, suffix):
     p.restore()
 
 
-def code_badge_rect(rect):
-    """Clickable Code marker at a card's top right, left of the priority dot."""
-    return QRectF(rect.right() - 50, rect.top() + 4, 32, 16)
+BADGE_HEIGHT = 18
 
 
-def paint_code_badge(p, rect, count):
-    """A small code glyph plus the ticket's changeset count; shown when its project has a repository."""
+def code_badge_rect(rect, count=0):
+    """Clickable Code marker at a card's top right, left of the priority dot.
+
+    Square for the glyph alone, wider when it also shows a changeset count.
+    """
+    width = BADGE_HEIGHT + (4 + 7 * len(str(min(count, 99))) if count else 0)
+    return QRectF(rect.right() - 20 - width, rect.top() + 3, width, BADGE_HEIGHT)
+
+
+def paint_code_badge(p, rect, count, hover=0.0, press=0.0):
+    """The code glyph (and changeset count) centred in a small button.
+
+    hover and press run from 0 to 1. Pressing sinks the button a pixel, deepens its fill
+    and draws an accent ring, so it reads like the app's other pressed buttons.
+    """
     p.save()
-    tint = QColor(C["accent"])
-    tint.setAlpha(32)
-    p.setBrush(tint)
-    p.setPen(Qt.NoPen)
-    p.drawRoundedRect(rect, 3, 3)
-    side = int(rect.height() - 4)
-    icon("code", C["accent"]).paint(p, int(rect.left() + 3), int(rect.top() + 2), side, side)
-    if count:
-        p.setPen(QColor(C["accent"]))
-        p.drawText(rect.adjusted(side + 5, 0, -2, 0), Qt.AlignVCenter | Qt.AlignLeft, str(count))
+    accent = QColor(C["accent"])
+    sink = 1.2 * press
+    body = rect.adjusted(sink * 0.5, sink, -sink * 0.5, 0)
+    fill = QColor(accent)
+    fill.setAlpha(int(30 + 34 * hover + 70 * press))
+    p.setBrush(fill)
+    ring = QColor(accent)
+    ring.setAlpha(int(150 * max(hover, press)))
+    p.setPen(QPen(ring, 1) if hover or press else Qt.NoPen)
+    radius = min(4.0, body.height() / 2)
+    p.drawRoundedRect(body.adjusted(0.5, 0.5, -0.5, -0.5), radius, radius)
+    side = 11
+    text = str(min(count, 99)) if count else ""
+    font = QFont(p.font())
+    font.setPointSizeF(max(6.5, font.pointSizeF() - 0.5))
+    font.setBold(True)
+    metrics = QFontMetricsF(font)
+    group = side + (3 + metrics.horizontalAdvance(text) if text else 0)
+    left = body.center().x() - group / 2
+    top = body.center().y() - side / 2
+    glyph = QColor(C["accent_text"]) if press > 0.6 else accent
+    icon("code", glyph.name()).paint(p, round(left), round(top), side, side)
+    if text:
+        p.setFont(font)
+        p.setPen(glyph)
+        p.drawText(
+            QRectF(left + side + 3, body.top(), group, body.height()), Qt.AlignVCenter | Qt.AlignLeft, text
+        )
     p.restore()
+
+
+class PressAnimation(QVariantAnimation):
+    """Animated 0 to 1 press level for a painted button; repaint() runs on every frame."""
+
+    def __init__(self, repaint):
+        super().__init__()
+        self.level = 0.0
+        self.after = None
+        self.valueChanged.connect(lambda value: (setattr(self, "level", float(value)), repaint()))
+        self.finished.connect(self._done)
+
+    def run(self, target, duration, after=None):
+        self.stop()
+        self.after = after
+        self.setStartValue(self.level)
+        self.setEndValue(float(target))
+        self.setDuration(duration)
+        self.setEasingCurve(QEasingCurve.OutCubic)
+        self.start()
+
+    def press(self):
+        self.run(1.0, 70)
+
+    def release(self, after=None):
+        self.run(0.0, 150, after)
+
+    def _done(self):
+        after, self.after = self.after, None
+        if after:
+            after()
 
 
 def card_size(ticket):
@@ -143,10 +203,13 @@ class BoardDelegate(QStyledItemDelegate):
         font.setPointSizeF(max(7.5, font.pointSizeF() - 0.5))
         p.setFont(font)
         project = next((x for x in self.window.data["project"] if x["id"] == ticket["project_id"]), {})
-        code = bool(self.window.code_repo(ticket["project_id"]))
+        code = bool(self.window.code_repo(ticket["project_id"])) and not ghost
+        count = self.window.changeset_count(ticket["id"]) if code else 0
+        badge = code_badge_rect(rect, count)
+        key_right = badge.left() - 6 if code else rect.right() - 19
         paint_project_key(
             p,
-            QRectF(rect.left() + 8, rect.top() + 5, rect.width() - (61 if code else 27), 18),
+            QRectF(rect.left() + 8, rect.top() + 5, key_right - rect.left() - 8, 18),
             ticket["project_id"],
             project.get("project_key", "T"),
             ticket["id"][:6].upper(),
@@ -157,8 +220,16 @@ class BoardDelegate(QStyledItemDelegate):
         p.setBrush(QColor(color))
         p.setPen(Qt.NoPen)
         p.drawEllipse(QPointF(rect.right() - 10, rect.top() + 12), 3, 3)
-        if code and not ghost:
-            paint_code_badge(p, code_badge_rect(rect), self.window.changeset_count(ticket["id"]))
+        if code:
+            lane = self.parent()
+            mine = getattr(lane, "badge_ticket", None) == ticket["id"]
+            paint_code_badge(
+                p,
+                badge,
+                count,
+                1.0 if mine and lane.badge_hover else 0.0,
+                lane.badge_press.level if mine else 0.0,
+            )
         font.setBold(True)
         p.setFont(font)
         p.setPen(QColor(C["text"]))
@@ -216,6 +287,12 @@ class TicketList(QListWidget):
         self.itemClicked.connect(
             lambda item: window.select_ticket(item.data(Qt.UserRole)) if item.data(Qt.UserRole) else None
         )
+        # The Code badge behaves like a small button: hover ring, animated press, open on release.
+        self.badge_ticket = None
+        self.badge_hover = False
+        self.badge_pressed = False
+        self.badge_press = PressAnimation(self.viewport().update)
+        self.setMouseTracking(True)
 
     def code_hit(self, pos):
         """The ticket whose Code badge is under a viewport position, if any."""
@@ -224,16 +301,52 @@ class TicketList(QListWidget):
         if not ticket or not self.window.code_repo(ticket["project_id"]):
             return None
         rect = QRectF(self.visualItemRect(item)).adjusted(2, 2, -2, -2)
-        return ticket["id"] if code_badge_rect(rect).contains(QPointF(pos)) else None
+        badge = code_badge_rect(rect, self.window.changeset_count(ticket["id"]))
+        return ticket["id"] if badge.adjusted(-2, -2, 2, 2).contains(QPointF(pos)) else None
 
     def mousePressEvent(self, event):
         ticket_id = self.code_hit(event.position().toPoint()) if event.button() == Qt.LeftButton else None
         if ticket_id:
-            # Leave the list's own event before the page is rebuilt.
-            QTimer.singleShot(0, lambda: self.window.open_code(ticket_id))
+            self.badge_ticket, self.badge_hover, self.badge_pressed = ticket_id, True, True
+            self.badge_press.press()
             event.accept()
             return
         super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self.badge_pressed:
+            self.badge_hover = self.code_hit(event.position().toPoint()) == self.badge_ticket
+            self.viewport().update()
+            event.accept()
+            return
+        hit = self.code_hit(event.position().toPoint())
+        if bool(hit) != self.badge_hover or (hit and hit != self.badge_ticket):
+            self.badge_hover = bool(hit)
+            if hit:
+                self.badge_ticket = hit
+            self.viewport().setCursor(Qt.PointingHandCursor if hit else Qt.ArrowCursor)
+            self.viewport().setToolTip("Open in Code" if hit else "")
+            self.viewport().update()
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self.badge_pressed:
+            self.badge_pressed = False
+            ticket_id = self.badge_ticket
+            inside = self.code_hit(event.position().toPoint()) == ticket_id
+            # Let the button spring back before the page changes, like a real button.
+            self.badge_press.release(
+                (lambda: QTimer.singleShot(0, lambda: self.window.open_code(ticket_id))) if inside else None
+            )
+            event.accept()
+            return
+        super().mouseReleaseEvent(event)
+
+    def leaveEvent(self, event):
+        if not self.badge_pressed and self.badge_hover:
+            self.badge_hover = False
+            self.viewport().update()
+        super().leaveEvent(event)
 
     def contextMenuEvent(self, event):
         item = self.itemAt(event.pos())

@@ -96,6 +96,13 @@ class CodeUiTests(unittest.TestCase):
     def repo(self):
         return self.w.code_repo(self.project["id"])
 
+    def pump(self, seconds):
+        """Process events for a while so press animations can finish."""
+        end = time.time() + seconds
+        while time.time() < end:
+            APP.processEvents()
+            time.sleep(0.01)
+
     def visible(self, kind):
         return next(w for w in self.w.workspace.findChildren(kind) if w.isVisible())
 
@@ -211,8 +218,14 @@ class CodeUiTests(unittest.TestCase):
             lane.item(i) for i in range(lane.count()) if lane.item(i).data(Qt.UserRole) == self.ticket["id"]
         )
         badge = code_badge_rect(QRectF(lane.visualItemRect(item)).adjusted(2, 2, -2, -2))
-        QTest.mouseClick(lane.viewport(), Qt.LeftButton, Qt.NoModifier, badge.center().toPoint())
-        APP.processEvents()
+        QTest.mousePress(lane.viewport(), Qt.LeftButton, Qt.NoModifier, badge.center().toPoint())
+        self.pump(0.15)
+        # Pressed: the badge sinks and the page has not changed yet.
+        self.assertTrue(lane.badge_pressed)
+        self.assertGreater(lane.badge_press.level, 0.9)
+        self.assertEqual(self.w.page, "Projects")
+        QTest.mouseRelease(lane.viewport(), Qt.LeftButton, Qt.NoModifier, badge.center().toPoint())
+        self.pump(0.4)
         self.assertEqual((self.w.page, self.w.code_ticket), ("Code", self.ticket["id"]))
 
         self.w.choose_project(self.project["id"])
@@ -229,7 +242,7 @@ class CodeUiTests(unittest.TestCase):
         view = self.w.findChild(ProjectMap)
         point = view.mapFromScene(node.mapToScene(node.code_rect.center()))
         QTest.mouseClick(view.viewport(), Qt.LeftButton, Qt.NoModifier, point)
-        APP.processEvents()
+        self.pump(0.4)
         self.assertEqual((self.w.page, self.w.code_ticket), ("Code", self.ticket["id"]))
 
         self.w.open_ticket(self.ticket["id"])
