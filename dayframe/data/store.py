@@ -31,6 +31,23 @@ CHANGESETS_TABLE = (
     "FOREIGN KEY(account_id,ticket_id) REFERENCES tickets(account_id,id))"
 )
 CHANGESETS_INDEX = "CREATE INDEX IF NOT EXISTS changesets_ticket ON changesets(account_id,ticket_id)"
+# Schema 6: ticket discussion and screenshots.
+POSTS_TABLE = (
+    "CREATE TABLE IF NOT EXISTS posts(account_id TEXT NOT NULL,id TEXT NOT NULL,ticket_id TEXT NOT NULL,"
+    "body TEXT NOT NULL,author TEXT NOT NULL,created_at REAL NOT NULL,edited_at REAL NOT NULL,"
+    "archived INTEGER NOT NULL,PRIMARY KEY(account_id,id),"
+    "FOREIGN KEY(account_id,ticket_id) REFERENCES tickets(account_id,id))"
+)
+ATTACHMENTS_TABLE = (
+    "CREATE TABLE IF NOT EXISTS attachments(account_id TEXT NOT NULL,id TEXT NOT NULL,ticket_id TEXT NOT NULL,"
+    "post_id TEXT NOT NULL,name TEXT NOT NULL,media_type TEXT NOT NULL,data TEXT NOT NULL,size REAL NOT NULL,"
+    "width REAL NOT NULL,height REAL NOT NULL,created_at REAL NOT NULL,archived INTEGER NOT NULL,"
+    "PRIMARY KEY(account_id,id),FOREIGN KEY(account_id,ticket_id) REFERENCES tickets(account_id,id))"
+)
+DISCUSSION_INDEXES = (
+    "CREATE INDEX IF NOT EXISTS posts_ticket ON posts(account_id,ticket_id)",
+    "CREATE INDEX IF NOT EXISTS attachments_ticket ON attachments(account_id,ticket_id)",
+)
 
 
 class Store:
@@ -49,7 +66,7 @@ class Store:
 
     def _migrate(self):
         version = self.db.execute("SELECT coalesce(max(version),0) FROM schema_migrations").fetchone()[0]
-        if version > 5:
+        if version > 6:
             raise ValueError("This database requires a newer DayFrame version.")
         if not version:
             self.db.executescript(files("dayframe.data").joinpath("schema.sql").read_text(encoding="utf-8"))
@@ -97,6 +114,19 @@ class Store:
                 self.db.execute(CHANGESETS_TABLE)
                 self.db.execute(CHANGESETS_INDEX)
                 self.db.execute("INSERT INTO schema_migrations VALUES(5)")
+        if version < 6:
+            with self.atomic():
+                columns = {row[1] for row in self.db.execute("PRAGMA table_info(tickets)")}
+                for field in ("created_at", "completed_at"):
+                    if field not in columns:
+                        self.db.execute(
+                            "ALTER TABLE tickets ADD COLUMN " + field + " REAL NOT NULL DEFAULT 0"
+                        )
+                self.db.execute(POSTS_TABLE)
+                self.db.execute(ATTACHMENTS_TABLE)
+                for statement in DISCUSSION_INDEXES:
+                    self.db.execute(statement)
+                self.db.execute("INSERT INTO schema_migrations VALUES(6)")
 
     def remember_session(self):
         """Remember trusted local access without storing a password or syncing it.
@@ -328,7 +358,18 @@ class Store:
                 section = self.read("section", next_record["section_id"])
                 if not section or section["project_id"] != ticket["project_id"]:
                     raise ValueError("Section belongs to another project.")
-        if kind in ("repo", "changeset"):
+        if kind == "ticket" and queue:
+            # Lifecycle times feed the Tickets overview. Only local edits set them; synced
+            # records keep the values from the device that made the change.
+            now = int(time.time() * 1000)
+            if not old and not next_record["created_at"]:
+                next_record["created_at"] = now
+            if "completed_at" not in patch:
+                if next_record["status"] == "done" and (not old or old["status"] != "done"):
+                    next_record["completed_at"] = now
+                elif next_record["status"] != "done":
+                    next_record["completed_at"] = 0
+        if kind in ("repo", "changeset", "post", "attachment"):
             D.check_code_relations(kind, next_record, self.read)
             # Only local edits are refused; a duplicate arriving through sync is kept and the
             # Code page uses the first one.
@@ -497,6 +538,8 @@ class Store:
                 "block.save": "block",
                 "repo.save": "repo",
                 "changeset.save": "changeset",
+                "post.save": "post",
+                "attachment.save": "attachment",
             }
             if method in direct:
                 return self._save(direct[method], p)
@@ -626,6 +669,7 @@ class Store:
                 3,
                 4,
                 5,
+                6,
             ):
                 raise ValueError("Unsupported database version.")
             if original.execute("PRAGMA quick_check").fetchone()[0] != "ok":

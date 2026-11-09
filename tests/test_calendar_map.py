@@ -116,7 +116,7 @@ class CalendarAndMapTests(unittest.TestCase):
         self.assertEqual(self.s.read("event", e["id"])["title"], "Old event")
         self.assertEqual(self.s.read("event", e["id"])["recurrence"], "")
         self.assertEqual(self.s.read("note", n["id"])["body"], "Old content")
-        self.assertEqual(self.s.db.execute("SELECT max(version) FROM schema_migrations").fetchone()[0], 5)
+        self.assertEqual(self.s.db.execute("SELECT max(version) FROM schema_migrations").fetchone()[0], 6)
 
     def test_nested_rules_ticket_parent_sequence_and_cycle_rollback(self):
         front = self.s.command(

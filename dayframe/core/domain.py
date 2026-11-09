@@ -23,10 +23,32 @@ PROVIDERS = ("git", "svn")
 # version as the merge base. Keeping the encoded size at 200 KB keeps both under the hub's
 # 500 KB operation limit.
 MAX_DIFF_BYTES = 200_000
+# Screenshots are stored base64-encoded; 300 KB of text keeps one under the same sync limit.
+MAX_ATTACHMENT_CHARS = 300_000
+MEDIA_TYPES = ("image/png", "image/jpeg")
+BASE64 = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=")
 
 
 def diff_size(value):
     return len(json.dumps(value))
+
+
+NUMBER_FIELDS = (
+    "estimate_min",
+    "x",
+    "y",
+    "start_at",
+    "end_at",
+    "session_ms",
+    "sort_order",
+    "updated_at",
+    "created_at",
+    "completed_at",
+    "edited_at",
+    "size",
+    "width",
+    "height",
+)
 
 
 def github_name(value):
@@ -144,7 +166,7 @@ def validate(kind, data):
     for key, value in data.items():
         if key not in definition["fields"]:
             raise ValueError("Unknown field: " + key)
-        if key in ("estimate_min", "x", "y", "start_at", "end_at", "session_ms", "sort_order", "updated_at"):
+        if key in NUMBER_FIELDS:
             if (
                 isinstance(value, bool)
                 or not isinstance(value, (int, float))
@@ -165,6 +187,9 @@ def validate(kind, data):
                     text(item.get("text"), 1000, True)
                 else:
                     text(item, 100, True)
+        elif key == "data":
+            if not isinstance(value, str) or len(value) > MAX_ATTACHMENT_CHARS or set(value) - BASE64:
+                raise ValueError("This image is too large to store and sync (limit about 220 KB).")
         elif key == "diff":
             if not isinstance(value, str) or diff_size(value) > MAX_DIFF_BYTES:
                 raise ValueError("This diff is too large to store and sync (limit about 200 KB).")
@@ -220,6 +245,10 @@ def validate(kind, data):
                 time.fromisoformat(data[key])
         if "start_time" in data and "end_time" in data and data["end_time"] <= data["start_time"]:
             raise ValueError("Work block must end after it starts.")
+    if "media_type" in data and data["media_type"] not in MEDIA_TYPES:
+        raise ValueError("Attach a PNG or JPEG image.")
+    if kind == "post" and "body" in data:
+        text(data["body"], 100000, True)
     if "provider" in data and data["provider"] not in PROVIDERS:
         raise ValueError("Choose Git or Subversion.")
     if "github_repo" in data:
@@ -286,10 +315,16 @@ def section_matches(sections, section, ticket):
 
 
 def check_code_relations(kind, data, find):
-    """Scope rules for repositories and changesets, shared by Store and hub.
+    """Scope rules for repositories, changesets, posts and attachments, shared by Store and hub.
 
     find(kind, id) returns the stored record or None.
     """
+    if kind in ("post", "attachment") and not find("ticket", data["ticket_id"]):
+        raise ValueError("Ticket not found.")
+    if kind == "attachment" and data["post_id"]:
+        post = find("post", data["post_id"])
+        if not post or post["ticket_id"] != data["ticket_id"]:
+            raise ValueError("Attach the image to a comment on the same ticket.")
     if kind == "repo" and not find("project", data["project_id"]):
         raise ValueError("Choose an existing project.")
     if kind == "changeset":

@@ -31,7 +31,9 @@
       "checklist",
       "labels",
       "dependencies",
-      "parent_id"
+      "parent_id",
+      "created_at",
+      "completed_at"
     ],
     "json": [
       "checklist"
@@ -55,7 +57,9 @@
       "checklist": [],
       "labels": [],
       "dependencies": [],
-      "parent_id": ""
+      "parent_id": "",
+      "created_at": 0,
+      "completed_at": 0
     }
   },
   "event": {
@@ -241,6 +245,55 @@
     },
     "heavy": [
       "diff"
+    ]
+  },
+  "post": {
+    "table": "posts",
+    "fields": [
+      "ticket_id",
+      "body",
+      "author",
+      "created_at",
+      "edited_at",
+      "archived"
+    ],
+    "defaults": {
+      "ticket_id": "",
+      "body": "",
+      "author": "",
+      "created_at": 0,
+      "edited_at": 0,
+      "archived": 0
+    }
+  },
+  "attachment": {
+    "table": "attachments",
+    "fields": [
+      "ticket_id",
+      "post_id",
+      "name",
+      "media_type",
+      "data",
+      "size",
+      "width",
+      "height",
+      "created_at",
+      "archived"
+    ],
+    "defaults": {
+      "ticket_id": "",
+      "post_id": "",
+      "name": "",
+      "media_type": "image/png",
+      "data": "",
+      "size": 0,
+      "width": 0,
+      "height": 0,
+      "created_at": 0,
+      "archived": 0
+    },
+    "heavy": [
+      "data"
     ]
   }
 }

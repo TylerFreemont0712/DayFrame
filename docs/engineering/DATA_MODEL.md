@@ -1,6 +1,6 @@
 # Persistent Data Model
 
-Status: complete-product logical model. The current normalized foundation schema is implemented in dayframe/data/schema.sql and dayframe/data/store.py, migration version 5. Entity families listed here include future features; [CURRENT_STATUS.md](../status/CURRENT_STATUS.md) identifies what is delivered. The hub stores validated canonical entity revisions separately from client projections.
+Status: complete-product logical model. The current normalized foundation schema is implemented in dayframe/data/schema.sql and dayframe/data/store.py, migration version 6. Entity families listed here include future features; [CURRENT_STATUS.md](../status/CURRENT_STATUS.md) identifies what is delivered. The hub stores validated canonical entity revisions separately from client projections.
 
 ## Global conventions
 
@@ -96,3 +96,10 @@ Tickets add parent_id; sections add parent_id and JSON predecessor_ids. Parent/d
 `changesets` (kind `changeset`) holds a ticket's saved working-tree changes: repository, ticket (from the same project), title, branch, base commit, the unified diff, a short stat line, `updated_at` and an archive flag. The diff is the shared, synchronized copy; a local git stash entry is only a device backup. Its JSON-encoded size is limited to 200 KB so a sync operation carrying the new diff and its merge base stays under the hub's 500 KB limit. Snapshots replace the diff with `diff_size`; views read the full record when they show it.
 
 Checkout folders (`repoPaths`), the changeset applied on this device (`activeChangesets`), the GitHub API address and the signed-in GitHub user are device preferences and never sync. The GitHub token lives only in the OS credential store under `DayFrame.github` (or in memory for the session). Version 4 profiles migrate to 5 by adding the two tables.
+
+
+## Implemented ticket history and discussion in schema 6
+
+Tickets gain `created_at` and `completed_at` (milliseconds; 0 when unknown, as for tickets made before schema 6). The Store sets them on local edits only: `created_at` when a ticket is first saved, `completed_at` when its status becomes Complete, and 0 again when it leaves Complete. Synced records keep the values the originating device set, so two devices editing other fields never conflict over them. An explicit value in a save (imports, demo data) is kept.
+
+`posts` (kind `post`) are ticket comments: ticket, Markdown body (required, up to 100,000 characters), author name, `created_at`, `edited_at` and an archive flag. `attachments` (kind `attachment`) are screenshots: ticket, optional post on the same ticket, file name, media type (PNG or JPEG), base64 data, byte size, width, height, `created_at` and an archive flag. Encoded data is limited to 300,000 characters (about 220 KB of image) so a sync operation stays under the hub limit; the page shrinks and recompresses larger images before saving. Snapshots replace the data with `data_size`; views read the full record when they draw an image. Version 5 profiles migrate to 6 by adding the two columns and tables.

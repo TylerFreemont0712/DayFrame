@@ -92,7 +92,7 @@ class CodeStoreTests(unittest.TestCase):
             db.execute("DELETE FROM schema_migrations WHERE version>4")
         self.s = Store(root)
         self.assertTrue(self.s.restore_session())
-        self.assertEqual(self.s.db.execute("SELECT max(version) FROM schema_migrations").fetchone()[0], 5)
+        self.assertEqual(self.s.db.execute("SELECT max(version) FROM schema_migrations").fetchone()[0], 6)
         self.assertEqual(self.s.read("ticket", self.t["id"])["title"], "Build it")
         self.s.command("repo.save", {"project_id": self.p["id"], "name": "web"})
 

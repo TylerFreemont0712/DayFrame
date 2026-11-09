@@ -168,7 +168,7 @@ class StoreTests(unittest.TestCase):
             old.execute("DELETE FROM schema_migrations WHERE version>=2")
         self.store = Store(root)
         self.assertTrue(self.store.restore_session())
-        self.assertEqual(self.store.db.execute("SELECT max(version) FROM schema_migrations").fetchone()[0], 5)
+        self.assertEqual(self.store.db.execute("SELECT max(version) FROM schema_migrations").fetchone()[0], 6)
         self.assertEqual(self.store.read("ticket", t["id"])["due_date"], "2026-12-20")
         self.assertEqual(self.store.snapshot()["block"], [])
 
@@ -186,7 +186,7 @@ class StoreTests(unittest.TestCase):
             self.assertFalse(imported.restore_session())
             imported.login("tester", "test-password-123")
             self.assertEqual(
-                imported.db.execute("SELECT max(version) FROM schema_migrations").fetchone()[0], 5
+                imported.db.execute("SELECT max(version) FROM schema_migrations").fetchone()[0], 6
             )
             self.assertEqual(imported.read("ticket", t["id"])["due_date"], "2026-12-20")
             imported.command("block.save", {"ticket_id": t["id"], "date": "2026-11-12"})
