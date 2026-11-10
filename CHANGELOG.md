@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.7.0 — 2026-11-10
+
 - Rework Home into a dashboard: the focus timer beside four figures (overdue, due today, in progress, done today) that open the matching Tickets view; compact task rows with stage symbols; a week strip of seven clickable day cards, each filled in with that day's all-day items and a small timeline; a Day Agenda that follows the selected day; major events as countdown tiles; and upcoming events with a symbol for each event type (a cake for birthdays, a plane for trips). The layout uses three columns when wide, two with tabs for Day Agenda and Coming up at medium widths, and Tasks, Week and Coming up tabs when narrow.
 - Add Clear workspace to Settings > Local data for starting over with an empty workspace. It saves and checks a full backup in the profile's backups folder first, asks for a typed confirmation and a second prompt, keeps the account and preferences, and disconnects the device from a configured hub so the cleared data is not downloaded again.
 - Redraw Map links: every link leaves and enters a card at a right angle with an arrowhead that sits flush on the card edge, links sharing a side are spread along it, dashed links always meet their arrowhead, and rounded step routes follow the channels between columns instead of passing under neighbouring cards.
