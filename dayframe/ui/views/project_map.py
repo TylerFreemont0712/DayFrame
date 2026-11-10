@@ -38,6 +38,18 @@ GROUP_GAP = 15
 CONTENT_X = 12
 CONTENT_Y = 54
 CARD_GAP = 10
+# Link geometry. A link ends LINE_INSET short of the card, hidden inside its arrowhead.
+ARROW_LENGTH = 9.0
+ARROW_HALF = 4.0
+LINE_INSET = ARROW_LENGTH * 0.6
+NORMALS = {
+    "right": QPointF(1, 0),
+    "left": QPointF(-1, 0),
+    "top": QPointF(0, -1),
+    "bottom": QPointF(0, 1),
+}
+# Dash patterns in pen widths; round caps turn the short one into dots.
+DASHES = {Qt.DashLine: [4.0, 3.6], Qt.DotLine: [0.2, 3.4]}
 
 
 def text_font(scale=1.0, bold=False):
@@ -349,7 +361,8 @@ class ProjectMap(QGraphicsView):
         self.headers = {}
         self.edges = []
         self.edge_records = []
-        self.gutter_lanes = {}
+        self.lanes = {}
+        self.port_use = {}
         self.regions = []
         self.region_items = {}
         self.node_sections = {}
@@ -524,29 +537,61 @@ class ProjectMap(QGraphicsView):
         ]
 
     @staticmethod
-    def curve(start, end, offset, vertical=False):
-        """A smooth S-curve between two anchors, bent sideways by offset to dodge cards."""
+    def anchor(rect, side, shift=0.0):
+        """A point on one side of a card, moved along that side by shift (kept off the corners)."""
+        if side in ("left", "right"):
+            limit = max(0.0, rect.height() / 2 - 10)
+            y = rect.center().y() + max(-limit, min(limit, shift))
+            return QPointF(rect.right() if side == "right" else rect.left(), y)
+        limit = max(0.0, rect.width() / 2 - 14)
+        x = rect.center().x() + max(-limit, min(limit, shift))
+        return QPointF(x, rect.bottom() if side == "bottom" else rect.top())
+
+    @staticmethod
+    def connector(start, out, end, into, bow=0.0):
+        """A smooth curve that leaves start along out and arrives at end against into.
+
+        out and into are the outward normals of the two card sides, so the line always meets
+        a card at a right angle. bow pushes the middle of the curve sideways to dodge cards
+        without tilting either end.
+        """
+        delta = end - start
+        distance = math.hypot(delta.x(), delta.y())
+        reach = max(22.0, min(110.0, distance * 0.45))
         path = QPainterPath(start)
-        if vertical:
-            bend = max(30, abs(end.y() - start.y()) / 2)
-            path.cubicTo(start + QPointF(offset, bend), end + QPointF(offset, -bend), end)
-        else:
-            bend = max(34, abs(end.x() - start.x()) / 2)
-            path.cubicTo(start + QPointF(bend, offset), end + QPointF(-bend, offset), end)
+        if not bow or distance < 1:
+            path.cubicTo(start + out * reach, end + into * reach, end)
+            return path
+        along = delta / distance
+        middle = (start + end) / 2 + QPointF(-along.y(), along.x()) * bow
+        half = max(18.0, distance * 0.22)
+        path.cubicTo(start + out * (reach * 0.7), middle - along * half, middle)
+        path.cubicTo(middle + along * half, end + into * (reach * 0.7), end)
         return path
 
     @staticmethod
-    def gutter(start, end, x, radius=9):
-        """Out of a card's side, along a gutter beside the column, and back into the target's same side."""
-        path = QPainterPath(start)
-        out = 1 if x > start.x() else -1
-        down = 1 if end.y() >= start.y() else -1
-        r = min(radius, abs(end.y() - start.y()) / 2, abs(x - start.x()), abs(x - end.x())) or 0.01
-        path.lineTo(x - out * r, start.y())
-        path.quadTo(QPointF(x, start.y()), QPointF(x, start.y() + down * r))
-        path.lineTo(x, end.y() - down * r)
-        path.quadTo(QPointF(x, end.y()), QPointF(x - out * r, end.y()))
-        path.lineTo(end)
+    def rounded(points, radius=13.0):
+        """Straight runs through the given points, joined by quarter-circle corners."""
+        path = QPainterPath(points[0])
+        k = 1 - 0.5523  # control distance that makes a cubic follow a quarter circle
+        last = len(points) - 2
+        for index in range(1, len(points) - 1):
+            before = points[index] - points[index - 1]
+            after = points[index + 1] - points[index]
+            run_in = math.hypot(before.x(), before.y())
+            run_out = math.hypot(after.x(), after.y())
+            # Neighbouring corners share a run, so each may use half of it; the first and
+            # last runs belong to one corner only.
+            r = min(radius, run_in if index == 1 else run_in / 2, run_out if index == last else run_out / 2)
+            if r < 0.5:
+                path.lineTo(points[index])
+                continue
+            before, after = before / run_in, after / run_out
+            path.lineTo(points[index] - before * r)
+            path.cubicTo(
+                points[index] - before * (r * k), points[index] + after * (r * k), points[index] + after * r
+            )
+        path.lineTo(points[-1])
         return path
 
     @staticmethod
@@ -558,58 +603,124 @@ class ProjectMap(QGraphicsView):
             hits += any(rect.contains(point) for rect in rects)
         return hits
 
+    def port(self, rect, side):
+        """Where the next link on this side of a card attaches.
+
+        Links sharing a side are spread along it (centre first, then alternating either
+        way) so two connections never leave a card on top of each other.
+        """
+        used = self.port_use.get((round(rect.x()), round(rect.y()), side), 0)
+        step = 12 if side in ("left", "right") else 18
+        return self.anchor(rect, side, ((used + 1) // 2) * step * (1 if used % 2 else -1))
+
+    def lane(self, key, base, away, nested=False):
+        """Coordinate of the next free lane in a channel, so parallel links never overlap.
+
+        Lanes step away from the card. The second link of a pair instead takes the lane
+        nearer the card when that lets it run inside the first without crossing it.
+        """
+        used = self.lanes.get(key, 0)
+        if used == 1 and nested:
+            return base - away * 7
+        return base + away * 7 * used
+
     def best_route(self, source, target, rects):
         """The clearest route from one card (or header) to another.
 
-        Candidates: side-to-side curves bent up or down, a top-to-bottom curve, and gutter
-        routes down either side of the column. Fewest cards crossed wins, then the shortest.
+        Candidates: side-to-side and top-to-bottom curves with their middle bowed either way,
+        elbows between adjacent sides, a C-curve on one side, and stepped routes that run
+        along the channels between columns and rows or down a gutter beside the column.
+        Fewest cards crossed wins, then the shortest. Returns the line (ending inside the
+        arrowhead), the arrow tip, both outward normals and how many samples still pass
+        under other cards.
         """
         candidates = []
-        start = QPointF(source.right(), source.center().y())
-        end = QPointF(target.left(), target.center().y())
-        for offset in (0, -70, 70, -140, 140, -220, 220):
-            candidates.append(self.curve(start, end, offset))
-        if target.top() > source.bottom() or source.top() > target.bottom():
-            downward = target.top() > source.bottom()
-            top_start = QPointF(source.center().x(), source.bottom() if downward else source.top())
-            top_end = QPointF(target.center().x(), target.top() if downward else target.bottom())
-            for offset in (0, -60, 60):
-                candidates.append(self.curve(top_start, top_end, offset, vertical=True))
+
+        def curve(source_side, target_side, bows=(0,)):
+            start = self.port(source, source_side)
+            tip = self.port(target, target_side)
+            into = NORMALS[target_side]
+            end = tip + into * LINE_INSET
+            for bow in bows:
+                path = self.connector(start, NORMALS[source_side], end, into, bow)
+                candidates.append((path, source_side, target_side, tip, None))
+
+        def step(source_side, target_side, bases):
+            """Out of one side, along a channel at each base coordinate, and into the target."""
+            start = self.port(source, source_side)
+            tip = self.port(target, target_side)
+            end = tip + NORMALS[target_side] * LINE_INSET
+            sideways = source_side in ("left", "right")
+            away = 1 if source_side in ("right", "bottom") else -1
+            same = source_side == target_side
+            for number, base in enumerate(bases):
+                key = ("x" if sideways else "y", round(base))
+                if sideways:
+                    # A link on a lower port heading down (or a higher one heading up) fits inside.
+                    shift = start.y() - source.center().y()
+                    at = self.lane(key, base, away, number == 0 and shift * (end.y() - start.y()) > 0)
+                    leave, arrive = (
+                        (at - start.x()) * away,
+                        ((at - end.x()) if same else (end.x() - at)) * away,
+                    )
+                    points = [start, QPointF(at, start.y()), QPointF(at, end.y()), end]
+                else:
+                    at = self.lane(key, base, away)
+                    leave, arrive = (at - start.y()) * away, (end.y() - at) * away
+                    points = [start, QPointF(start.x(), at), QPointF(end.x(), at), end]
+                if leave >= 5 and arrive >= 5:
+                    candidates.append((self.rounded(points), source_side, target_side, tip, key))
+
+        wide = (0, -60, 60, -120, 120, -200, 200)
+        right = target.left() >= source.right()
+        left = target.right() <= source.left()
+        below = target.top() >= source.bottom()
+        above = target.bottom() <= source.top()
+        if target.left() >= source.left() + 40:
+            curve("right", "left", wide)
+        if target.right() <= source.right() - 40:
+            curve("left", "right", wide)
+        if right:
+            middle = (source.right() + target.left()) / 2
+            step("right", "left", (source.right() + 15, middle, target.left() - 15 - LINE_INSET))
+        if left:
+            middle = (source.left() + target.right()) / 2
+            step("left", "right", (source.left() - 15, middle, target.right() + 15 + LINE_INSET))
+        if below:
+            curve("bottom", "top", (0, -50, 50))
+            gap = target.top() - source.bottom()
+            step("bottom", "top", (source.bottom() + min(15, gap / 3), source.bottom() + gap / 2))
+        if above:
+            curve("top", "bottom", (0, -50, 50))
+            gap = source.top() - target.bottom()
+            step("top", "bottom", (source.top() - min(15, gap / 3), source.top() - gap / 2))
+        for across, side, opposite in ((right, "right", "left"), (left, "left", "right")):
+            if across and below:
+                curve(side, "top")
+                curve("bottom", opposite)
+            if across and above:
+                curve(side, "bottom")
+                curve("top", opposite)
         band_top = min(source.top(), target.top())
         band_bottom = max(source.bottom(), target.bottom())
         band = [r for r in rects if r.bottom() >= band_top and r.top() <= band_bottom]
-        for side in ("right", "left"):
-            lane = self.gutter_lanes.get(side, 0)
-            if side == "right":
-                x = max([source.right(), target.right()] + [r.right() for r in band]) + 10 + lane * 6
-                candidates.append(
-                    self.gutter(
-                        QPointF(source.right(), source.center().y()),
-                        QPointF(target.right(), target.center().y()),
-                        x,
-                    )
-                )
-            else:
-                x = min([source.left(), target.left()] + [r.left() for r in band]) - 10 - lane * 6
-                candidates.append(
-                    self.gutter(
-                        QPointF(source.left(), source.center().y()),
-                        QPointF(target.left(), target.center().y()),
-                        x,
-                    )
-                )
-        scored = sorted(
-            (
-                (self.crossings(path, rects), path.length(), index, path)
-                for index, path in enumerate(candidates)
-            ),
-            key=lambda item: item[:3],
+        curve("right", "right")
+        step("right", "right", (max([source.right(), target.right()] + [r.right() for r in band]) + 16,))
+        curve("left", "left")
+        step("left", "left", (min([source.left(), target.left()] + [r.left() for r in band]) - 16,))
+        # A route may not cut back through the two cards it joins either.
+        own = [rect.adjusted(6, 6, -6, -6) for rect in (source, target)]
+        index = min(
+            range(len(candidates)),
+            key=lambda i: (self.crossings(candidates[i][0], rects + own), candidates[i][0].length(), i),
         )
-        crossing, _, index, path = scored[0]
-        if index >= len(candidates) - 2:
-            side = "right" if index == len(candidates) - 2 else "left"
-            self.gutter_lanes[side] = self.gutter_lanes.get(side, 0) + 1
-        return path, crossing
+        path, source_side, target_side, tip, lane_key = candidates[index]
+        for rect, side in ((source, source_side), (target, target_side)):
+            key = (round(rect.x()), round(rect.y()), side)
+            self.port_use[key] = self.port_use.get(key, 0) + 1
+        if lane_key:
+            self.lanes[lane_key] = self.lanes.get(lane_key, 0) + 1
+        return path, tip, NORMALS[source_side], NORMALS[target_side], self.crossings(path, rects)
 
     def portals(self, path, rects, color):
         """Rings where a connection dives under a card and where it comes back out."""
@@ -640,24 +751,34 @@ class ProjectMap(QGraphicsView):
 
     def add_edge(self, source, target, color, style, tooltip, ends=()):
         rects = self.obstacles(ends)
-        path, crossing = self.best_route(source, target, rects)
-        end = path.pointAtPercent(1.0)
-        pen = QPen(QColor(color), 1.25, style)
+        route, tip, out, into, crossing = self.best_route(source, target, rects)
+        pen = QPen(QColor(color), 1.3)
         pen.setCosmetic(True)
-        edge = self.scene().addPath(path, pen)
+        pen.setCapStyle(Qt.RoundCap)
+        pen.setJoinStyle(Qt.RoundJoin)
+        if style in DASHES:
+            pen.setDashPattern(DASHES[style])
+        # The line is drawn from the arrow back to its source, so the dash pattern starts at
+        # the arrowhead and a dashed link never leaves a gap in front of it.
+        edge = self.scene().addPath(route.toReversed(), pen)
         edge.setZValue(3)
         edge.setToolTip(tooltip)
-        tangent = path.angleAtPercent(1.0)
-        arrow = self.scene().addPolygon(
-            QTransform()
-            .translate(end.x(), end.y())
-            .rotate(-tangent)
-            .map(QPolygonF([QPointF(0, 0), QPointF(-7, -3.5), QPointF(-7, 3.5)])),
-            QPen(Qt.NoPen),
-            QBrush(QColor(color)),
-        )
+        # Arrowhead and source dot share one item. The head points straight into the card
+        # side it touches; the line ends inside it, so nothing pokes past the tip.
+        side = QPointF(-into.y(), into.x())
+        back = tip + into * ARROW_LENGTH
+        marks = QPainterPath(tip)
+        marks.lineTo(back + side * ARROW_HALF)
+        marks.lineTo(tip + into * (ARROW_LENGTH * 0.72))
+        marks.lineTo(back - side * ARROW_HALF)
+        marks.closeSubpath()
+        if route.length() > 3 * ARROW_LENGTH:
+            # Short hops between neighbouring cards are all arrowhead; a dot would crowd it.
+            marks.addEllipse(route.pointAtPercent(0) + out * 2.6, 2.3, 2.3)
+        arrow = self.scene().addPath(marks, QPen(Qt.NoPen), QBrush(QColor(color)))
         arrow.setZValue(3)
-        extra = self.portals(path, rects, color) if crossing else []
+        arrow.setToolTip(tooltip)
+        extra = self.portals(route, rects, color) if crossing else []
         self.edges.extend([edge, arrow, *extra])
         self.edge_records.append(
             {"ends": set(ends), "path": edge, "items": [edge, arrow, *extra], "pen": QPen(pen)}
@@ -688,7 +809,8 @@ class ProjectMap(QGraphicsView):
 
     def march(self):
         """Move the dashes of highlighted links along, from prerequisite/parent to dependent/child."""
-        self.ant_offset = (self.ant_offset - 1) % 8
+        # Paths run from the arrow back to the source, so a growing offset walks toward the arrow.
+        self.ant_offset = (self.ant_offset + 1) % 8
         for record in self.edge_records:
             if self.focus_id in record["ends"]:
                 pen = record["path"].pen()
@@ -738,7 +860,8 @@ class ProjectMap(QGraphicsView):
             self.scene().removeItem(item)
         self.edges = []
         self.edge_records = []
-        self.gutter_lanes = {}
+        self.lanes = {}
+        self.port_use = {}
         for node in self.nodes.values():
             links = [(x, Qt.DashLine, "#dfae65", "Dependency") for x in node.ticket["dependencies"]]
             if node.ticket.get("parent_id"):

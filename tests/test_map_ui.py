@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt, QEvent, QPointF
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QWidget, QMessageBox
-from dayframe.ui.views.project_map import ProjectMap, SectionHeader, CONTENT_X, CONTENT_Y
+from dayframe.ui.views.project_map import ARROW_LENGTH, ProjectMap, SectionHeader, CONTENT_X, CONTENT_Y
 
 APP = QApplication.instance() or QApplication([])
 
@@ -141,6 +141,44 @@ class MapUiTests(unittest.TestCase):
         # When nothing can avoid a card, portals mark where the line passes under it.
         blocked = view.portals(record["path"].path(), [record["path"].path().boundingRect()], "#ffffff")
         self.assertTrue(blocked)
+
+    def test_links_meet_cards_squarely_and_share_a_side_without_overlapping(self):
+        self.stack_three()
+        # b becomes a child of a as well, so two links leave a.
+        self.window.data["ticket"][1] = ticket("b", parent_id="a")
+        view = self.show_map()
+        self.assertEqual(len(view.edge_records), 2)
+        cards = [node.sceneBoundingRect() for node in view.nodes.values()]
+        sources = []
+        for record in view.edge_records:
+            line = record["path"].path()
+            head = record["items"][1].path()
+            # The line is drawn from inside the arrowhead back to its source card, so
+            # nothing pokes past the tip, and its last stretch runs along one axis only.
+            inside, sources_end = line.pointAtPercent(0), line.pointAtPercent(1)
+            self.assertTrue(head.contains(inside))
+            near = line.pointAtPercent(line.percentAtLength(2))
+            self.assertTrue(abs(near.x() - inside.x()) < 0.05 or abs(near.y() - inside.y()) < 0.05)
+            # The head is as long as designed and its tip rests on a card edge from outside.
+            tips = [
+                card
+                for card in cards
+                if not card.contains(inside)
+                and abs(
+                    min(
+                        abs(inside.x() - card.left()),
+                        abs(inside.x() - card.right()),
+                        abs(inside.y() - card.top()),
+                        abs(inside.y() - card.bottom()),
+                    )
+                    - ARROW_LENGTH * 0.6
+                )
+                < 0.01
+            ]
+            self.assertTrue(tips)
+            sources.append(sources_end)
+        # Both links start on a, at different points.
+        self.assertGreater((sources[0] - sources[1]).manhattanLength(), 8)
 
     def test_hovering_a_card_focuses_its_links(self):
         self.stack_three()

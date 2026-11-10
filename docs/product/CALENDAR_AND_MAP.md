@@ -43,7 +43,7 @@ Position changes within the same section save manual coordinates without a class
 
 Parentage is separate from dependencies and does not change status/blocking. The child inherits parent tags and fills empty component/milestone values; confirmation explains this. An unsorted child may be placed beside its parent so the connection is visible.
 
-Solid accent lines show parent → child; dashed amber lines show prerequisites; dotted purple lines show section sequence. Borders show containment. Parent and sequence cycles/cross-project links are rejected locally and on the Python hub.
+Solid accent lines show parent → child; dashed amber lines show prerequisites; dotted purple lines show section sequence. A link starts at a dot on its source and ends in an arrowhead on its target, meeting both at a right angle; links that share a side of a card are spread along it. Routes are smooth curves where the way is clear and rounded steps along the channels between columns and rows where a card is in the way. Borders show containment. Parent and sequence cycles/cross-project links are rejected locally and on the Python hub.
 
 Ticket context actions: Open, Start timer, Schedule, Create child, Complete, Remove parent. Section context actions: Edit, Add subsection, Move to root, Clear sequence. The inspector exposes parent and child navigation.
 
