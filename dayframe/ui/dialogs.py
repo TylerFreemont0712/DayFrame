@@ -574,3 +574,86 @@ class ConflictDialog(FormDialog):
     def choose(self, value):
         self.choice = value
         self.accept()
+
+
+class ClearWorkspaceDialog(FormDialog):
+    """Confirms clearing the workspace: what goes, what stays, and a word typed by hand."""
+
+    WORD = "CLEAR"
+    KINDS = (
+        ("project", "project", "projects"),
+        ("ticket", "ticket", "tickets"),
+        ("section", "map section", "map sections"),
+        ("event", "event", "events"),
+        ("block", "work block", "work blocks"),
+        ("entry", "time entry", "time entries"),
+        ("post", "comment", "comments"),
+        ("attachment", "screenshot", "screenshots"),
+        ("repo", "repository connection", "repository connections"),
+        ("changeset", "changeset", "changesets"),
+        ("note", "note", "notes"),
+    )
+
+    @classmethod
+    def summary(cls, counts):
+        parts = [
+            "%d %s" % (counts[kind], one if counts[kind] == 1 else many)
+            for kind, one, many in cls.KINDS
+            if counts.get(kind)
+        ]
+        return ", ".join(parts)
+
+    def __init__(self, parent, counts, backup_folder, hub=""):
+        super().__init__(parent, "Clear workspace")
+        self.resize(500, 360)
+        heading = label("Delete everything in this workspace?", "section")
+        heading.setWordWrap(True)
+        self.layout.addWidget(heading)
+        notes = [
+            ("This removes " + self.summary(counts) + " from this device.", None),
+            ("Your account, password, theme and other preferences stay.", None),
+            (
+                "A full backup is saved first in " + str(backup_folder) + ". Nothing is deleted unless "
+                "that backup is written and checked. Clearing cannot be undone with Ctrl+Z; going back "
+                "means restoring that file.",
+                None,
+            ),
+        ]
+        if hub:
+            notes.append(
+                (
+                    "This device is connected to " + hub + ". It will be disconnected, because the hub "
+                    "and your other devices keep their copy and would send it straight back. Connecting "
+                    "again downloads that copy.",
+                    "warning",
+                )
+            )
+        if counts.get("pending"):
+            notes.append(
+                (
+                    "%d change%s not yet sent to the hub will only exist in the backup."
+                    % (counts["pending"], "" if counts["pending"] == 1 else "s"),
+                    "warning",
+                )
+            )
+        for text, kind in notes:
+            note = label(text, kind)
+            note.setWordWrap(True)
+            note.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            self.layout.addWidget(note)
+        self.layout.addWidget(label("Type " + self.WORD + " to confirm.", "muted"))
+        self.word = QLineEdit()
+        self.word.setAccessibleName("Confirmation word")
+        self.word.setPlaceholderText(self.WORD)
+        self.layout.addWidget(self.word)
+        self.confirm = button("Clear workspace", self.accept, "trash-alt")
+        self.confirm.setEnabled(False)
+        cancel = button("Cancel", self.reject)
+        cancel.setDefault(True)
+        self.word.textChanged.connect(lambda text: self.confirm.setEnabled(text.strip() == self.WORD))
+        self.set_footer(row(None, self.confirm, cancel))
+
+    def accept(self):
+        # Enter in the text field must not confirm a half-typed or wrong word.
+        if self.word.text().strip() == self.WORD:
+            super().accept()

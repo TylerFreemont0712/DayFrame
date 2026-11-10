@@ -34,7 +34,7 @@ dayframe/
 └── ui/                  PySide6 Qt Widgets
     ├── window/          the main window, one mixin module per page or concern
     ├── views/           self-contained painted widgets
-    ├── dialogs.py       Quick Add (AddDialog), SectionDialog, ConflictDialog
+    ├── dialogs.py       Quick Add (AddDialog), SectionDialog, ConflictDialog, ClearWorkspaceDialog
     ├── code_dialogs.py  Code page dialogs: RepoDialog, CommitDialog, SwitchDialog, GitHub forms, confirm()
     ├── ticket_editor.py TicketEditor (every editable ticket field) and TicketEditDialog
     ├── widgets.py       label/button/row/column/panel helpers, FormDialog, ElidingLabel, error()
@@ -66,7 +66,7 @@ Import direction is one way: `ui → sync → data → core`, `ui → code → c
 | tickets.py | `TicketsPage` | `show_tickets`, `open_ticket_details`, quick views, overview tiles/charts/table, ticket page with comments, screenshots and in-place editing |
 | schedule.py | `CalendarPage` | `show_calendar`, opening and moving calendar items |
 | tracking.py | `TimePage` | `show_time`, manual time entry dialog |
-| settings.py | `SettingsPage` | Settings host, backup, conflict review, automatic and manual sync |
+| settings.py | `SettingsPage` | Settings host, backup, clear workspace, conflict review, automatic and manual sync |
 | capture.py | `CaptureMixin` | `quick_add` for new and existing tickets/events |
 | code.py | `CodePage` | `show_code`, `open_code`, repository connection, status and `code_load` caches, git actions, Tickets tab and changesets, GitHub tab |
 | code_repo.py | `CodeRepoViews` | Code page Working tree (stage/unstage/discard), History (commit graph and commit details) and Branches tabs |
@@ -103,11 +103,11 @@ Each widget in `ui/views/` takes the window as its first argument and stores it 
 | diff_view.py `ChangeBrowser`, `DiffCanvas`, `StatBar` | code.py, code_repo.py | none; state dict owned by the page |
 | commit_graph.py `CommitGraph` | code_repo.py | none |
 | code_cards.py `TicketCards`, `ChangesetStrip` | code.py | `data`, `code_ticket`, `code_item` |
-| settings_panel.py `SettingsPanel` | settings.py | `execute`, `build_shell`, `refresh`, `backup`, `sync_now`, `sync_finished`, `run_async`, `review_conflict`, `change_local_password`, `logout`, `settings_section`, `github_token`, `set_github_token` |
+| settings_panel.py `SettingsPanel` | settings.py | `execute`, `build_shell`, `refresh`, `backup`, `clear_workspace`, `sync_now`, `sync_finished`, `run_async`, `review_conflict`, `change_local_password`, `logout`, `settings_section`, `github_token`, `set_github_token` |
 
 ## Writes: one path into the database
 
-All user changes go through `Store.command(method, payload)` (usually via `window.execute`, which also refreshes the page and reports errors). Commands such as `ticket.save`, `ticket.capture`, `ticket.relate`, `section.save`, `placement.save`, `map.restore`, `event.save`, `block.save`, `time.add`, `timer.action` and `settings.save` run inside `Store.atomic()`, which wraps the domain write and its outbox row in one SQLite transaction or savepoint. Sync later pushes the outbox. Do not write SQL from the UI or add a second write path.
+All user changes go through `Store.command(method, payload)` (usually via `window.execute`, which also refreshes the page and reports errors). Commands such as `ticket.save`, `ticket.capture`, `ticket.relate`, `section.save`, `placement.save`, `map.restore`, `event.save`, `block.save`, `time.add`, `timer.action`, `workspace.clear` and `settings.save` run inside `Store.atomic()`, which wraps the domain write and its outbox row in one SQLite transaction or savepoint. Sync later pushes the outbox. Do not write SQL from the UI or add a second write path.
 
 ## Threads, timers and signals
 

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add Clear workspace to Settings > Local data for starting over with an empty workspace. It saves and checks a full backup in the profile's backups folder first, asks for a typed confirmation and a second prompt, keeps the account and preferences, and disconnects the device from a configured hub so the cleared data is not downloaded again.
 - Redraw Map links: every link leaves and enters a card at a right angle with an arrowhead that sits flush on the card edge, links sharing a side are spread along it, dashed links always meet their arrowhead, and rounded step routes follow the channels between columns instead of passing under neighbouring cards.
 - Give every stage its own symbol and color (dashed ring, half, three quarters, ring with a core, checked disc) on Kanban lanes and cards, Map cards, the inspector and ticket page status menus, ticket tables, stage filters, the ticket editor, Quick Add and Code ticket cards.
 - Add the Tickets page between Projects and Code: an overview with stat tiles, charts of completions, tracked time, created and completed per week, open work by stage and project, and estimate against tracked time, plus a sortable, filterable table of every ticket; and a forum-style ticket page with a Markdown description, comments, pasted or attached screenshots, activity, relations and in-place editing.

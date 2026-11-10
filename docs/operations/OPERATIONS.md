@@ -106,6 +106,8 @@ The hub exposes POST /devices and /revoke for registered-device management. A fu
 
 Settings → Local data → Back up database uses SQLite's consistent backup API. A backup contains a password verifier and personal data; use protected storage.
 
+Settings → Local data → Clear workspace empties the signed-in account's workspace after a typed confirmation and a second prompt. It first writes `backups/before-clear-<date>-<time>.db` inside the profile folder and checks it; if that fails, nothing is deleted. The account, password and appearance preferences stay. A configured hub connection is switched off and the sync cursor and unsent changes are dropped, because the hub has no delete operation: the hub and other devices keep their copy, and connecting again downloads it. To go back, import the backup into a new, unconfigured profile, or close DayFrame and put the backup in place of `timemanager.db`.
+
 Import-copy is supported into an unconfigured native profile. Do not restore an old backup directly into an actively syncing profile without reconciliation: its cursor and outbox can be stale. Sync is not a backup. For the hub, stop the service before a simple filesystem backup or use SQLite's backup API; copying only a live WAL main file is insufficient.
 
 ## Troubleshooting

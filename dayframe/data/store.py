@@ -8,7 +8,7 @@ import sqlite3
 import threading
 import time
 import uuid
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from datetime import date, timedelta
 from importlib.resources import files
 from pathlib import Path
@@ -48,6 +48,31 @@ DISCUSSION_INDEXES = (
     "CREATE INDEX IF NOT EXISTS posts_ticket ON posts(account_id,ticket_id)",
     "CREATE INDEX IF NOT EXISTS attachments_ticket ON attachments(account_id,ticket_id)",
 )
+
+
+# Every table that holds workspace records, children before the rows they reference.
+WORKSPACE_TABLES = (
+    "attachments",
+    "posts",
+    "changesets",
+    "repositories",
+    "work_blocks",
+    "map_placements",
+    "ticket_dependencies",
+    "ticket_labels",
+    "time_entries",
+    "timers",
+    "tickets",
+    "map_sections",
+    "notes",
+    "events",
+    "projects",
+    "outbox",
+    "conflicts",
+    "sync_meta",
+)
+# Device preferences that point at cleared records or at a hub that still holds them.
+WORKSPACE_PREFERENCES = ("repoPaths", "activeChangesets", "syncUrl", "syncEnabled", "syncFingerprint")
 
 
 class Store:
@@ -534,6 +559,8 @@ class Store:
             from .demo import load_demo
 
             return load_demo(self)
+        if method == "workspace.clear":
+            return self.clear_workspace()
         with self.atomic():
             direct = {
                 "project.save": "project",
@@ -659,9 +686,73 @@ class Store:
         destination = Path(destination)
         if destination.resolve() == (self.root / "timemanager.db").resolve():
             raise ValueError("Choose a different file for the backup.")
-        with self.lock, sqlite3.connect(destination) as other:
+        # closing() releases the file as soon as the copy is done, so it can be moved or opened.
+        with self.lock, closing(sqlite3.connect(destination)) as other:
             self.db.backup(other)
         return str(destination)
+
+    def workspace_counts(self):
+        """How many records of each kind the signed-in account has, plus unsent changes."""
+        with self.lock:
+            account = self.auth()
+            counts = {
+                kind: self.db.execute(
+                    f"SELECT count(*) FROM {D.DEFINITIONS[kind]['table']} WHERE account_id=?",
+                    (account["id"],),
+                ).fetchone()[0]
+                for kind in D.DEFINITIONS
+            }
+            counts["pending"] = self.db.execute(
+                "SELECT count(*) FROM outbox WHERE account_id=?", (account["id"],)
+            ).fetchone()[0]
+            return counts
+
+    def clear_workspace(self):
+        """Delete every record of the signed-in account and start over with an empty workspace.
+
+        A complete backup is written to the profile's backups folder and checked before
+        anything is deleted. The account, its password and the appearance preferences
+        stay. Sync history goes too, and the hub connection is switched off: the hub has
+        no delete operation, so a connected device would only download everything again.
+        """
+        with self.lock:
+            account = self.auth()
+            counts = self.workspace_counts()
+            folder = self.root / "backups"
+            folder.mkdir(exist_ok=True)
+            name = "before-clear-" + time.strftime("%Y%m%d-%H%M%S")
+            target = folder / (name + ".db")
+            number = 1
+            while target.exists():
+                number += 1
+                target = folder / (name + "-" + str(number) + ".db")
+            self.backup(target)
+            copy_ = sqlite3.connect(target)
+            try:
+                saved = copy_.execute(
+                    "SELECT count(*) FROM tickets WHERE account_id=?", (account["id"],)
+                ).fetchone()[0]
+                if copy_.execute("PRAGMA quick_check").fetchone()[0] != "ok" or saved != counts["ticket"]:
+                    raise ValueError("The backup could not be verified, so nothing was deleted.")
+            finally:
+                copy_.close()
+            with self.atomic():
+                for table in WORKSPACE_TABLES:
+                    self.db.execute(f"DELETE FROM {table} WHERE account_id=?", (account["id"],))
+                row = self.db.execute(
+                    "SELECT data FROM settings WHERE account_id=?", (account["id"],)
+                ).fetchone()
+                if row:
+                    kept = {k: v for k, v in json.loads(row[0]).items() if k not in WORKSPACE_PREFERENCES}
+                    self.db.execute(
+                        "UPDATE settings SET data=? WHERE account_id=?", (json.dumps(kept), account["id"])
+                    )
+            try:
+                # Hand the space used by screenshots and stored diffs back to the disk.
+                self.db.execute("VACUUM")
+            except sqlite3.Error:
+                pass
+            return {"backup": str(target), "removed": counts}
 
     def import_database(self, source):
         if self.status()["configured"]:

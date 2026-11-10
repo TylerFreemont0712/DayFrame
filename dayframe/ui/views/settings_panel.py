@@ -111,7 +111,7 @@ class SettingsPanel(QWidget):
             "Adjust text size, spacing, panel sizes, your time zone and world clocks.",
         ),
         ("theme", "Theme", "palette", "Choose the theme, colors, corners and fonts of DayFrame."),
-        ("data", "Local data", "database", "Back up your workspace or load example projects."),
+        ("data", "Local data", "database", "Back up your workspace, load example projects or start over."),
         (
             "sync",
             "Sync",
@@ -558,6 +558,17 @@ class SettingsPanel(QWidget):
         layout.addWidget(
             row(button("Load demo workspace", lambda: self.window.execute("demo.load"), "flask"), None)
         )
+        body.addWidget(card)
+        card, layout = panel("Clear workspace")
+        note = label(
+            "Start over with an empty workspace. Every project, ticket, event, time entry, comment and "
+            "repository connection on this device is deleted; your account and preferences stay. A full "
+            "backup is saved first, and you are asked to confirm.",
+            "muted",
+        )
+        note.setWordWrap(True)
+        layout.addWidget(note)
+        layout.addWidget(row(button("Clear workspace…", self.window.clear_workspace, "trash-alt"), None))
         body.addWidget(card)
 
     def build_sync(self, body):
