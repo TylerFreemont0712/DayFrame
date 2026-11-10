@@ -738,7 +738,7 @@ class TicketsPage:
         if t["completed_at"]:
             items.append(("done", t["completed_at"], None))
         items.sort(key=lambda item: item[1] or 0)
-        sessions = sum(count for _, (_, _, count) in [(k, v) for k, v in days.items()])
+        sessions = sum(count for _, count, _ in days.values())
         main.addWidget(
             row(
                 label("Activity", "section"),

@@ -220,6 +220,17 @@ class TicketsUiTests(unittest.TestCase):
         self.settle()
         self.assertEqual((self.w.tickets_view, self.w.tickets_ticket), ("Details", first))
 
+    def test_activity_header_counts_time_sessions(self):
+        from PySide6.QtWidgets import QLabel
+
+        entries = self.s.list("entry")
+        ticket = next(t for t in self.s.list("ticket") if any(e["ticket_id"] == t["id"] for e in entries))
+        sessions = sum(e["ticket_id"] == ticket["id"] for e in entries)
+        self.w.open_ticket_details(ticket["id"])
+        self.settle()
+        labels = [x.text() for x in self.w.workspace.findChildren(QLabel)]
+        self.assertIn("%d time sessions" % sessions, labels)
+
     def test_comment_with_screenshot_edit_and_delete(self):
         from unittest.mock import patch as mock
         from PySide6.QtGui import QColor, QImage
