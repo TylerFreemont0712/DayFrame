@@ -4,7 +4,7 @@ Python/PySide6 Qt Widgets, SQLite and a private Python sync hub. Normal 1280×80
 
 ## Delivered
 
-- Today priorities, due/overdue/recent work, agenda, major-event countdowns, upcoming events and live timer.
+- Today priorities, due/overdue/recent work, agenda, major-event countdowns, upcoming events and live timer. Unreleased: Home as a dashboard with figures, a week strip of clickable day cards, countdown tiles and event-type symbols; a symbol for every workflow stage; redrawn Map links; Clear workspace in Settings > Local data.
 - Shared Kanban/Map/Details tickets, inspector, checklist, dependencies and work blocks.
 - Month/Upcoming/Sunday-first Week calendar, event presets, detailed and multi-day events, yearly birthdays, click editing and 15-minute move/resize with Undo.
 - Nested map sections, inherited rules, parent/child tickets, sequence links and collapsible Unsorted.
@@ -56,6 +56,10 @@ Source tests cover the schema 5 migration, repository and changeset rules, the d
 ## Tickets page verification
 
 Source tests cover lifecycle times, post and attachment rules and size limits, the schema 6 migration, syncing a comment with a screenshot through the hub, the demo workspace, the navigation order, overview charts and table (search, quick views, sorting, double-click), posting a comment with a pasted screenshot, editing and deleting comments with Undo, the unsent-comment guard, the inspector's status menu and actions, image shrinking, Map link routing, hover focus and section carrying, and the Code badge press. Layouts were checked by screenshot in the Catppuccin theme at 1280×800 on Windows only.
+
+## Home, stage symbols, Map links and Clear workspace verification
+
+Unreleased. Source tests cover the stage symbols (distinct shapes and colors, lanes, menus and choices), Map link geometry (lines end inside an arrowhead resting on the card edge, arrive along one axis, and take separate ports on a shared side), Clear workspace (checked backup first, nothing deleted when the backup fails, account and appearance kept, sync settings and history dropped, typed word and second confirmation in the UI, every page opening on the empty workspace) and Home (figures and their Tickets views, week strip selection and week navigation, date rollover, countdown tiles, event symbols, the three layout modes and remembered tabs). Layouts were checked by screenshot in the Catppuccin and Graphite themes at 1280×800 and 980×640 on Windows only: not packaged and not checked on Linux Mint. Clear workspace was not exercised against a real hub.
 
 ## Remaining
 

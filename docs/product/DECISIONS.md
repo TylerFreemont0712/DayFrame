@@ -172,3 +172,13 @@ D-082: Tickets record when they were created and completed, and comments and scr
 D-083: Dragging a section on the Map carries its nested sections and cards. Links route around unrelated cards; where they must pass under one, portal rings mark it, and hovering a card highlights its links.
 
 D-084: A large, seeded demo workspace and a separate demo preview profile exist for exploring the app without touching real data.
+
+## Stage symbols, Map links, fresh start and Home — 2026-11-10
+
+D-085: Every workflow stage has its own small symbol so a ticket's stage reads at a glance on cards, lanes, menus and tables. The shapes fill up as work advances and each has its own color; shape, not color alone, carries the meaning.
+
+D-086: Map connections must look smooth and whole: arrowheads sit flush on the card they point at, links meet cards at a right angle, and links sharing a side do not overlap.
+
+D-087: Settings > Local data offers Clear workspace for starting with a fresh database. It must be confirmed (typed word and a second prompt) and saves a checked backup first. The account and preferences stay. Because sync has no delete operation, clearing disconnects the device from its hub instead of deleting anything there.
+
+D-088: Home becomes a compact dashboard in the style of the rest of the app: focus and figures, task rows, a week strip of clickable day cards that are filled in with each day's events, a Day Agenda for the selected day, countdown tiles for major events, and upcoming events with a symbol per event type, including birthdays. D-003, D-004 and D-006 still hold.

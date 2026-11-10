@@ -16,7 +16,7 @@ Presets include Appointment, Meeting, Birthday, Trip, Personal plan, Routine, Ho
 
 Work blocks reference tickets, so titles/details stay current. Moving work never changes the ticket deadline. Click a deadline to open its ticket. Recorded time remains separate and editable in Time.
 
-Home shares the same calendar projection. It includes priorities, due/overdue, in-progress and up to five recent ungrouped tickets, three major countdowns (pinned first), ordinary upcoming events, all-day items and Day Agenda. Focus shows the current timer's ticket/duration/pause control, including while an unrelated inspector draft is open.
+Home shares the same calendar projection. It includes priorities, due/overdue, in-progress and up to five recent ungrouped tickets, three major countdowns (pinned first) drawn as tiles, ordinary upcoming events, all-day items and Day Agenda. A week strip of seven day cards (Sunday first) shows each day filled in with its all-day chips and a small timeline; clicking a card points the Day Agenda at that day and double-clicking adds an event there. Events shown as countdown tiles are not repeated in Upcoming. Every event type has a symbol. Focus shows the current timer's ticket/duration/pause control, including while an unrelated inspector draft is open.
 
 ## Nested map and inherited rules
 

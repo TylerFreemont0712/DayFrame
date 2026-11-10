@@ -60,7 +60,7 @@ Import direction is one way: `ui → sync → data → core`, `ui → code → c
 | records.py | `RecordLookups` | read-only lookups on `self.data`: `find_ticket`, `ticket_key`, `blocked`, `project_name`, `tracked_ms`, `code_repo`, `changeset_count` |
 | account.py | `AccountMixin` | sign-in screen, register/login, database and LAN imports, local password, logout |
 | shell.py | `ShellMixin` | navigation rail, masthead, utility bar (timer, totals, world clocks), search, inline capture, the one-second `tick` |
-| today.py | `TodayPage` | `show_today`, ticket rows, major-event countdowns, completion |
+| today.py | `TodayPage` | `show_today`, layout modes, focus and figures, ticket rows, week strip and day selection, Day Agenda, countdowns and upcoming events, completion |
 | projects.py | `ProjectsPage` | `show_projects`, project tree, Map/Kanban/Details, filters, sections, rules, milestones |
 | inspector.py | `InspectorMixin` | compact read-only inspector, status menu, `edit_ticket` (Edit dialog), archive, work-block scheduling, `open_ticket` |
 | tickets.py | `TicketsPage` | `show_tickets`, `open_ticket_details`, quick views, overview tiles/charts/table, ticket page with comments, screenshots and in-place editing |
@@ -82,6 +82,7 @@ Mixins communicate only through attributes on `self`. The important ones:
 | `store`, `sync` | main | the account's `Store` and `Sync` client |
 | `data` | main (`refresh`, `execute`), settings (`sync_finished`) | latest `Store.snapshot()`; every page renders from it |
 | `page`, `project_id`, `project_view`, `selected` | main, projects, inspector | navigation and selection |
+| `home_day`, `home_today` | today | day shown in Home's week strip and Day Agenda; resets when the date changes |
 | `filter_project`, `filter_status`, `filter_label`, `search_text` | projects, shell | ticket filters |
 | `draft_reader`, `draft_save` | inspector | unsaved-editor guard used by `leave_editor` |
 | `undo_action` | any page, views | single-level Undo callable (Ctrl+Z) |
@@ -98,6 +99,7 @@ Each widget in `ui/views/` takes the window as its first argument and stores it 
 | project_map.py `ProjectMap`, `UnsortedList` | projects.py | `execute`, `refresh`, `select_ticket`, `edit_section`, `new_section`, `new_child_ticket`, `blocked`, `ticket_key`, `undo_action`, `toast`, `code_repo`, `changeset_count`, `open_code` |
 | calendar.py `MiniMonth`, `UpcomingPanel`, `WeekCalendar` | schedule.py | `open_calendar_item`, `move_calendar_item`, `quick_add`, `calendar_selected` |
 | agenda.py `Agenda` | today.py, shell.py (`tick`) | `open_calendar_item` |
+| home.py `WeekStrip`, `CountdownTiles`, `StatChip`, event symbols | today.py, shell.py (`tick`) | `data`, `home_select_day`, `quick_add`, `open_calendar_item` |
 | charts.py `ColumnChart`, `BarList`, `stat_tile` | tickets.py | none |
 | ticket_thread.py `MarkdownView`, `Thumb`, `PasteEdit`, `prepare_image` | tickets.py | `store` (reads attachment images) |
 | diff_view.py `ChangeBrowser`, `DiffCanvas`, `StatBar` | code.py, code_repo.py | none; state dict owned by the page |
@@ -118,7 +120,7 @@ All user changes go through `Store.command(method, payload)` (usually via `windo
 | `Store` | any | one SQLite connection with `check_same_thread=False`, guarded by `Store.lock` (RLock); `atomic()` holds it for the whole transaction |
 | `Sync` | worker | `Sync.guard` (Lock) prevents overlapping runs |
 | `Hub` | its own threads | `ThreadingHTTPServer` in a daemon thread; `Hub.lock` (RLock) serializes database work |
-| `self.timer` (1 s) | GUI | `tick()`: utility-bar timer, today total, sync label, day rollover, agenda/week repaint |
+| `self.timer` (1 s) | GUI | `tick()`: utility-bar timer, today total, sync label, day rollover, Home focus panel, agenda/week strip/week repaint |
 | `self.sync_timer` (5 s) | GUI | `auto_sync()` when sync is enabled and no job is running |
 | `ProjectMap.hover_timer` (50 ms) | GUI | drives the 1.5 s hold-to-confirm ghost preview |
 | `QTimer.singleShot(0, ...)` | GUI | defers rebuilds until the current mouse/paint event has finished; do not replace these with direct calls |
@@ -129,4 +131,4 @@ The window refuses to close or log out while `self.jobs` is non-empty, so a work
 
 ## Tests
 
-`tests/` mirrors the layers: `test_store.py`, `test_sync.py` (client and hub together), `test_palettes.py`, `test_preferences.py` (preferences, custom colors, time zones) for core/data; `test_ui.py`, `test_kanban.py`, `test_map_ui.py`, `test_calendar_map.py`, `test_dialogs.py`, `test_settings.py`, `test_capture_polish.py`, `test_code_ui.py` for the window and views; `test_code.py` for the git runner, GitHub client and code records; `test_branding.py` for stable runtime identifiers. `check_native_frame.py` is a manual Windows check, not part of discovery. Every test creates its own profile under `build/test-data/`.
+`tests/` mirrors the layers: `test_store.py`, `test_sync.py` (client and hub together), `test_palettes.py`, `test_preferences.py` (preferences, custom colors, time zones) for core/data; `test_ui.py`, `test_home.py`, `test_kanban.py`, `test_map_ui.py`, `test_calendar_map.py`, `test_dialogs.py`, `test_settings.py`, `test_capture_polish.py`, `test_code_ui.py` for the window and views; `test_code.py` for the git runner, GitHub client and code records; `test_branding.py` for stable runtime identifiers. `check_native_frame.py` is a manual Windows check, not part of discovery. Every test creates its own profile under `build/test-data/`.

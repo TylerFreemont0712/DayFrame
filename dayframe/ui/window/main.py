@@ -71,6 +71,7 @@ class DayFrame(
         self.draft_reader = None
         self.draft_save = None
         self.day = None
+        self.home_day = None
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.tick)
         self.timer.start(1000)
@@ -236,7 +237,9 @@ class DayFrame(
     def resizeEvent(self, event):
         super().resizeEvent(event)
         if hasattr(self, "data") and self.data and self.page == "Today" and not self.rebuilding:
-            narrow = self.width() - 48 - (280 if self.selected else 0) < 840
-            if narrow != getattr(self, "_today_narrow", narrow):
+            # Home rearranges itself by width (wide, medium, narrow) and shortens its week strip.
+            layout = (self.home_mode(), self.height() >= 720)
+            if layout != getattr(self, "_home_layout", layout):
                 QTimer.singleShot(0, self.refresh_page)
-            self._today_narrow = narrow
+            self._home_layout = layout
+            self._today_narrow = layout[0] == "narrow"

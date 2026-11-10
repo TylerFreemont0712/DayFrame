@@ -84,6 +84,14 @@ Display appointments, ticket work blocks, personal plans, and optional routines 
 
 At wider widths, priorities/due work and agenda appear side by side. A countdown module fits below the work list or in a reserved supporting area. Do not stretch this arrangement into a single cramped strip.
 
+### HOME-06: week strip and day cards
+
+Above the Day Agenda, show the selected week (Sunday first) as seven day cards. Each card is a small picture of its day: weekday and date, all-day items and deadlines as chips with their type symbol, and timed events and work blocks drawn on a miniature timeline that uses one scale for the whole week. Today is marked and carries the current-time line; past days are dimmed. Clicking a card selects that day for the Day Agenda without changing any data; double-clicking adds an event on it. Previous, Today and next move between weeks, and Calendar opens the same week. The selection returns to today when the date changes.
+
+### HOME-07: figures and symbols
+
+Beside the focus timer, show counts of overdue, due-today, in-progress and completed-today tickets; each opens the matching Tickets view. Events on Home carry a symbol for their type (for example a cake for birthdays and a plane for trips) in the event's color, in addition to their title.
+
 ### HOME-03: countdowns
 
 Show the next three upcoming events explicitly marked major. Allow pinning a farther-away event into the three slots. Sort automatic slots by event date; prevent duplicate entries when a pinned event is already among the next events.
@@ -326,7 +334,7 @@ The decision log records accepted product choices. DESIGN_SYSTEM.md defines the 
 
 ## 20. Latest owner correction — compact native app
 
-The owner explicitly requests a normal windowed app with small text, compact pieces and tight spacing following the compact native dashboard layout. Default1280×800, minimum980×640, resizable; the display resolution1920×1200 must not dictate the window size. Today uses compact rows with Priorities/Due today/Overdue counts, followed by three small next-event rows; Day Agenda sits alongside. Narrow screens use Tasks/Agenda tabs when the inspector needs room. Keep the compact project pane, five Kanban lanes, detail inspector, footer quick capture and daily tracked total.
+The owner explicitly requests a normal windowed app with small text, compact pieces and tight spacing following the compact native dashboard layout. Default1280×800, minimum980×640, resizable; the display resolution1920×1200 must not dictate the window size. Today uses compact rows with Priorities/Due today/Overdue counts; the week strip, Day Agenda, three major-event countdown tiles and upcoming events sit alongside (HOME-06, HOME-07). Medium widths put Day Agenda and Coming up in tabs; narrow screens use Tasks/Week/Coming up tabs when the inspector needs room. Keep the compact project pane, five Kanban lanes, detail inspector, footer quick capture and daily tracked total.
 
 Passwords have no minimum length; simple values such as tyler are valid. Remember local sign-in after account creation/login, including across application restarts. Explicit Options → Log out clears remembered sign-in and requires the next login. Store a local account/device marker, never the password, outside backups and sync. Existing password verifiers remain valid; an authenticated local-password-change action is available.
 

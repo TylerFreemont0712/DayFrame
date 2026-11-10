@@ -44,6 +44,8 @@ Collected from [SPEC.md](../../SPEC.md), [DECISIONS.md](../product/DECISIONS.md)
 - **planned** Reminders, only for explicitly enabled events and deadlines (D-028).
 - **planned** Event search alongside ticket search (SPEC §10).
 - **planned** Routines with occurrence/completion state (SPEC §2).
+- **proposed** Use the event-type symbols from Home in the Calendar's Upcoming list, month marks and week chips as well.
+- **proposed** Drag a ticket from Home's task list onto a day card to schedule a work block on that day.
 
 ### Tickets, Kanban and Map
 - **planned** Manual ordering within a Kanban lane (TKT-05).
@@ -63,6 +65,8 @@ Collected from [SPEC.md](../../SPEC.md), [DECISIONS.md](../product/DECISIONS.md)
 - **planned** Hub password change and account recovery.
 - **planned** Field-level conflict resolution beyond "keep local / keep hub".
 - **planned** Paged queries and virtualized rendering for large collections.
+- **proposed** Restore a backup from inside the app (Settings > Local data), so undoing Clear workspace does not need a new profile or a manual file swap.
+- **proposed** Delete records through sync (tombstones on the hub), so clearing or deleting on one device can reach the others instead of disconnecting.
 
 ### Code area and team
 - **planned** Subversion support: per-project SVN checkouts with shelves stored as changesets (D-075).
