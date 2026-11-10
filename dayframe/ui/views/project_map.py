@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 from ..theme import CURRENT as C
 from ...core import domain as D
 from ..labels import paint_label_pills
+from ..status import paint_status
 from ..dragdrop import TICKET_MIME
 from .kanban import BADGE_HEIGHT, PressAnimation, code_badge_rect, paint_code_badge
 
@@ -226,15 +227,16 @@ class TicketNode(QGraphicsObject):
         p.setPen(QColor(C["accent"] if selected else C["muted"]))
         status = "Blocked" if self.view.window.blocked(self.ticket) else D.STATUS_NAMES[self.ticket["status"]]
         footer = status + " · " + str(int(self.ticket["estimate_min"])) + "m"
-        footer_width = min(100, QFontMetricsF(p.font()).horizontalAdvance(footer))
+        footer_width = min(92, QFontMetricsF(p.font()).horizontalAdvance(footer))
         p.drawText(
-            QRectF(10, 55, footer_width, 15),
+            QRectF(27, 55, footer_width, 15),
             Qt.AlignVCenter,
             QFontMetricsF(p.font()).elidedText(footer, Qt.ElideRight, footer_width),
         )
+        paint_status(p, QRectF(10, 56, 13, 13), self.ticket["status"])
         if self.ticket["labels"]:
             paint_label_pills(
-                p, QRectF(18 + footer_width, 54, CARD_WIDTH - 28 - footer_width, 16), self.ticket["labels"], 1
+                p, QRectF(34 + footer_width, 54, CARD_WIDTH - 44 - footer_width, 16), self.ticket["labels"], 1
             )
 
     def on_badge(self, pos):

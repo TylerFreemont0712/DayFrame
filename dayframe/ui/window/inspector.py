@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QTimeEdit,
 )
 from ...core import domain as D
+from ..status import status_icon
 from ..ticket_editor import TicketEditDialog
 from ..views.kanban import TicketList
 from ..widgets import button, column, ElidingLabel, FormDialog, label, row, scroll
@@ -51,13 +52,16 @@ class InspectorMixin:
         title.setAccessibleName("Ticket title")
         title.setTextInteractionFlags(Qt.TextSelectableByMouse)
         l.addWidget(title)
-        status = button(D.STATUS_NAMES[t["status"]], None, "circle")
+        status = button(D.STATUS_NAMES[t["status"]])
+        status.setIcon(status_icon(t["status"]))
         status.setObjectName("statusButton")
         status.setAccessibleName("Ticket status")
         status.setToolTip("Change status")
         menu = QMenu(self)
         for value in D.STATUSES:
-            action = menu.addAction(D.STATUS_NAMES[value], lambda v=value: self.set_ticket_status(t, v))
+            action = menu.addAction(
+                status_icon(value), D.STATUS_NAMES[value], lambda v=value: self.set_ticket_status(t, v)
+            )
             action.setCheckable(True)
             action.setChecked(value == t["status"])
         status.setMenu(menu)

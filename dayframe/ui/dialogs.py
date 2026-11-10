@@ -23,6 +23,7 @@ from .widgets import FormDialog, label, combo, row, button, column
 from PySide6.QtGui import QShortcut, QKeySequence
 from .theme import CURRENT as C
 from .labels import LabelsEditor, label_choices
+from .status import add_status_icons
 
 
 def form_layout():
@@ -94,7 +95,9 @@ class AddDialog(FormDialog):
         )
         self.preset.setAccessibleName("Ticket preset")
         self.form.addRow("Preset", self.preset)
-        self.status = combo([(k, D.STATUS_NAMES[k]) for k in D.STATUSES], values.get("status", "inbox"))
+        self.status = add_status_icons(
+            combo([(k, D.STATUS_NAMES[k]) for k in D.STATUSES], values.get("status", "inbox"))
+        )
         self.status.setAccessibleName("Initial status")
         self.priority = combo([(x, x.title()) for x in D.PRIORITIES], values.get("priority", "medium"))
         self.priority.setAccessibleName("Priority")

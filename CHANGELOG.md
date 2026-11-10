@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Give every stage its own symbol and color (dashed ring, half, three quarters, ring with a core, checked disc) on Kanban lanes and cards, Map cards, the inspector and ticket page status menus, ticket tables, stage filters, the ticket editor, Quick Add and Code ticket cards.
 - Add the Tickets page between Projects and Code: an overview with stat tiles, charts of completions, tracked time, created and completed per week, open work by stage and project, and estimate against tracked time, plus a sortable, filterable table of every ticket; and a forum-style ticket page with a Markdown description, comments, pasted or attached screenshots, activity, relations and in-place editing.
 - Make the board inspector a compact read-only summary with Edit, Track, Details, Schedule, Code and a status menu, and let Kanban lanes narrow so the Complete lane stays visible beside it.
 - Record when tickets are created and completed, and sync comments and screenshots (schema 6).

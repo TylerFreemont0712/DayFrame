@@ -11,6 +11,7 @@ from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from PySide6.QtWidgets import QAbstractItemView, QApplication, QListView, QListWidget, QStyledItemDelegate
 from ...core import domain as D
 from ..labels import paint_label_pills
+from ..status import paint_status, status_color
 from ..theme import CURRENT as C, icon
 from .kanban import paint_project_key, paint_title, project_color
 
@@ -93,10 +94,9 @@ class TicketCardDelegate(QStyledItemDelegate):
         project = next((x for x in self.window.data["project"] if x["id"] == ticket["project_id"]), {})
         right = rect.right() - 8
         status = D.STATUS_NAMES[ticket["status"]]
-        status_color = C["accent"] if ticket["status"] in ("ready", "doing", "review") else C["muted"]
-        left = pill(
-            p, right, rect.top() + 6, status, QColor(status_color), filled=ticket["status"] == "doing"
-        )
+        left = pill(p, right, rect.top() + 6, status, status_color(ticket["status"]))
+        paint_status(p, QRectF(left - 17, rect.top() + 7.5, 13, 13), ticket["status"])
+        left -= 18
         p.setBrush(QColor(PRIORITY_COLORS.get(ticket["priority"], C["muted"])))
         p.setPen(Qt.NoPen)
         p.drawEllipse(QRectF(left - 11, rect.top() + 10, 7, 7))

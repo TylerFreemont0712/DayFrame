@@ -36,6 +36,7 @@ from PySide6.QtWidgets import (
 from ...core import domain as D
 from ...core import ticket_stats as S
 from ..code_dialogs import confirm
+from ..status import add_status_icons, status_icon
 from ..theme import CURRENT as C, icon
 from ..ticket_editor import TicketEditor
 from ..views.charts import BarList, ColumnChart, stat_tile
@@ -411,8 +412,8 @@ class TicketsPage:
         search.setAccessibleName("Search tickets")
         search.setClearButtonEnabled(True)
         search.setMinimumWidth(200)
-        status = combo(
-            [("any", "Any stage")] + [(s, D.STATUS_NAMES[s]) for s in D.STATUSES], self.tickets_status
+        status = add_status_icons(
+            combo([("any", "Any stage")] + [(s, D.STATUS_NAMES[s]) for s in D.STATUSES], self.tickets_status)
         )
         priority = combo(
             [("any", "Any priority")] + [(p, p.title()) for p in D.PRIORITIES], self.tickets_priority
@@ -471,6 +472,8 @@ class TicketsPage:
                 item.setData(Qt.UserRole, t["id"])
                 if c == 1:
                     item.setToolTip(t["title"])
+                if c == 3:
+                    item.setIcon(status_icon(t["status"]))
                 if c == 7 and overdue:
                     item.setForeground(QColor(C["danger"]))
                 table.setItem(r, c, item)
@@ -634,13 +637,14 @@ class TicketsPage:
         heading.setTextInteractionFlags(Qt.TextSelectableByMouse)
         heading.setAccessibleName("Ticket title")
         cl.addWidget(heading)
-        status = button(D.STATUS_NAMES[t["status"]], None, "circle")
+        status = button(D.STATUS_NAMES[t["status"]])
+        status.setIcon(status_icon(t["status"]))
         status.setObjectName("statusButton")
         status.setToolTip("Change status")
         status_menu = QMenu(self)
         for value in D.STATUSES:
             action = status_menu.addAction(
-                D.STATUS_NAMES[value], lambda v=value: self.set_ticket_status(t, v)
+                status_icon(value), D.STATUS_NAMES[value], lambda v=value: self.set_ticket_status(t, v)
             )
             action.setCheckable(True)
             action.setChecked(value == t["status"])

@@ -39,6 +39,7 @@ dayframe/
     ├── ticket_editor.py TicketEditor (every editable ticket field) and TicketEditDialog
     ├── widgets.py       label/button/row/column/panel helpers, FormDialog, ElidingLabel, error()
     ├── labels.py        LabelsEditor chip input, preset label colors, label pill painting
+    ├── status.py        stage symbols: painted glyph, color and icon for each workflow status
     ├── theme.py         apply_theme(), CURRENT palette, fonts and sizes, Qt style sheet, icon()
     ├── color_picker.py  color wheel dialog, swatch buttons and the palette preview
     ├── zone_picker.py   searchable time zone drop-down with offsets and current times

@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
 
 from ...core import domain as D
 from ..labels import paint_label_pills
+from ..status import paint_status
 from ..dragdrop import TICKET_MIME
 from ..theme import CURRENT as C, icon
 
@@ -266,6 +267,7 @@ class BoardDelegate(QStyledItemDelegate):
         if ticket["due_date"]:
             p.setPen(QColor(C["muted"]))
             p.drawText(rect.adjusted(8, 99 + extra, -6, -3), Qt.AlignTop, "Due " + ticket["due_date"][5:])
+        paint_status(p, QRectF(rect.right() - 20, rect.bottom() - 20, 14, 14), ticket["status"])
         p.restore()
 
 

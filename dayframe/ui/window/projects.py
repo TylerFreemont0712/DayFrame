@@ -22,6 +22,7 @@ from ...core import domain as D
 from ..views.kanban import card_size, project_color, TicketList
 from ..views.project_map import ProjectMap, UnsortedList
 from ..dialogs import SectionDialog
+from ..status import add_status_icons, status_icon, status_label
 from ..theme import CURRENT as C, icon
 from ..widgets import ask_text, button, column, combo, FormDialog, label, panel, row, scroll
 
@@ -205,10 +206,12 @@ class ProjectsPage:
         )
         project_filter.setMaximumWidth(170)
         project_filter.setVisible(not self.project_id)
-        status_filter = combo(
-            [("all", "All statuses"), ("open", "Open tickets")]
-            + [(s, D.STATUS_NAMES[s]) for s in D.STATUSES],
-            self.filter_status,
+        status_filter = add_status_icons(
+            combo(
+                [("all", "All statuses"), ("open", "Open tickets")]
+                + [(s, D.STATUS_NAMES[s]) for s in D.STATUSES],
+                self.filter_status,
+            )
         )
         status_filter.setMaximumWidth(170)
         labels = sorted({v for t in self.data["ticket"] for v in t["labels"]})
@@ -243,7 +246,12 @@ class ProjectsPage:
             for status in D.STATUSES:
                 col, cl = column(spacing=3)
                 group = [t for t in tickets if t["status"] == status]
-                header = row(label(D.STATUS_NAMES[status], "section"), label(str(len(group)), "count"), None)
+                header = row(
+                    status_label(status),
+                    label(D.STATUS_NAMES[status], "section"),
+                    label(str(len(group)), "count"),
+                    None,
+                )
                 cl.addWidget(header)
                 lst = TicketList(self, status)
                 # Narrow enough that all five lanes fit beside the inspector; wide enough for the
@@ -294,6 +302,8 @@ class ProjectsPage:
                 for c, value in enumerate(values[: len(fields)]):
                     item = QTableWidgetItem(value)
                     item.setData(Qt.UserRole, t["id"])
+                    if c == 2:
+                        item.setIcon(status_icon(t["status"]))
                     table.setItem(r, c, item)
             table.resizeColumnsToContents()
             table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)

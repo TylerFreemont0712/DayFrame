@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 )
 from ..core import domain as D
 from .labels import LabelsEditor, label_choices
+from .status import add_status_icons
 from .widgets import FormDialog, button, combo, error, label, row
 
 
@@ -43,7 +44,7 @@ class TicketEditor(QWidget):
             and other["id"] != ticket["id"]
             and not other["archived"]
         ]
-        self.status = combo([(s, D.STATUS_NAMES[s]) for s in D.STATUSES], ticket["status"])
+        self.status = add_status_icons(combo([(s, D.STATUS_NAMES[s]) for s in D.STATUSES], ticket["status"]))
         self.status.setAccessibleName("Status")
         self.priority = combo([(p, p.title()) for p in D.PRIORITIES], ticket["priority"])
         self.priority.setAccessibleName("Priority")
