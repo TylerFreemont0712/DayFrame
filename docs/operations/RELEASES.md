@@ -38,18 +38,18 @@ An explicitly requested validation build stays in dist/build output and does not
 
 | Item | Value |
 |---|---|
-| Version | 0.6.0 |
-| Packaged date | 2026-11-08 |
-| Source commit | dce8dc20e341f6e35c6aba5aa7fc4ca515e7b721 |
-| Windows artifacts | release/native-0.6.0/DayFrame/ (portable, 871 files) with SHA256SUMS.txt and verification.json, on the development machine |
-| Verification | 106 Windows source tests; 97-screen packaged UI smoke check with a fresh profile; a 0.5.2 profile opened in 0.6.0 with its remembered sign-in, records and theme, and moved from 100% to 90% text |
+| Version | 0.7.0 |
+| Packaged date | 2026-11-10 |
+| Source commit | 76290038c56f9089c19fe8f25144531efb24ee30 |
+| Windows artifacts | release/native-0.7.0/DayFrame/ (portable, 871 files) with SHA256SUMS.txt and verification.json, on the development machine |
+| Verification | 161 Windows source tests; 97-screen packaged UI smoke check with a fresh profile. No upgrade check from a 0.6.0 profile was run for this package |
 | Build tools | Python 3.13.5, PyInstaller 6.22.3 |
-| DayFrame.exe SHA-256 | 1322b1d5bcac956b21dc2b4840f27982a24b6a4c108377a677e4a06864ed3a21 |
-| Windows installer | Not built for 0.6.0: NSIS is not installed on this machine. The 0.5.2 installer remains the last one built |
-| Source review and CI | [Release pull request #2](https://github.com/TylerFreemont0712/DayFrame/pull/2) |
+| DayFrame.exe SHA-256 | be13beb7d291611cf75a6f71190ebb6fd501f98970ad0121a0a63a04e0279c82 |
+| Windows installer | Not built for 0.7.0: NSIS is not installed on this machine. The 0.5.2 installer remains the last one built |
+| Source review and CI | Pushed on branch code-section; no pull request yet |
 | Linux Mint | The owner's exact installation has not been verified |
 | GitHub publication | No GitHub Release or release tag created for this package |
 
 The build commit identifies the packaged source. Binaries and test profiles are excluded from Git. verification.json and SHA256SUMS.txt (one hash per bundle file) accompany the local release. Current packaged UI references are in [docs/screenshots/current/](../screenshots/current/).
 
-This package was built with Python 3.13, which the project supports (3.12–3.14); earlier packages used 3.14. The upgrade check created a profile with the 0.5.2 source and opened it with 0.6.0 against an isolated folder; it did not touch the live profile.
+This package was built with Python 3.13, which the project supports (3.12–3.14). The previous package, release/native-0.6.0/, is kept alongside it.
