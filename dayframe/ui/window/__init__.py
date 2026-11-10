@@ -9,11 +9,14 @@ same ``self`` and reach data through ``self.store`` / ``self.data``:
 - shell.py      navigation rail, masthead, utility bar, search, timer tick
 - today.py      Today page
 - projects.py   Projects page (tree, Map/Kanban/Details, sections, filters)
+- tickets.py    Tickets page (overview stats, charts, table; ticket page with comments)
 - inspector.py  ticket inspector panel and work-block scheduling
 - schedule.py   Calendar page
 - tracking.py   Time page
 - settings.py   Settings page host, backup, conflicts, sync
 - capture.py    Quick Add dialog wiring
+- code.py       Code page shell, Tickets tab, git actions, changesets, GitHub tab
+- code_repo.py  Code page Working tree, History (commit graph) and Branches tabs
 """
 
 from .main import DayFrame

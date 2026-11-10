@@ -84,6 +84,14 @@ class AccountMixin:
             self.store.settings(patch)
             self.data = self.store.snapshot()
             apply_theme(self.data["settings"])
+        if self.data["settings"].get("layoutRevision", 0) < 5:
+            # The inspector became a compact summary; narrow wide saved inspectors once so the
+            # Kanban's last lane stays visible beside it.
+            patch = {"layoutRevision": 5}
+            if self.data["settings"].get("inspectorWidth", 250) > 260:
+                patch["inspectorWidth"] = 250
+            self.store.settings(patch)
+            self.data = self.store.snapshot()
         self.build_shell()
         geometry = self.data["settings"].get("windowGeometry")
         if geometry:

@@ -220,7 +220,7 @@ def apply_theme(settings):
     QFrame#masthead,QFrame#utilityBar { background:%(panel)s; border-bottom:1px solid %(line)s; }
     QFrame#utilityBar { border-top:1px solid %(line)s; border-bottom:0; }
     QWidget#contextPane { background:%(rail)s; border-right:1px solid %(line)s; }
-    QWidget#ticketInspector,QWidget#agendaPane { border-left:1px solid %(line)s; }
+    QWidget#ticketInspector { border-left:1px solid %(line)s; }
     QFrame#panel { background:%(panel)s; border:1px solid %(line)s; border-radius:%(radius)spx; }
     QFrame#focusPanel { background:%(raised)s; border:1px solid %(accent)s; border-radius:%(radius)spx; }
     QFrame#taskRow { background:%(panel)s; border:1px solid %(line)s; border-radius:%(radius)spx; }
@@ -255,6 +255,15 @@ def apply_theme(settings):
     QToolButton::menu-indicator,QPushButton::menu-indicator { image:url("%(down)s"); width:9px; height:7px; }
     QLineEdit:focus,QPlainTextEdit:focus { border-color:%(accent)s; }
     QLineEdit#ticketTitle { font-size:%(title_px)spx; font-weight:650; }
+    QLabel#inspectorTitle { font-size:%(title_px)spx; font-weight:650; color:%(heading_text)s; }
+    QLabel#ticketHeading { font-size:%(heading_px)spx; font-weight:700; font-family:"%(heading)s"; color:%(heading_text)s; }
+    QFrame#postCard { background:%(panel)s; border:1px solid %(line)s; border-radius:%(radius)spx; }
+    QFrame#statTile { background:%(panel)s; border:1px solid %(line)s; border-radius:%(radius)spx; }
+    QLabel#statValue { font-size:%(heading_px)spx; font-weight:650; color:%(heading_text)s; }
+    QFrame#homeStat { background:%(panel)s; border:1px solid %(line)s; border-radius:%(radius)spx; }
+    QFrame#homeStat:hover { border-color:%(button_hover)s; }
+    QLabel#homeStatValue,QLabel#homeStatWarn { font-family:"%(mono)s",monospace; font-size:%(capture_px)spx; font-weight:700; color:%(heading_text)s; }
+    QLabel#homeStatWarn { color:%(warning)s; }
     QListWidget,QTreeWidget,QTableWidget,QScrollArea { background:%(panel)s; border:1px solid %(line)s; border-radius:%(radius)spx; }
     QScrollArea { border:0; background:transparent; }
     QScrollArea#dialogContent { background:transparent; }

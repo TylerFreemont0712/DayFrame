@@ -1,4 +1,4 @@
--- DayFrame schema version 4; version-1 databases migrate in Store._migrate.
+-- DayFrame schema version 6; older databases migrate in Store._migrate.
 BEGIN TRANSACTION;
 CREATE TABLE accounts(id TEXT PRIMARY KEY,username TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,salt TEXT NOT NULL,device_id TEXT NOT NULL);
 CREATE TABLE conflicts(id TEXT PRIMARY KEY,account_id TEXT NOT NULL,operation_id TEXT NOT NULL,kind TEXT NOT NULL,entity_id TEXT NOT NULL,remote TEXT NOT NULL,fields TEXT NOT NULL);
@@ -13,11 +13,13 @@ INSERT INTO "schema_migrations" VALUES(1);
 INSERT INTO "schema_migrations" VALUES(2);
 INSERT INTO "schema_migrations" VALUES(3);
 INSERT INTO "schema_migrations" VALUES(4);
+INSERT INTO "schema_migrations" VALUES(5);
+INSERT INTO "schema_migrations" VALUES(6);
 CREATE TABLE settings(account_id TEXT PRIMARY KEY REFERENCES accounts(id),data TEXT NOT NULL CHECK(json_valid(data)));
 CREATE TABLE sync_meta(account_id TEXT PRIMARY KEY,cursor INTEGER NOT NULL DEFAULT 0);
 CREATE TABLE ticket_dependencies(account_id TEXT NOT NULL,ticket_id TEXT NOT NULL,prerequisite_id TEXT NOT NULL,PRIMARY KEY(account_id,ticket_id,prerequisite_id),FOREIGN KEY(account_id,ticket_id) REFERENCES tickets(account_id,id),FOREIGN KEY(account_id,prerequisite_id) REFERENCES tickets(account_id,id));
 CREATE TABLE ticket_labels(account_id TEXT NOT NULL,ticket_id TEXT NOT NULL,label TEXT NOT NULL,PRIMARY KEY(account_id,ticket_id,label),FOREIGN KEY(account_id,ticket_id) REFERENCES tickets(account_id,id));
-CREATE TABLE tickets(account_id TEXT NOT NULL,id TEXT NOT NULL,project_id TEXT NOT NULL,title TEXT NOT NULL,description TEXT NOT NULL,status TEXT NOT NULL,priority TEXT NOT NULL,component TEXT NOT NULL,milestone TEXT NOT NULL,due_date TEXT NOT NULL,estimate_min REAL NOT NULL,pinned INTEGER NOT NULL,archived INTEGER NOT NULL,checklist TEXT NOT NULL CHECK(json_valid(checklist)),parent_id TEXT NOT NULL DEFAULT '',PRIMARY KEY(account_id,id),FOREIGN KEY(account_id,project_id) REFERENCES projects(account_id,id));
+CREATE TABLE tickets(account_id TEXT NOT NULL,id TEXT NOT NULL,project_id TEXT NOT NULL,title TEXT NOT NULL,description TEXT NOT NULL,status TEXT NOT NULL,priority TEXT NOT NULL,component TEXT NOT NULL,milestone TEXT NOT NULL,due_date TEXT NOT NULL,estimate_min REAL NOT NULL,pinned INTEGER NOT NULL,archived INTEGER NOT NULL,checklist TEXT NOT NULL CHECK(json_valid(checklist)),parent_id TEXT NOT NULL DEFAULT '',created_at REAL NOT NULL DEFAULT 0,completed_at REAL NOT NULL DEFAULT 0,PRIMARY KEY(account_id,id),FOREIGN KEY(account_id,project_id) REFERENCES projects(account_id,id));
 CREATE TABLE time_entries(account_id TEXT NOT NULL REFERENCES accounts(id),id TEXT NOT NULL,ticket_id TEXT NOT NULL,start_at REAL NOT NULL,end_at REAL NOT NULL,device_id TEXT NOT NULL,note TEXT NOT NULL,PRIMARY KEY(account_id,id));
 CREATE TABLE timers(account_id TEXT NOT NULL REFERENCES accounts(id),id TEXT NOT NULL,ticket_id TEXT NOT NULL,start_at REAL NOT NULL,session_ms REAL NOT NULL,paused INTEGER NOT NULL,device_id TEXT NOT NULL,PRIMARY KEY(account_id,id));
 CREATE TABLE work_blocks(account_id TEXT NOT NULL,ticket_id TEXT NOT NULL,id TEXT NOT NULL,date TEXT NOT NULL,start_time TEXT NOT NULL,end_time TEXT NOT NULL,PRIMARY KEY(account_id,id),FOREIGN KEY(account_id,ticket_id) REFERENCES tickets(account_id,id));
@@ -25,5 +27,12 @@ CREATE INDEX tickets_project ON tickets(account_id,project_id,status);
 CREATE INDEX tickets_due ON tickets(account_id,due_date);
 CREATE INDEX outbox_account ON outbox(account_id,status,seq);
 CREATE INDEX work_blocks_day ON work_blocks(account_id,date,start_time);
+CREATE TABLE repositories(account_id TEXT NOT NULL,id TEXT NOT NULL,project_id TEXT NOT NULL,provider TEXT NOT NULL,name TEXT NOT NULL,remote_url TEXT NOT NULL,github_repo TEXT NOT NULL,default_branch TEXT NOT NULL,archived INTEGER NOT NULL,PRIMARY KEY(account_id,id),FOREIGN KEY(account_id,project_id) REFERENCES projects(account_id,id));
+CREATE TABLE changesets(account_id TEXT NOT NULL,id TEXT NOT NULL,repo_id TEXT NOT NULL,ticket_id TEXT NOT NULL,title TEXT NOT NULL,branch TEXT NOT NULL,base_commit TEXT NOT NULL,diff TEXT NOT NULL,stat TEXT NOT NULL,updated_at REAL NOT NULL,archived INTEGER NOT NULL,PRIMARY KEY(account_id,id),FOREIGN KEY(account_id,repo_id) REFERENCES repositories(account_id,id),FOREIGN KEY(account_id,ticket_id) REFERENCES tickets(account_id,id));
+CREATE INDEX changesets_ticket ON changesets(account_id,ticket_id);
+CREATE TABLE posts(account_id TEXT NOT NULL,id TEXT NOT NULL,ticket_id TEXT NOT NULL,body TEXT NOT NULL,author TEXT NOT NULL,created_at REAL NOT NULL,edited_at REAL NOT NULL,archived INTEGER NOT NULL,PRIMARY KEY(account_id,id),FOREIGN KEY(account_id,ticket_id) REFERENCES tickets(account_id,id));
+CREATE TABLE attachments(account_id TEXT NOT NULL,id TEXT NOT NULL,ticket_id TEXT NOT NULL,post_id TEXT NOT NULL,name TEXT NOT NULL,media_type TEXT NOT NULL,data TEXT NOT NULL,size REAL NOT NULL,width REAL NOT NULL,height REAL NOT NULL,created_at REAL NOT NULL,archived INTEGER NOT NULL,PRIMARY KEY(account_id,id),FOREIGN KEY(account_id,ticket_id) REFERENCES tickets(account_id,id));
+CREATE INDEX posts_ticket ON posts(account_id,ticket_id);
+CREATE INDEX attachments_ticket ON attachments(account_id,ticket_id);
 DELETE FROM "sqlite_sequence";
 COMMIT;

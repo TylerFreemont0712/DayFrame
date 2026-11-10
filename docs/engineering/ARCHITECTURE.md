@@ -16,6 +16,7 @@ The package is split by layer. Lower layers never import higher ones: `core` has
 | data/store.py, schema.sql, schema_definitions.json | SQLite migrations, account scope, normalized relations, transactions/outbox, backup/import |
 | sync/client.py | Authenticated push/pull, certificate pinning, OS keyring, conflict reconciliation |
 | sync/hub.py | Optional private HTTP/TLS service with SQLite change feed and device registry |
+| code/git.py, code/github.py | Git subprocess runner for local checkouts (never prompts, never force-pushes, fast-forward pulls only); GitHub REST client and keyring token storage |
 | ui/window/ | Main window: `main.py` owns state, async jobs and refresh; one mixin module per page or concern |
 | ui/views/ | Painted view widgets: Kanban lanes, project Map, Calendar, Today agenda, Settings panel |
 | ui/dialogs.py, widgets.py, labels.py | Quick Add/section/conflict dialogs, small widget helpers, label chip editor and painting |
@@ -31,11 +32,11 @@ Editor drafts block destructive navigation with Save/Discard/Cancel. Unrelated r
 
 ## Persistence and compatibility
 
-Each device has its own SQLite database, using foreign keys, WAL, schema version 4, normalized label/dependency tables, and atomic domain/outbox writes. Sequential migrations preserve saved records and password parameters while adding work blocks, event metadata and map relationships. Database import uses SQLite's backup API from a read-only source connection.
+Each device has its own SQLite database, using foreign keys, WAL, schema version 6, normalized label/dependency tables, and atomic domain/outbox writes. Sequential migrations preserve saved records and password parameters while adding work blocks, event metadata and map relationships. Database import uses SQLite's backup API from a read-only source connection.
 
 Native runtime paths are %LOCALAPPDATA%\TimeManager and $XDG_DATA_HOME/TimeManager. The source directory is never the default data directory. Window geometry and view settings are local preferences, not ticket entities.
 
-The hub synchronizes application-level changes between independent databases. The Python client and Python hub are integration-tested together. Schema 4 and sync protocol 1 are the current baseline.
+The hub synchronizes application-level changes between independent databases. The Python client and Python hub are integration-tested together. Schema 6 and sync protocol 1 are the current baseline. Schema 5 added repository and changeset records and schema 6 adds ticket lifecycle times, comments and screenshots; a hub must be updated before clients sync these records.
 
 ## Packaging and icons
 

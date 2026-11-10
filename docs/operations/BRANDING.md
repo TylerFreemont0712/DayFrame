@@ -1,6 +1,6 @@
 # DayFrame identity and compatibility
 
-Use **DayFrame**, with capital D and F. Schema 4 is the current data format.
+Use **DayFrame**, with capital D and F. Schema 6 is the current data format.
 
 ## Assets
 
@@ -52,9 +52,10 @@ The following are intentionally preserved:
 | timemanager.db and native-desktop.lock | Preserve database identity and mutual exclusion with earlier clients |
 | .local-session.json | Retain remembered local sign-in |
 | TimeManager.native.sync | Reuse registered device credentials in the OS keyring |
+| DayFrame.github | OS keyring entry holding the GitHub access token, keyed by account ID |
 | TM_HUB_* variables and timemanager-hub data/config paths | Existing Linux service configuration continues to work |
 | application/x-timemanager-ticket | Stable internal drag format |
-| Schema 4 / sync protocol 1 | Stable data and synchronization format |
+| Schema 6 / sync protocol 1 | Stable data and synchronization format |
 
 These identifiers are used by the active application and its stored data. Treat changes to them as a data migration, rather than a branding edit.
 

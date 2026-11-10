@@ -8,7 +8,7 @@ Graphite with the Cyan scheme is the default theme.
 
 Normal window 1280×800, minimum 980×640; respect Qt/OS scaling and restore bounds. The 1920×1200 monitor is not the application size.
 
-48px rail, ~34px masthead, ~36px footer, 164px project pane, 280px inspector, 9px margins and ~6px gaps. Home has no contextual pane and uses Tasks/Agenda tabs when narrow. Kanban uses five lanes with horizontal scrolling and 105–120px cards.
+48px rail, ~34px masthead, ~36px footer, 164px project pane, 280px inspector, 9px margins and ~6px gaps. Home has no contextual pane. From about 1090px of free width it shows tasks, the week strip with Day Agenda, and Coming up side by side; below that Day Agenda and Coming up share tabs; below about 840px it uses Tasks/Week/Coming up tabs. The week strip is 132px tall, 108px in windows shorter than 720px. Kanban uses five lanes with horizontal scrolling and 105–120px cards.
 
 Native forms scroll content with a fixed Save/Cancel footer. Keep them inside the screen and retain fields on errors. Plain-text labels and editors.
 

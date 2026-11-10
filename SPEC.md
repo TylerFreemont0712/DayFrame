@@ -50,11 +50,11 @@ Desktop is the initial priority. Windows and Linux must be first-class targets. 
 
 ### NAV-01: primary navigation
 
-A compact icon rail contains Home, Projects, Calendar, Time, future Code, and Settings. Icons have labels for assistive technology, hover/focus tooltips, and a clear active state.
+A compact icon rail contains Home, Projects, Tickets, Code, Calendar, Time, and Settings, in that order. Icons have labels for assistive technology, hover/focus tooltips, and a clear active state.
 
 ### NAV-02: contextual navigation
 
-Home has no secondary sidebar. Projects reveals a collapsible contextual pane with All tickets, Schedule, Time tracker, and the project list. Selecting an individual project exposes project-specific overview/map, milestones, and future code information.
+Home has no secondary sidebar. Projects reveals a collapsible contextual pane with All tickets, Schedule, Time tracker, and the project list. Selecting an individual project exposes project-specific overview/map, milestones, and its Code page. Code reveals the same kind of collapsible pane listing projects and their repositories.
 
 ### NAV-03: workspace scope
 
@@ -70,7 +70,7 @@ Remember selected view, project, panel sizes, density, and filters at appropriat
 
 ### NAV-06: settings sections
 
-Settings uses a keyboard-accessible category menu with View, Theme, Local data, Sync and Account. Show one scrollable section at a time, with bounded form widths. View contains density, text size and time zone; Theme contains the visual profile. Apply those sections independently and preserve entries when switching categories or applying appearance changes. Keep backup/examples, LAN connection credentials, automatic/manual sync, conflict review and account actions available in their corresponding sections. Remember the selected category while the app is open.
+Settings uses a keyboard-accessible category menu with View, Theme, Local data, Sync and Account. Show one scrollable section at a time, with bounded form widths. View contains density, text size and time zone; Theme contains the visual profile. Apply those sections independently and preserve entries when switching categories or applying appearance changes. Keep backup/examples, LAN connection credentials, automatic/manual sync, conflict review, the GitHub access token and account actions available in their corresponding sections. Remember the selected category while the app is open.
 
 ## 5. Today / Home
 
@@ -83,6 +83,14 @@ Show up to three pinned priority tickets first. Display due-today tickets and ov
 Display appointments, ticket work blocks, personal plans, and optional routines against a chronological time ruler. Visually distinguish fixed events, work sessions, and routines. Show the current-time indicator and the active work session.
 
 At wider widths, priorities/due work and agenda appear side by side. A countdown module fits below the work list or in a reserved supporting area. Do not stretch this arrangement into a single cramped strip.
+
+### HOME-06: week strip and day cards
+
+Above the Day Agenda, show the selected week (Sunday first) as seven day cards. Each card is a small picture of its day: weekday and date, all-day items and deadlines as chips with their type symbol, and timed events and work blocks drawn on a miniature timeline that uses one scale for the whole week. Today is marked and carries the current-time line; past days are dimmed. Clicking a card selects that day for the Day Agenda without changing any data; double-clicking adds an event on it. Previous, Today and next move between weeks, and Calendar opens the same week. The selection returns to today when the date changes.
+
+### HOME-07: figures and symbols
+
+Beside the focus timer, show counts of overdue, due-today, in-progress and completed-today tickets; each opens the matching Tickets view. Events on Home carry a symbol for their type (for example a cake for birthdays and a plane for trips) in the event's color, in addition to their title.
 
 ### HOME-03: countdowns
 
@@ -112,13 +120,13 @@ Blocked is an independent indicator. When unfinished prerequisites block work, c
 
 ### TKT-03: editing and viewing
 
-Click a ticket to open a side inspector without losing board/map context. Provide a distinct full Details workspace with a ticket list/table and the selected ticket's richer detail.
+Click a ticket to open a side inspector without losing board/map context. The inspector is a compact, read-only summary (title, status menu, priority, project, due, estimate, tracked, checklist, relations, next work block, comment and changeset counts, labels and a description excerpt) with Edit, Track, Details, Schedule, Code and More; Edit opens the full form in a dialog. It is narrow enough that all five Kanban lanes stay visible beside it at the default window size. The full ticket page lives on the Tickets page (TKT-08).
 
 ### TKT-04: default ticket fields
 
 Title, description, status, priority, owning project, labels, component, deadline, estimated duration, tracked time, checklist, and dependencies. Use optional fields rather than forcing data entry for every ticket. Include creation/update metadata, archive state, and stable identity.
 
-Current inspector tabs are Details and Time. Notes is hidden; activity, files and Code remain planned. Child tickets have their own identity, workflow, and time entries. Checklist items do not.
+Current inspector tabs are Details and Time, with a Code button that opens the ticket's changesets. Notes is hidden; activity and files remain planned. Child tickets have their own identity, workflow, and time entries. Checklist items do not.
 
 ### TKT-05: board behavior
 
@@ -133,6 +141,14 @@ Support create, edit, archive, restore, and recoverable deletion. Project archiv
 ### TKT-07: dependencies
 
 Disallow self-dependencies and dependency cycles. Relationship editing is validated in the authoritative data layer. Deleting or archiving a prerequisite must not silently claim its dependents are complete. Related-ticket links do not block work.
+
+### TKT-08: Tickets page
+
+Tickets sits between Projects and Code. Its contextual pane holds Overview/Details, quick views (All open, Assigned to me, Due this week, Overdue, Blocked, No due date, Completed this week, Everything) with counts, and a project filter.
+
+Overview shows stat tiles (open, completed this week with the change against last week, created this week, overdue, due in 7 days, blocked, tracked this week with its change, median cycle time over 30 days), six charts (completed per day and tracked time per day over 14 days, created and completed per Sunday-first week, open tickets by stage and by project, estimate and tracked by project) with hover values, and a sortable table of every ticket in the view: key, title, project, status, priority, assignee, labels, due, estimate, tracked, checklist, comments, changesets, created and completed. The table filters by text, stage and priority; double-click opens the ticket page. Assignee shows the signed-in person until Team workspaces add real assignment.
+
+Details is the ticket page, laid out like a forum thread: a header with status menu, priority, labels and actions (Edit, Track, Schedule, Code, Complete/Reopen, show on board, copy key, child ticket, archive); the description rendered from Markdown as the opening post with its screenshots; a checklist whose steps can be ticked; the activity thread of comments with screenshots, tracked time per day and completion; and a composer that takes Markdown text and pasted, dropped or chosen images (Ctrl+Enter posts). Comments can be edited (marked edited) or deleted with Undo. A sidebar lists every field, estimate use, relations (parent, children, depends on, blocks), upcoming work and the Code page link. Edit replaces the description with the full form in place; unsaved edits and unsent comments are protected like other drafts. Images are shrunk and recompressed to fit the sync limit and open full size on click.
 
 ## 7. Robust project Map
 
@@ -230,13 +246,33 @@ Personal application first. Team support later introduces memberships, owners/ad
 
 Plan stable workspace IDs and authorization boundaries now. Do not implement team access as a client-side filter over otherwise accessible personal records. A shared link is an explicit object/authorization relationship, not a hidden duplication of personal work.
 
-## 14. Future GitHub / Code area
+## 14. Code area
 
-Initial code integration is a repository overview: repository identity/URL, current or tracked branch, latest commit ID, release/tag when available, last update, checks, and linked issues/PRs.
+### CODE-01: repository per project
 
-Distinguish remote repository metadata from local checkout state. Working-tree changes, ahead/behind counts, and local branch require a selected accessible local checkout. Files and diffs follow later. Editing, terminal, pushing, merging, and shell execution are outside the initial overview.
+Each project chooses its version control: Git now, Subversion later. One active repository connection per project stores provider, name, remote URL, GitHub `owner/name` and default branch, and syncs between devices. Each device chooses its own checkout folder; paths never sync. Disconnecting archives the connection and keeps its changesets.
 
-Store provider secrets in credential storage and redact logs. Never show fictional mockup repository metadata as a connected real repository.
+### CODE-02: ticket changesets
+
+The Code page's Tickets tab shows the project's tickets as a fixed-width column of outlined cards (project key, status, priority, labels, changeset count, applied marker) with a filter; the divider does not move. Each ticket keeps changesets: named snapshots of working-tree changes (untracked files included) with branch, base commit, a short stat and the unified diff. The diff is stored in the database and synced, so every device can see and restore it. New changeset and Save to selected capture the working tree and keep working; Shelve saves into the applied changeset (or a new one) and cleans the checkout; Switch to restores a changeset into a clean checkout, shelving uncommitted work first and optionally switching to the changeset's branch. Restores apply the stored patch, falling back to a three-way apply. A local git stash entry is kept as a device backup and is used when a diff was too large to store (about 200 KB encoded). Deleting a changeset archives it with Undo.
+
+### CODE-06: developer views
+
+Every diff (changeset, working tree, commit) opens in a change browser: a folder tree of changed files with status letters and +/− counts per file and folder, a total with a five-block change bar, and the selected file's diff painted with old and new line numbers, highlighted in-line edits, visible tab and line-ending changes, in a unified or split (side-by-side) layout. The Working tree tab separates staged, unstaged and untracked files and stages, unstages or (after confirmation) discards selected files or folders. The History tab draws the commit graph of all branches, remotes and tags with lanes, merges and branch/tag/HEAD badges, filterable by message, author, commit or branch; a selected commit shows its id, parents, author, committer, date and full message beside its change browser (merges against their first parent). The Branches tab lists local branches with tracking and ahead/behind, remote branches, tags and stashes (DayFrame shelves by changeset name), and switches, creates branches from any of them, deletes merged local branches and jumps to a branch in History.
+
+### CODE-03: git actions with failsafes
+
+Refresh, Fetch, Pull, Commit, Push and branch create/switch run in the background. Pull is fast-forward only; push never forces and refuses while the branch is behind. Commit, push, pull, branch switches, shelving and deletion show what will happen first, including the git command, the outgoing commits and a warning for the default branch. Commit can archive the applied changeset and continue to a confirmed push. Git uses its own credentials and never prompts on a terminal.
+
+### CODE-04: GitHub
+
+Settings > Sync holds a GitHub access token (tested against the API before saving) and an API address for GitHub Enterprise. The token lives only in the OS credential store, or in memory for the session; never in the database, backups, sync or logs. The Code page's GitHub tab shows the repository, checks on the current branch, the latest release, open pull requests and issues. It opens pull requests (prefilled from the selected ticket), creates issues, merges a selected pull request after confirmation, and creates DayFrame tickets from issues.
+
+### CODE-05: links from other views
+
+Kanban and Map cards of projects with a repository show a code badge with the ticket's changeset count; clicking it, or Open in Code in the card's context menu, opens the ticket on the Code page. The inspector has a Code button. Calendar and agenda work blocks open their schedule dialog with Open ticket and Open in Code.
+
+Subversion shelves and in-app editing remain outside the current Code area.
 
 ## 15. Data reliability, accessibility, and quality
 
@@ -282,7 +318,8 @@ Some foundation work for sync begins in milestone 2 even if the network feature 
 | A-14 | Two-device sync, when implemented, survives duplicate requests, offline edits, conflict, and deletion. |
 | A-15 | Another account/workspace cannot read unauthorized private records through the data/API layer. |
 | A-16 | Windows and the selected Linux target launch from their own native package and preserve user data. |
-| A-17 | Unimplemented Code/Team controls explain availability rather than pretending to complete actions. |
+| A-17 | Unimplemented Subversion/Team controls explain availability rather than pretending to complete actions. |
+| A-18 | A changeset shelved on one device restores the same files in another device's checkout; push and pull never rewrite remote history. |
 
 ## 18. Confirmed infrastructure decisions
 
@@ -297,7 +334,7 @@ The decision log records accepted product choices. DESIGN_SYSTEM.md defines the 
 
 ## 20. Latest owner correction — compact native app
 
-The owner explicitly requests a normal windowed app with small text, compact pieces and tight spacing following the compact native dashboard layout. Default1280×800, minimum980×640, resizable; the display resolution1920×1200 must not dictate the window size. Today uses compact rows with Priorities/Due today/Overdue counts, followed by three small next-event rows; Day Agenda sits alongside. Narrow screens use Tasks/Agenda tabs when the inspector needs room. Keep the compact project pane, five Kanban lanes, detail inspector, footer quick capture and daily tracked total.
+The owner explicitly requests a normal windowed app with small text, compact pieces and tight spacing following the compact native dashboard layout. Default1280×800, minimum980×640, resizable; the display resolution1920×1200 must not dictate the window size. Today uses compact rows with Priorities/Due today/Overdue counts; the week strip, Day Agenda, three major-event countdown tiles and upcoming events sit alongside (HOME-06, HOME-07). Medium widths put Day Agenda and Coming up in tabs; narrow screens use Tasks/Week/Coming up tabs when the inspector needs room. Keep the compact project pane, five Kanban lanes, detail inspector, footer quick capture and daily tracked total.
 
 Passwords have no minimum length; simple values such as tyler are valid. Remember local sign-in after account creation/login, including across application restarts. Explicit Options → Log out clears remembered sign-in and requires the next login. Store a local account/device marker, never the password, outside backups and sync. Existing password verifiers remain valid; an authenticated local-password-change action is available.
 

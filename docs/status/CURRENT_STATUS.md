@@ -4,7 +4,7 @@ Python/PySide6 Qt Widgets, SQLite and a private Python sync hub. Normal 1280×80
 
 ## Delivered
 
-- Today priorities, due/overdue/recent work, agenda, major-event countdowns, upcoming events and live timer.
+- Today priorities, due/overdue/recent work, agenda, major-event countdowns, upcoming events and live timer. Unreleased: Home as a dashboard with figures, a week strip of clickable day cards, countdown tiles and event-type symbols; a symbol for every workflow stage; redrawn Map links; Clear workspace in Settings > Local data.
 - Shared Kanban/Map/Details tickets, inspector, checklist, dependencies and work blocks.
 - Month/Upcoming/Sunday-first Week calendar, event presets, detailed and multi-day events, yearly birthdays, click editing and 15-minute move/resize with Undo.
 - Nested map sections, inherited rules, parent/child tickets, sequence links and collapsible Unsorted.
@@ -16,6 +16,8 @@ Python/PySide6 Qt Widgets, SQLite and a private Python sync hub. Normal 1280×80
 - Native Windows frame theming, current DayFrame logo/icon and Windows/Linux launch/build templates.
 - SQLite backup/import, transactional sync outbox, private LAN hub, certificate pinning, independent field merges and conflict review.
 - Private GitHub repository, issue/PR templates, contribution guide and Windows/Linux CI.
+- Tickets page (unreleased): overview tiles, six charts and a sortable, filterable table of every ticket; a forum-style ticket page with Markdown description, comments with pasted or attached screenshots, activity, relations, schedule and in-place editing. Compact read-only inspector with an Edit dialog. Map sections drag with their contents, links avoid unrelated cards, and hovering a card highlights its links. Large demo workspace and demo preview profile.
+- Code page (unreleased): one Git repository per project with a device-local checkout folder; per-ticket changesets with stored, synced diffs; shelve, save and switch between changesets; fetch, fast-forward pull, commit and push with confirmations; branch create/switch; GitHub token in Settings > Sync with checks, release, pull requests and issues, new pull requests and issues, merges and tickets from issues; code badges and Open in Code links from Kanban, Map, inspector and calendar work blocks. The page has Tickets (ticket cards, changeset strip), Working tree, History (commit graph) and Branches tabs, with a change browser (file tree, line counts, numbered unified/split diffs with in-line edit highlighting) for every diff.
 
 The checkout retains current branding, native source and useful documentation. The current release and development environment stay local. Current packaged UI references live in docs/screenshots/current/.
 
@@ -33,7 +35,7 @@ The source is organized into layered subpackages with one module per window page
 
 ## Data and compatibility
 
-Schema 4 preserves saved records/passwords; databases on versions 1–3 migrate transactionally. Import changes only the copied database. Established storage, session, keyring and sync identifiers are documented in [BRANDING.md](../operations/BRANDING.md). Notes data is retained with its UI hidden.
+Schema 5 preserves saved records/passwords; databases on versions 1–4 migrate transactionally. Schema 5 (unreleased) adds repositories and changesets; update the hub before syncing them from a client. Import changes only the copied database. Established storage, session, keyring and sync identifiers are documented in [BRANDING.md](../operations/BRANDING.md). Notes data is retained with its UI hidden.
 
 ## Verification
 
@@ -47,9 +49,21 @@ Seven Settings tests cover category and keyboard navigation, independent saves, 
 
 The Windows installer is unsigned. Ubuntu CI does not verify the owner's exact Linux Mint installation. No hub/service/firewall or external integration is installed by source setup.
 
+## Code page verification
+
+Source tests cover the schema 5 migration, repository and changeset rules, the diff size limit, syncing a large Unicode diff between two devices through the hub, git status parsing, shelving with untracked files, restoring a stored diff in a second clone, snapshots, committing selected files, push and pull against a bare remote (including the refusal to push while behind), the GitHub client against a local fake API (errors never include the token), and the page itself: capture, shelve, switch with automatic shelving, commit with changeset archiving, confirmed push, recoverable delete, the GitHub settings and tab, and the links from Kanban, Map, inspector and calendar work blocks. The diff parser (renames, deletions, binary files, quoted names, line endings), folder tree, in-line spans, split pairing and graph lanes (branch, merge, fold) have unit tests; the Working tree (stage, unstage, discard), History (graph, commit details) and Branches (create from remote, safe delete, jump to History) tabs are tested against real repositories. Layouts were checked by screenshot in the Catppuccin theme at 1280×800 only. Verified on Windows with git 2.45 from source only: not packaged, not checked on Linux Mint, and not exercised against the real GitHub API.
+
+## Tickets page verification
+
+Source tests cover lifecycle times, post and attachment rules and size limits, the schema 6 migration, syncing a comment with a screenshot through the hub, the demo workspace, the navigation order, overview charts and table (search, quick views, sorting, double-click), posting a comment with a pasted screenshot, editing and deleting comments with Undo, the unsent-comment guard, the inspector's status menu and actions, image shrinking, Map link routing, hover focus and section carrying, and the Code badge press. Layouts were checked by screenshot in the Catppuccin theme at 1280×800 on Windows only.
+
+## Home, stage symbols, Map links and Clear workspace verification
+
+Unreleased. Source tests cover the stage symbols (distinct shapes and colors, lanes, menus and choices), Map link geometry (lines end inside an arrowhead resting on the card edge, arrive along one axis, and take separate ports on a shared side), Clear workspace (checked backup first, nothing deleted when the backup fails, account and appearance kept, sync settings and history dropped, typed word and second confirmation in the UI, every page opening on the empty workspace) and Home (figures and their Tickets views, week strip selection and week navigation, date rollover, countdown tiles, event symbols, the three layout modes and remembered tabs). Layouts were checked by screenshot in the Catppuccin and Graphite themes at 1280×800 and 980×640 on Windows only: not packaged and not checked on Linux Mint. Clear workspace was not exercised against a real hub.
+
 ## Remaining
 
-Recurrence exceptions and weekly/monthly rules, reminders, goal/reference objects, attachments/activity, durable history/recovery, large-data paging, stronger timer leasing, device/recovery management, sync-aware historical restore, GitHub overview, Team and mobile. Conflict resolution currently chooses local or hub data. The full list of planned and proposed work is in [IDEAS.md](IDEAS.md).
+Recurrence exceptions and weekly/monthly rules, reminders, goal/reference objects, attachments/activity, durable history/recovery, large-data paging, stronger timer leasing, device/recovery management, sync-aware historical restore, Subversion shelves, Team and mobile. Conflict resolution currently chooses local or hub data. The full list of planned and proposed work is in [IDEAS.md](IDEAS.md).
 
 ## Desktop runtime
 

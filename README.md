@@ -61,7 +61,7 @@ To restore a database backup, import a consistent snapshot into an unconfigured 
 .venv\Scripts\python.exe -m ruff check dayframe tests
 ```
 
-Use .venv/bin/python on Linux. Preview changes with app.py; the regular launcher may open the last packaged version. [CONTRIBUTING.md](CONTRIBUTING.md) covers branches, checks and isolated profiles. Routine GitHub Actions runs test Windows/Linux source. Packaging is opt-in for an explicitly requested release or validation build. Releases ship in waves; see [the release policy](docs/operations/RELEASES.md).
+Use .venv/bin/python on Linux. Preview changes with **Preview DayFrame.cmd** (or `sh scripts/preview.sh`), which runs the source in a separate preview profile; the regular launcher may open the last packaged version. [CONTRIBUTING.md](CONTRIBUTING.md) covers branches, checks and isolated profiles. Routine GitHub Actions runs test Windows/Linux source. Packaging is opt-in for an explicitly requested release or validation build. Releases ship in waves; see [the release policy](docs/operations/RELEASES.md).
 
 ## Project guide
 

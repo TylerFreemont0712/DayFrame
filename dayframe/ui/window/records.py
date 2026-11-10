@@ -20,5 +20,15 @@ class RecordLookups:
     def project_name(self, project_id):
         return next((p["name"] for p in self.data["project"] if p["id"] == project_id), "Project")
 
+    def code_repo(self, project_id):
+        """The project's active repository connection, if any."""
+        return next(
+            (r for r in self.data.get("repo", []) if r["project_id"] == project_id and not r["archived"]),
+            None,
+        )
+
+    def changeset_count(self, ticket_id):
+        return sum(c["ticket_id"] == ticket_id and not c["archived"] for c in self.data.get("changeset", []))
+
     def tracked_ms(self, ticket_id):
         return sum(e["end_at"] - e["start_at"] for e in self.data["entry"] if e["ticket_id"] == ticket_id)

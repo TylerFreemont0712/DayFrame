@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 0.7.0 — 2026-11-10
+
+- Rework Home into a dashboard: the focus timer beside four figures (overdue, due today, in progress, done today) that open the matching Tickets view; compact task rows with stage symbols; a week strip of seven clickable day cards, each filled in with that day's all-day items and a small timeline; a Day Agenda that follows the selected day; major events as countdown tiles; and upcoming events with a symbol for each event type (a cake for birthdays, a plane for trips). The layout uses three columns when wide, two with tabs for Day Agenda and Coming up at medium widths, and Tasks, Week and Coming up tabs when narrow.
+- Add Clear workspace to Settings > Local data for starting over with an empty workspace. It saves and checks a full backup in the profile's backups folder first, asks for a typed confirmation and a second prompt, keeps the account and preferences, and disconnects the device from a configured hub so the cleared data is not downloaded again.
+- Redraw Map links: every link leaves and enters a card at a right angle with an arrowhead that sits flush on the card edge, links sharing a side are spread along it, dashed links always meet their arrowhead, and rounded step routes follow the channels between columns instead of passing under neighbouring cards.
+- Give every stage its own symbol and color (dashed ring, half, three quarters, ring with a core, checked disc) on Kanban lanes and cards, Map cards, the inspector and ticket page status menus, ticket tables, stage filters, the ticket editor, Quick Add and Code ticket cards.
+- Add the Tickets page between Projects and Code: an overview with stat tiles, charts of completions, tracked time, created and completed per week, open work by stage and project, and estimate against tracked time, plus a sortable, filterable table of every ticket; and a forum-style ticket page with a Markdown description, comments, pasted or attached screenshots, activity, relations and in-place editing.
+- Make the board inspector a compact read-only summary with Edit, Track, Details, Schedule, Code and a status menu, and let Kanban lanes narrow so the Complete lane stays visible beside it.
+- Record when tickets are created and completed, and sync comments and screenshots (schema 6).
+- On the Map, drag a section together with its nested sections and cards, route links around unrelated cards (with portal markers where a link must pass under one), and highlight a card's links on hover.
+- Make the Code badge on cards a centred button with a hover ring and press animation.
+- Add a large demo workspace (Settings > Local data) with eight projects, about ninety tickets with history, comments and screenshots, three weeks of tracked time, scheduled work and events. `Preview DayFrame.cmd -Demo` opens a separate demo profile that also includes a git repository for the Code page.
+- Add the Code page. Each project connects a Git repository with a checkout folder per device, and each ticket keeps changesets: saved working-tree changes whose diff is stored and synced, with New changeset, Save to selected, Shelve and Switch to for moving between them.
+- Run fetch, fast-forward pull, commit, push and branch create/switch from the Code page in the background, with confirmations that show the command and outgoing commits. Push never forces.
+- Connect GitHub with an access token in Settings > Sync (kept in the OS credential store) to see checks, the latest release, pull requests and issues, open pull requests and issues, merge pull requests and create tickets from issues.
+- Open a ticket on the Code page from a code badge on Kanban and Map cards, their context menus, the inspector, and the work-block dialog in Calendar and Today.
+- Rework the Code page for development: tickets as outlined cards in a fixed column, a changeset strip, and a change browser with a changed-file tree, +/− counts per file and folder, and numbered unified or split diffs that highlight in-line edits and line-ending changes. Add Working tree (stage, unstage, discard), History (commit graph with merges, branches and tags, commit details) and Branches (tracking, ahead/behind, tags, stashes, create and safe delete) tabs.
+- Move the database to schema 5 for repositories and changesets. Update the hub before syncing from a client that uses the Code page.
+
 ## 0.6.0 — 2026-11-08
 
 - Add the Nord, Catppuccin and Editor themes. Editor offers Dracula, Tokyo Night, One Dark, Monokai, Gruvbox, Solarized, Rosé Pine and Everforest schemes; Nord, Catppuccin and Editor include light schemes.

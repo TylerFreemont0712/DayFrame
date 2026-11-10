@@ -16,7 +16,7 @@ Presets include Appointment, Meeting, Birthday, Trip, Personal plan, Routine, Ho
 
 Work blocks reference tickets, so titles/details stay current. Moving work never changes the ticket deadline. Click a deadline to open its ticket. Recorded time remains separate and editable in Time.
 
-Home shares the same calendar projection. It includes priorities, due/overdue, in-progress and up to five recent ungrouped tickets, three major countdowns (pinned first), ordinary upcoming events, all-day items and Day Agenda. Focus shows the current timer's ticket/duration/pause control, including while an unrelated inspector draft is open.
+Home shares the same calendar projection. It includes priorities, due/overdue, in-progress and up to five recent ungrouped tickets, three major countdowns (pinned first) drawn as tiles, ordinary upcoming events, all-day items and Day Agenda. A week strip of seven day cards (Sunday first) shows each day filled in with its all-day chips and a small timeline; clicking a card points the Day Agenda at that day and double-clicking adds an event there. Events shown as countdown tiles are not repeated in Upcoming. Every event type has a symbol. Focus shows the current timer's ticket/duration/pause control, including while an unrelated inspector draft is open.
 
 ## Nested map and inherited rules
 
@@ -43,7 +43,7 @@ Position changes within the same section save manual coordinates without a class
 
 Parentage is separate from dependencies and does not change status/blocking. The child inherits parent tags and fills empty component/milestone values; confirmation explains this. An unsorted child may be placed beside its parent so the connection is visible.
 
-Solid accent lines show parent → child; dashed amber lines show prerequisites; dotted purple lines show section sequence. Borders show containment. Parent and sequence cycles/cross-project links are rejected locally and on the Python hub.
+Solid accent lines show parent → child; dashed amber lines show prerequisites; dotted purple lines show section sequence. A link starts at a dot on its source and ends in an arrowhead on its target, meeting both at a right angle; links that share a side of a card are spread along it. Routes are smooth curves where the way is clear and rounded steps along the channels between columns and rows where a card is in the way. Borders show containment. Parent and sequence cycles/cross-project links are rejected locally and on the Python hub.
 
 Ticket context actions: Open, Start timer, Schedule, Create child, Complete, Remove parent. Section context actions: Edit, Add subsection, Move to root, Clear sequence. The inspector exposes parent and child navigation.
 

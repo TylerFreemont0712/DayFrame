@@ -15,7 +15,7 @@ For source work, install Python 3.12+ (3.14 recommended) and run:
     .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
     .venv\Scripts\python.exe -m unittest discover -s tests -v
 
-Run app.py directly to preview source changes; the regular launcher prefers the current packaged release. Development commits do not replace it. Build only for an explicitly requested release or validation build; see [release policy](RELEASES.md) and [packaging commands](../../CONTRIBUTING.md#version-and-release).
+Run Preview DayFrame.cmd (or scripts/preview.sh) to preview source changes in a separate TimeManager-preview profile; see [CONTRIBUTING.md](../../CONTRIBUTING.md). The regular launcher prefers the current packaged release. Development commits do not replace it. Build only for an explicitly requested release or validation build; see [release policy](RELEASES.md) and [packaging commands](../../CONTRIBUTING.md#version-and-release).
 
 Source desktop dependencies are pinned in requirements.txt. requirements-windows.lock.txt captures the tested environment; do not use its Windows-only packages as a Linux lock.
 
@@ -105,6 +105,8 @@ The hub exposes POST /devices and /revoke for registered-device management. A fu
 ## Backups and recovery
 
 Settings → Local data → Back up database uses SQLite's consistent backup API. A backup contains a password verifier and personal data; use protected storage.
+
+Settings → Local data → Clear workspace empties the signed-in account's workspace after a typed confirmation and a second prompt. It first writes `backups/before-clear-<date>-<time>.db` inside the profile folder and checks it; if that fails, nothing is deleted. The account, password and appearance preferences stay. A configured hub connection is switched off and the sync cursor and unsent changes are dropped, because the hub has no delete operation: the hub and other devices keep their copy, and connecting again downloads it. To go back, import the backup into a new, unconfigured profile, or close DayFrame and put the backup in place of `timemanager.db`.
 
 Import-copy is supported into an unconfigured native profile. Do not restore an old backup directly into an actively syncing profile without reconciliation: its cursor and outbox can be stale. Sync is not a backup. For the hub, stop the service before a simple filesystem backup or use SQLite's backup API; copying only a live WAL main file is insufficient.
 

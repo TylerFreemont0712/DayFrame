@@ -8,12 +8,71 @@ import sqlite3
 import threading
 import time
 import uuid
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from datetime import date, timedelta
 from importlib.resources import files
 from pathlib import Path
 from ..core import domain as D
 from ..core import preferences
+
+
+# Schema 5: version-control records. Kept here so the migration and schema.sql agree.
+REPOSITORIES_TABLE = (
+    "CREATE TABLE IF NOT EXISTS repositories(account_id TEXT NOT NULL,id TEXT NOT NULL,project_id TEXT NOT NULL,"
+    "provider TEXT NOT NULL,name TEXT NOT NULL,remote_url TEXT NOT NULL,github_repo TEXT NOT NULL,"
+    "default_branch TEXT NOT NULL,archived INTEGER NOT NULL,PRIMARY KEY(account_id,id),"
+    "FOREIGN KEY(account_id,project_id) REFERENCES projects(account_id,id))"
+)
+CHANGESETS_TABLE = (
+    "CREATE TABLE IF NOT EXISTS changesets(account_id TEXT NOT NULL,id TEXT NOT NULL,repo_id TEXT NOT NULL,"
+    "ticket_id TEXT NOT NULL,title TEXT NOT NULL,branch TEXT NOT NULL,base_commit TEXT NOT NULL,"
+    "diff TEXT NOT NULL,stat TEXT NOT NULL,updated_at REAL NOT NULL,archived INTEGER NOT NULL,"
+    "PRIMARY KEY(account_id,id),FOREIGN KEY(account_id,repo_id) REFERENCES repositories(account_id,id),"
+    "FOREIGN KEY(account_id,ticket_id) REFERENCES tickets(account_id,id))"
+)
+CHANGESETS_INDEX = "CREATE INDEX IF NOT EXISTS changesets_ticket ON changesets(account_id,ticket_id)"
+# Schema 6: ticket discussion and screenshots.
+POSTS_TABLE = (
+    "CREATE TABLE IF NOT EXISTS posts(account_id TEXT NOT NULL,id TEXT NOT NULL,ticket_id TEXT NOT NULL,"
+    "body TEXT NOT NULL,author TEXT NOT NULL,created_at REAL NOT NULL,edited_at REAL NOT NULL,"
+    "archived INTEGER NOT NULL,PRIMARY KEY(account_id,id),"
+    "FOREIGN KEY(account_id,ticket_id) REFERENCES tickets(account_id,id))"
+)
+ATTACHMENTS_TABLE = (
+    "CREATE TABLE IF NOT EXISTS attachments(account_id TEXT NOT NULL,id TEXT NOT NULL,ticket_id TEXT NOT NULL,"
+    "post_id TEXT NOT NULL,name TEXT NOT NULL,media_type TEXT NOT NULL,data TEXT NOT NULL,size REAL NOT NULL,"
+    "width REAL NOT NULL,height REAL NOT NULL,created_at REAL NOT NULL,archived INTEGER NOT NULL,"
+    "PRIMARY KEY(account_id,id),FOREIGN KEY(account_id,ticket_id) REFERENCES tickets(account_id,id))"
+)
+DISCUSSION_INDEXES = (
+    "CREATE INDEX IF NOT EXISTS posts_ticket ON posts(account_id,ticket_id)",
+    "CREATE INDEX IF NOT EXISTS attachments_ticket ON attachments(account_id,ticket_id)",
+)
+
+
+# Every table that holds workspace records, children before the rows they reference.
+WORKSPACE_TABLES = (
+    "attachments",
+    "posts",
+    "changesets",
+    "repositories",
+    "work_blocks",
+    "map_placements",
+    "ticket_dependencies",
+    "ticket_labels",
+    "time_entries",
+    "timers",
+    "tickets",
+    "map_sections",
+    "notes",
+    "events",
+    "projects",
+    "outbox",
+    "conflicts",
+    "sync_meta",
+)
+# Device preferences that point at cleared records or at a hub that still holds them.
+WORKSPACE_PREFERENCES = ("repoPaths", "activeChangesets", "syncUrl", "syncEnabled", "syncFingerprint")
 
 
 class Store:
@@ -32,7 +91,7 @@ class Store:
 
     def _migrate(self):
         version = self.db.execute("SELECT coalesce(max(version),0) FROM schema_migrations").fetchone()[0]
-        if version > 4:
+        if version > 6:
             raise ValueError("This database requires a newer DayFrame version.")
         if not version:
             self.db.executescript(files("dayframe.data").joinpath("schema.sql").read_text(encoding="utf-8"))
@@ -74,6 +133,25 @@ class Store:
                             + "'"
                         )
                 self.db.execute("INSERT INTO schema_migrations VALUES(4)")
+        if version < 5:
+            with self.atomic():
+                self.db.execute(REPOSITORIES_TABLE)
+                self.db.execute(CHANGESETS_TABLE)
+                self.db.execute(CHANGESETS_INDEX)
+                self.db.execute("INSERT INTO schema_migrations VALUES(5)")
+        if version < 6:
+            with self.atomic():
+                columns = {row[1] for row in self.db.execute("PRAGMA table_info(tickets)")}
+                for field in ("created_at", "completed_at"):
+                    if field not in columns:
+                        self.db.execute(
+                            "ALTER TABLE tickets ADD COLUMN " + field + " REAL NOT NULL DEFAULT 0"
+                        )
+                self.db.execute(POSTS_TABLE)
+                self.db.execute(ATTACHMENTS_TABLE)
+                for statement in DISCUSSION_INDEXES:
+                    self.db.execute(statement)
+                self.db.execute("INSERT INTO schema_migrations VALUES(6)")
 
     def remember_session(self):
         """Remember trusted local access without storing a password or syncing it.
@@ -260,14 +338,19 @@ class Store:
                 ]
             return result
 
-    def list(self, kind):
+    def list(self, kind, summary=False):
+        """All records of a kind. summary=True replaces large fields (diffs) with their size."""
         with self.lock:
             account = self.auth()
             table = D.DEFINITIONS[kind]["table"]
             ids = self.db.execute(
                 f"SELECT id FROM {table} WHERE account_id=? ORDER BY rowid", (account["id"],)
             ).fetchall()
-            return [self.read(kind, row[0]) for row in ids]
+            records = [self.read(kind, row[0]) for row in ids]
+            for key in D.DEFINITIONS[kind].get("heavy", []) if summary else ():
+                for record in records:
+                    record[key + "_size"] = len(record.pop(key))
+            return records
 
     def _save(self, kind, payload, queue=True):
         account = self.auth()
@@ -300,6 +383,29 @@ class Store:
                 section = self.read("section", next_record["section_id"])
                 if not section or section["project_id"] != ticket["project_id"]:
                     raise ValueError("Section belongs to another project.")
+        if kind == "ticket" and queue:
+            # Lifecycle times feed the Tickets overview. Only local edits set them; synced
+            # records keep the values from the device that made the change.
+            now = int(time.time() * 1000)
+            if not old and not next_record["created_at"]:
+                next_record["created_at"] = now
+            if "completed_at" not in patch:
+                if next_record["status"] == "done" and (not old or old["status"] != "done"):
+                    next_record["completed_at"] = now
+                elif next_record["status"] != "done":
+                    next_record["completed_at"] = 0
+        if kind in ("repo", "changeset", "post", "attachment"):
+            D.check_code_relations(kind, next_record, self.read)
+            # Only local edits are refused; a duplicate arriving through sync is kept and the
+            # Code page uses the first one.
+            if kind == "repo" and queue and not next_record["archived"]:
+                if any(
+                    r["id"] != record_id
+                    and r["project_id"] == next_record["project_id"]
+                    and not r["archived"]
+                    for r in self.list("repo")
+                ):
+                    raise ValueError("This project already has a repository.")
         if (
             kind in ("entry", "timer", "block")
             and next_record["ticket_id"]
@@ -364,7 +470,7 @@ class Store:
         with self.lock:
             a = self.auth()
             result = {"account": {k: a[k] for k in ("id", "username")}, "settings": self.settings()}
-            result.update({kind: self.list(kind) for kind in D.DEFINITIONS})
+            result.update({kind: self.list(kind, summary=True) for kind in D.DEFINITIONS})
             rows = self.db.execute("SELECT * FROM conflicts WHERE account_id=?", (a["id"],)).fetchall()
             result["conflicts"] = [
                 {**dict(r), "remote": json.loads(r["remote"]), "fields": json.loads(r["fields"])}
@@ -449,12 +555,22 @@ class Store:
             return self.timer_action(p["action"], p.get("ticket_id"))
         if method == "examples.load":
             return self.load_examples()
+        if method == "demo.load":
+            from .demo import load_demo
+
+            return load_demo(self)
+        if method == "workspace.clear":
+            return self.clear_workspace()
         with self.atomic():
             direct = {
                 "project.save": "project",
                 "event.save": "event",
                 "note.save": "note",
                 "block.save": "block",
+                "repo.save": "repo",
+                "changeset.save": "changeset",
+                "post.save": "post",
+                "attachment.save": "attachment",
             }
             if method in direct:
                 return self._save(direct[method], p)
@@ -477,6 +593,14 @@ class Store:
                         },
                     )
                 return self.read("ticket", ticket["id"])
+            if method == "post.capture":
+                # A comment and its screenshots are saved together or not at all.
+                post = self._save("post", p["post"])
+                for attachment in p.get("attachments", []):
+                    self._save(
+                        "attachment", {**attachment, "ticket_id": post["ticket_id"], "post_id": post["id"]}
+                    )
+                return post
             if method == "ticket.relate":
                 child = self.read("ticket", p["child_id"])
                 parent = self.read("ticket", p["parent_id"])
@@ -562,9 +686,73 @@ class Store:
         destination = Path(destination)
         if destination.resolve() == (self.root / "timemanager.db").resolve():
             raise ValueError("Choose a different file for the backup.")
-        with self.lock, sqlite3.connect(destination) as other:
+        # closing() releases the file as soon as the copy is done, so it can be moved or opened.
+        with self.lock, closing(sqlite3.connect(destination)) as other:
             self.db.backup(other)
         return str(destination)
+
+    def workspace_counts(self):
+        """How many records of each kind the signed-in account has, plus unsent changes."""
+        with self.lock:
+            account = self.auth()
+            counts = {
+                kind: self.db.execute(
+                    f"SELECT count(*) FROM {D.DEFINITIONS[kind]['table']} WHERE account_id=?",
+                    (account["id"],),
+                ).fetchone()[0]
+                for kind in D.DEFINITIONS
+            }
+            counts["pending"] = self.db.execute(
+                "SELECT count(*) FROM outbox WHERE account_id=?", (account["id"],)
+            ).fetchone()[0]
+            return counts
+
+    def clear_workspace(self):
+        """Delete every record of the signed-in account and start over with an empty workspace.
+
+        A complete backup is written to the profile's backups folder and checked before
+        anything is deleted. The account, its password and the appearance preferences
+        stay. Sync history goes too, and the hub connection is switched off: the hub has
+        no delete operation, so a connected device would only download everything again.
+        """
+        with self.lock:
+            account = self.auth()
+            counts = self.workspace_counts()
+            folder = self.root / "backups"
+            folder.mkdir(exist_ok=True)
+            name = "before-clear-" + time.strftime("%Y%m%d-%H%M%S")
+            target = folder / (name + ".db")
+            number = 1
+            while target.exists():
+                number += 1
+                target = folder / (name + "-" + str(number) + ".db")
+            self.backup(target)
+            copy_ = sqlite3.connect(target)
+            try:
+                saved = copy_.execute(
+                    "SELECT count(*) FROM tickets WHERE account_id=?", (account["id"],)
+                ).fetchone()[0]
+                if copy_.execute("PRAGMA quick_check").fetchone()[0] != "ok" or saved != counts["ticket"]:
+                    raise ValueError("The backup could not be verified, so nothing was deleted.")
+            finally:
+                copy_.close()
+            with self.atomic():
+                for table in WORKSPACE_TABLES:
+                    self.db.execute(f"DELETE FROM {table} WHERE account_id=?", (account["id"],))
+                row = self.db.execute(
+                    "SELECT data FROM settings WHERE account_id=?", (account["id"],)
+                ).fetchone()
+                if row:
+                    kept = {k: v for k, v in json.loads(row[0]).items() if k not in WORKSPACE_PREFERENCES}
+                    self.db.execute(
+                        "UPDATE settings SET data=? WHERE account_id=?", (json.dumps(kept), account["id"])
+                    )
+            try:
+                # Hand the space used by screenshots and stored diffs back to the disk.
+                self.db.execute("VACUUM")
+            except sqlite3.Error:
+                pass
+            return {"backup": str(target), "removed": counts}
 
     def import_database(self, source):
         if self.status()["configured"]:
@@ -583,6 +771,8 @@ class Store:
                 2,
                 3,
                 4,
+                5,
+                6,
             ):
                 raise ValueError("Unsupported database version.")
             if original.execute("PRAGMA quick_check").fetchone()[0] != "ok":

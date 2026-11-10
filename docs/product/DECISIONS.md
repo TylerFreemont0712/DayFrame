@@ -33,7 +33,7 @@
 | D-027 | Quick Add supports tickets, events, notes, and optional field chips. |
 | D-028 | Reminders only for explicitly enabled events/deadlines. |
 | D-029 | Revision means branch + latest commit ID + release/tag. |
-| D-030 | Repository overview first; files/diffs later. |
+| D-030 | Repository overview first; files/diffs later (updated by D-075). |
 | D-031 | Graphite/Cyan wins over the alternate combined concept. |
 | D-032 | Real app is a larger dashboard; do not copy the compressed concept-sheet proportions. |
 | D-033 | Smaller text is acceptable with configurable scale/density and readable controls. |
@@ -148,3 +148,37 @@ D-072: Interface, heading and number fonts can be chosen from installed fonts, d
 D-073: The time zone is chosen from a searchable list sorted by UTC offset that shows each zone's current time, including whole-hour fixed UTC offsets. Up to three world clocks show the current time elsewhere in the bottom bar.
 
 D-074: Bottom-bar controls and calendar all-day chips size themselves from the active font; the all-day band shows up to four rows and summarizes the rest as "+N more".
+
+## Code area — 2026-11-08
+
+D-075: The Code page becomes a working hub for version control, not only a read-only overview. Each project selects its version control; Git ships first and Subversion (shelves) follows later. A project has one active repository connection.
+
+D-076: Tickets own changesets: saved working-tree changes whose diff is stored in the database and synced so other devices can see and restore them. Git stash creates them and remains a local backup. Switching between changesets restores files into the checkout, shelving uncommitted work first so nothing is lost.
+
+D-077: GitHub gets full read/write API access through a personal access token in Settings > Sync, kept only in the OS credential store. Commit, push, pull, branch switches, merges and deletions require confirmation; push never forces and pull only fast-forwards.
+
+D-078: Other views link to the Code page: a code badge on Kanban and Map cards, Open in Code in their context menus, a Code button in the inspector, and Open ticket / Open in Code in the work-block dialog used by Calendar and Today.
+
+D-079 (2026-11-09): The Code page is a developer workspace with as much detail as possible, all inside the Code section. Tickets show as outlined cards in a fixed-width column whose divider does not move. Changes open in a change browser (file tree, per-file and folder line counts, numbered diff with in-line edit highlighting, unified or split). Working tree, History (commit graph with merges and refs) and Branches tabs join Tickets and GitHub.
+
+## Tickets page and Map clarity — 2026-11-09
+
+D-080: Navigation order is Home, Projects, Tickets, Code, Calendar, Time. Tickets is a ticketing centre with an overview of efficiency statistics, charts and the full ticket table, and a forum-style ticket page with comments and screenshots. Assignee shows the signed-in person until Teams arrive.
+
+D-081: The board inspector becomes a compact read-only summary with all its actions; editing is an explicit Edit. It must not hide the Complete lane at the default window size.
+
+D-082: Tickets record when they were created and completed, and comments and screenshots are synced records (schema 6), so statistics and discussions are the same on every device.
+
+D-083: Dragging a section on the Map carries its nested sections and cards. Links route around unrelated cards; where they must pass under one, portal rings mark it, and hovering a card highlights its links.
+
+D-084: A large, seeded demo workspace and a separate demo preview profile exist for exploring the app without touching real data.
+
+## Stage symbols, Map links, fresh start and Home — 2026-11-10
+
+D-085: Every workflow stage has its own small symbol so a ticket's stage reads at a glance on cards, lanes, menus and tables. The shapes fill up as work advances and each has its own color; shape, not color alone, carries the meaning.
+
+D-086: Map connections must look smooth and whole: arrowheads sit flush on the card they point at, links meet cards at a right angle, and links sharing a side do not overlap.
+
+D-087: Settings > Local data offers Clear workspace for starting with a fresh database. It must be confirmed (typed word and a second prompt) and saves a checked backup first. The account and preferences stay. Because sync has no delete operation, clearing disconnects the device from its hub instead of deleting anything there.
+
+D-088: Home becomes a compact dashboard in the style of the rest of the app: focus and figures, task rows, a week strip of clickable day cards that are filled in with each day's events, a Day Agenda for the selected day, countdown tiles for major events, and upcoming events with a symbol per event type, including birthdays. D-003, D-004 and D-006 still hold.

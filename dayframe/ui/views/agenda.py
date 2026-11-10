@@ -15,7 +15,7 @@ class Agenda(QWidget):
         super().__init__()
         self.window = window
         self.day = day
-        self.setMinimumSize(265, 360)
+        self.setMinimumSize(220, 190)
         self.regions = []
         self.setMouseTracking(True)
 
@@ -28,7 +28,7 @@ class Agenda(QWidget):
         first = min([9] + [x["start_min"] // 60 for x in items])
         last = max([19] + [(x["end_min"] + 59) // 60 for x in items])
         left, top = max(43, p.fontMetrics().horizontalAdvance("00:00") + 10), 12
-        span = max(300, self.height() - 34)
+        span = max(170, self.height() - 34)
         hour = span / max(1, last - first)
         width = self.width() - left - 5
         for h in range(first, last + 1):
@@ -38,13 +38,15 @@ class Agenda(QWidget):
             p.setPen(QPen(QColor(C["line"]), 0.6))
             p.drawLine(left, int(y), self.width() - 4, int(y))
         for item in P.overlap_lanes(items):
+            height = max(p.fontMetrics().height() + 3, (item["end_min"] - item["start_min"]) / 60 * hour - 4)
             rect = QRectF(
                 left + item["lane"] * width / item["lanes"],
                 top + (item["start_min"] / 60 - first) * hour + 2,
                 width / item["lanes"] - 4,
-                max(22, (item["end_min"] - item["start_min"]) / 60 * hour - 4),
+                height,
             )
-            paint_item(p, rect, item)
+            # A block too short for a title line above its times shows the title alone.
+            paint_item(p, rect, item, height < 2 * p.fontMetrics().height() + 6)
             self.regions.append((rect, item))
         now = datetime.now(D.ZoneInfo(self.window.data["settings"]["timezone"]))
         if now.date().isoformat() == self.day and first <= now.hour < last:

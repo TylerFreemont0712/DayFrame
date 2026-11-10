@@ -1,7 +1,7 @@
 @echo off
 cd /d "%~dp0"
-if exist "release\native-0.6.0\DayFrame\DayFrame.exe" (
-    start "" "release\native-0.6.0\DayFrame\DayFrame.exe" %*
+if exist "release\native-0.7.0\DayFrame\DayFrame.exe" (
+    start "" "release\native-0.7.0\DayFrame\DayFrame.exe" %*
     exit /b
 )
 if exist "dist\DayFrame\DayFrame.exe" (

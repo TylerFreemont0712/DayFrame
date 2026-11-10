@@ -8,6 +8,7 @@ from ...core import domain as D
 from ...core import timezones as TZ
 from ...core.preferences import valid_zone
 from ..views.agenda import Agenda
+from ..views.home import WeekStrip
 from ..views.calendar import WeekCalendar
 from ..theme import app_icon, icon
 from ..widgets import button, column, combo, fit_combo_width, fit_text_width, label
@@ -30,9 +31,10 @@ class ShellMixin:
         for page, glyph in (
             ("Today", "home"),
             ("Projects", "layer-group"),
+            ("Tickets", "ticket-alt"),
+            ("Code", "code"),
             ("Calendar", "calendar-alt"),
             ("Time", "clock"),
-            ("Code", "code"),
         ):
             b = button("", lambda checked=False, p=page: self.navigate(p), glyph)
             b.setCheckable(True)
@@ -244,14 +246,11 @@ class ShellMixin:
             self.day = today
             self.refresh()
         if self.page == "Today" and hasattr(self, "home_focus_title"):
-            self.home_focus_title.setText(
-                ticket["title"] if ticket and active else "Unassigned session" if active else "Start a timer"
-            )
-            self.home_focus_title.setToolTip(ticket["title"] if ticket else "Open time tracking")
-            self.home_focus_clock.setText(D.duration(ms))
-            self.home_focus_toggle.setIcon(icon("pause" if t and t["start_at"] else "play"))
+            self.home_focus_update()
         for agenda in self.findChildren(Agenda):
             agenda.update()
+        for strip in self.findChildren(WeekStrip):
+            strip.update()
         for week in self.findChildren(WeekCalendar):
             week.canvas.update()
 

@@ -44,12 +44,14 @@ Collected from [SPEC.md](../../SPEC.md), [DECISIONS.md](../product/DECISIONS.md)
 - **planned** Reminders, only for explicitly enabled events and deadlines (D-028).
 - **planned** Event search alongside ticket search (SPEC §10).
 - **planned** Routines with occurrence/completion state (SPEC §2).
+- **proposed** Use the event-type symbols from Home in the Calendar's Upcoming list, month marks and week chips as well.
+- **proposed** Drag a ticket from Home's task list onto a day card to schedule a work block on that day.
 
 ### Tickets, Kanban and Map
 - **planned** Manual ordering within a Kanban lane (TKT-05).
 - **planned** Per-project workflow customization (TKT-02).
 - **planned** Goal and reference objects; linked map references (D-018, D-022).
-- **planned** Inspector Activity, Files/attachments and Code tabs (TKT-04, D-026).
+- **planned** Inspector Activity and Files/attachments tabs (TKT-04, D-026).
 - **parked** Notes UI and note capture; saved notes stay intact (SPEC §10).
 
 ### Time tracking
@@ -63,9 +65,16 @@ Collected from [SPEC.md](../../SPEC.md), [DECISIONS.md](../product/DECISIONS.md)
 - **planned** Hub password change and account recovery.
 - **planned** Field-level conflict resolution beyond "keep local / keep hub".
 - **planned** Paged queries and virtualized rendering for large collections.
+- **proposed** Restore a backup from inside the app (Settings > Local data), so undoing Clear workspace does not need a new profile or a manual file swap.
+- **proposed** Delete records through sync (tombstones on the hub), so clearing or deleting on one device can reach the others instead of disconnecting.
 
 ### Code area and team
-- **planned** Repository overview: repository, branch, latest commit, release/tag, checks and linked issues/PRs (SPEC §14, D-029, D-030).
+- **planned** Subversion support: per-project SVN checkouts with shelves stored as changesets (D-075).
+- **proposed** Use the GitHub token for git push and pull over HTTPS through a credential helper, so one sign-in covers both.
+- **proposed** Link tickets to GitHub issues and pull requests both ways, showing pull request state and checks on cards.
+- **proposed** Blame view, file history and syntax highlighting in the change browser.
+- **proposed** Stage or discard single hunks and lines from the Working tree tab.
+- **proposed** Drop DayFrame's own git stash backups when a changeset is committed or deleted.
 - **planned** Team workspaces with memberships, explicit sharing and assignees (SPEC §13, D-015, D-016).
 
 ### Platforms and packaging

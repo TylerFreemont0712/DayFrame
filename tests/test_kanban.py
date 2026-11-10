@@ -15,7 +15,7 @@ from PySide6.QtGui import (
     QPainter,
     QColor,
 )
-from PySide6.QtWidgets import QApplication, QComboBox, QLabel, QStyleOptionViewItem
+from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QStyleOptionViewItem
 
 from dayframe.core import domain as D, planning as P
 from dayframe.ui.dialogs import AddDialog
@@ -79,12 +79,41 @@ class KanbanTests(unittest.TestCase):
         finally:
             dialog.close()
         self.window.select_ticket(tickets[1]["id"])
-        choices = next(c for c in self.window.inspector.findChildren(QComboBox) if c.findData("inbox") >= 0)
-        self.assertEqual(choices.currentText(), "In Progress")
+        status = next(
+            b for b in self.window.inspector.findChildren(QPushButton) if b.objectName() == "statusButton"
+        )
+        self.assertEqual(status.text(), "In Progress")
+        self.assertEqual([a.text() for a in status.menu().actions()], names)
         self.window.complete_ticket(tickets[1])
         self.assertEqual(self.store.read("ticket", tickets[1]["id"])["status"], "done")
         self.window.undo()
         self.assertEqual(self.store.read("ticket", tickets[1]["id"])["status"], "ready")
+
+    def test_every_stage_has_its_own_symbol_on_lanes_menus_and_choices(self):
+        from dayframe.ui.status import status_color, status_pixmap
+
+        images = [status_pixmap(status).toImage() for status in D.STATUSES]
+        for index, image in enumerate(images):
+            self.assertFalse(image.isNull())
+            self.assertTrue(all(image != other for other in images[index + 1 :]), D.STATUSES[index])
+        # Shape carries the meaning; color only reinforces it, so each stage has its own too.
+        self.assertEqual(len({status_color(status).name() for status in D.STATUSES}), len(D.STATUSES))
+        ticket = self.ticket(status="review")
+        self.board()
+        glyphs = [w.accessibleName() for w in self.window.workspace.findChildren(QLabel) if w.pixmap()]
+        for status in D.STATUSES:
+            self.assertIn(D.STATUS_NAMES[status], glyphs)
+        self.window.select_ticket(ticket["id"])
+        status = next(
+            b for b in self.window.inspector.findChildren(QPushButton) if b.objectName() == "statusButton"
+        )
+        self.assertFalse(status.icon().isNull())
+        self.assertTrue(all(not action.icon().isNull() for action in status.menu().actions()))
+        dialog = AddDialog(self.window, self.store.snapshot(), "ticket", self.project["id"])
+        try:
+            self.assertTrue(all(not dialog.status.itemIcon(i).isNull() for i in range(dialog.status.count())))
+        finally:
+            dialog.close()
 
     def test_home_in_progress_group_follows_the_renamed_stage_and_active_timer(self):
         working = self.ticket(title="Working", status="ready")

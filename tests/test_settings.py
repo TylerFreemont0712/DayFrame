@@ -6,7 +6,7 @@ from unittest.mock import patch
 from PySide6.QtCore import QEvent, Qt
 from PySide6.QtTest import QTest
 from PySide6.QtGui import QFontDatabase
-from PySide6.QtWidgets import QApplication, QPushButton, QCheckBox, QLineEdit
+from PySide6.QtWidgets import QApplication, QLabel, QPushButton, QCheckBox, QLineEdit
 
 from dayframe.data.store import Store
 from dayframe.ui.window import DayFrame
@@ -245,6 +245,64 @@ class SettingsTests(unittest.TestCase):
             self.click("Log out")
             logout.assert_called_once()
 
+    def test_clear_workspace_needs_the_typed_word_and_a_second_confirmation(self):
+        from PySide6.QtWidgets import QDialog, QMessageBox
+        from dayframe.ui.dialogs import ClearWorkspaceDialog
+
+        self.store.command("examples.load")
+        self.window.refresh()
+        self.section("data")
+        tickets = len(self.store.list("ticket"))
+        dialog = ClearWorkspaceDialog(
+            self.window, self.store.workspace_counts(), self.store.root / "backups", "https://hub:47831"
+        )
+        try:
+            self.assertFalse(dialog.confirm.isEnabled())
+            dialog.word.setText("clear")
+            self.assertFalse(dialog.confirm.isEnabled())
+            dialog.accept()
+            self.assertNotEqual(dialog.result(), QDialog.Accepted)
+            dialog.word.setText("CLEAR")
+            self.assertTrue(dialog.confirm.isEnabled())
+            text = " ".join(w.text() for w in dialog.findChildren(QLabel))
+            self.assertIn(str(tickets) + " tickets", text)
+            self.assertIn("https://hub:47831", text)
+        finally:
+            dialog.close()
+        # Cancelling either step leaves every record alone.
+        with patch.object(ClearWorkspaceDialog, "exec", return_value=QDialog.Rejected):
+            self.click("Clear workspace…")
+        self.assertEqual(len(self.store.list("ticket")), tickets)
+        with (
+            patch.object(ClearWorkspaceDialog, "exec", return_value=QDialog.Accepted),
+            patch.object(QMessageBox, "warning", return_value=QMessageBox.Cancel),
+        ):
+            self.click("Clear workspace…")
+        self.assertEqual(len(self.store.list("ticket")), tickets)
+        self.assertFalse((self.store.root / "backups").exists())
+        self.window.project_id = self.store.list("project")[0]["id"]
+        self.window.undo_action = lambda: None
+        with (
+            patch.object(ClearWorkspaceDialog, "exec", return_value=QDialog.Accepted),
+            patch.object(QMessageBox, "warning", return_value=QMessageBox.Yes),
+            patch.object(QMessageBox, "information") as told,
+        ):
+            self.click("Clear workspace…")
+        self.assertEqual(self.store.list("ticket"), [])
+        self.assertEqual(self.store.list("project"), [])
+        self.assertIsNone(self.window.project_id)
+        self.assertIsNone(self.window.undo_action)
+        self.assertEqual(len(list((self.store.root / "backups").glob("before-clear-*.db"))), 1)
+        self.assertIn("before-clear-", told.call_args.args[2])
+        self.assertEqual(self.window.settings_section, "data")
+        # Every page still opens on the empty workspace.
+        for page in ("Today", "Projects", "Tickets", "Code", "Calendar", "Time", "Settings"):
+            self.window.navigate(page)
+            APP.processEvents()
+        with patch.object(QMessageBox, "information") as told:
+            self.window.clear_workspace()
+        self.assertIn("already empty", told.call_args.args[2])
+
     def test_sync_connection_publish_auto_sync_and_conflict_actions(self):
         conflict = {"id": "review", "kind": "ticket", "entity_id": "12345678-1234", "fields": ["title"]}
         self.window.data["conflicts"] = [conflict]
@@ -344,6 +402,25 @@ class SettingsTests(unittest.TestCase):
                                 point = control.mapTo(page.viewport(), control.rect().center())
                                 self.assertTrue(page.viewport().rect().contains(point), control.text())
 
+    def test_wide_saved_inspector_narrows_once_for_the_compact_summary(self):
+        for saved, expected in ((280, 250), (240, 240)):
+            with self.subTest(saved=saved):
+                store = Store(Path("build/test-data") / uuid.uuid4().hex)
+                try:
+                    store.register("upgrade", "tyler")
+                    store.settings({"layoutRevision": 4, "inspectorWidth": saved})
+                    dispose(DayFrame(store))
+                    self.assertEqual(
+                        (store.settings()["inspectorWidth"], store.settings()["layoutRevision"]),
+                        (expected, 5),
+                    )
+                    # A width chosen afterwards is kept.
+                    store.settings({"inspectorWidth": 330})
+                    dispose(DayFrame(store))
+                    self.assertEqual(store.settings()["inspectorWidth"], 330)
+                finally:
+                    store.close()
+
     def test_old_default_text_size_moves_to_ninety_percent_once(self):
         for saved, expected in ((100, 90), (110, 110)):
             with self.subTest(saved=saved):
@@ -353,7 +430,7 @@ class SettingsTests(unittest.TestCase):
                     store.settings({"layoutRevision": 3, "textScale": saved})
                     dispose(DayFrame(store))
                     self.assertEqual(
-                        (store.settings()["textScale"], store.settings()["layoutRevision"]), (expected, 4)
+                        (store.settings()["textScale"], store.settings()["layoutRevision"]), (expected, 5)
                     )
                     # A size chosen after the upgrade is kept on later starts.
                     store.settings({"textScale": 100})

@@ -103,7 +103,7 @@ class PreferenceValidationTests(unittest.TestCase):
             {"worldClocks": "UTC"},
             {"worldClocks": ["Mars/Base"]},
             {"customColors": {"nord": {"accent": "nope"}}},
-            {"layoutRevision": 5},
+            {"layoutRevision": 6},
             {"unknown": 1},
         ):
             with self.assertRaises(ValueError, msg=bad):

@@ -27,7 +27,9 @@ from PySide6.QtWidgets import (
 from ..theme import CURRENT as C
 from ...core import domain as D
 from ..labels import paint_label_pills
+from ..status import paint_status
 from ..dragdrop import TICKET_MIME
+from .kanban import BADGE_HEIGHT, PressAnimation, code_badge_rect, paint_code_badge
 
 CARD_WIDTH = 180
 CARD_HEIGHT = 74
@@ -36,6 +38,18 @@ GROUP_GAP = 15
 CONTENT_X = 12
 CONTENT_Y = 54
 CARD_GAP = 10
+# Link geometry. A link ends LINE_INSET short of the card, hidden inside its arrowhead.
+ARROW_LENGTH = 9.0
+ARROW_HALF = 4.0
+LINE_INSET = ARROW_LENGTH * 0.6
+NORMALS = {
+    "right": QPointF(1, 0),
+    "left": QPointF(-1, 0),
+    "top": QPointF(0, -1),
+    "bottom": QPointF(0, 1),
+}
+# Dash patterns in pen widths; round caps turn the short one into dots.
+DASHES = {Qt.DashLine: [4.0, 3.6], Qt.DotLine: [0.2, 3.4]}
 
 
 def text_font(scale=1.0, bold=False):
@@ -93,15 +107,19 @@ class SectionHeader(QGraphicsObject):
     def mousePressEvent(self, event):
         self.origin = QPointF(self.pos())
         self.view.begin_hover("section", self.section["id"])
+        if self.section["id"]:
+            self.view.begin_carry(self)
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
+        self.view.carry_to(self.pos() - self.origin)
         self.view.consider_hover("section", self.section["id"], event.scenePos())
 
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
         self.setPos(self.origin)
+        self.view.end_carry()
         if self.view.hover_source:
             self.view.finish_hover("section", self.section["id"], event.scenePos())
 
@@ -160,6 +178,13 @@ class TicketNode(QGraphicsObject):
         )
         self.setZValue(10)
         self.origin = QPointF()
+        self.code = bool(view.window.code_repo(ticket["project_id"]))
+        count = view.window.changeset_count(ticket["id"]) if self.code else 0
+        self.code_rect = code_badge_rect(QRectF(0, 1, CARD_WIDTH - 2, BADGE_HEIGHT + 4), count)
+        self.badge_hover = False
+        self.badge_pressed = False
+        self.badge_press = PressAnimation(self.update)
+        self.setAcceptHoverEvents(True)
 
     def boundingRect(self):
         return QRectF(0, 0, CARD_WIDTH, CARD_HEIGHT)
@@ -173,16 +198,36 @@ class TicketNode(QGraphicsObject):
         p.setPen(pen)
         p.setBrush(QColor(C["raised"]))
         p.drawRoundedRect(self.boundingRect().adjusted(1, 1, -1, -1), C.get("radius", 5), C.get("radius", 5))
+        if self.ticket["id"] in self.view.focus_ids and self.ticket["id"] != self.view.focus_id:
+            # A soft halo on cards linked to the hovered one.
+            glow = QColor(C["accent"])
+            glow.setAlpha(70)
+            halo = QPen(glow, 3)
+            halo.setCosmetic(True)
+            p.setPen(halo)
+            p.setBrush(Qt.NoBrush)
+            p.drawRoundedRect(
+                self.boundingRect().adjusted(2, 2, -2, -2), C.get("radius", 5), C.get("radius", 5)
+            )
         p.setPen(QColor(C["muted"]))
         p.setFont(text_font(0.88))
         key = self.view.window.ticket_key(self.ticket)
         if self.placement and self.placement["manual"]:
             key += " · pin"
+        key_width = (self.code_rect.left() - 16) if self.code else CARD_WIDTH - 34
         p.drawText(
-            QRectF(10, 5, CARD_WIDTH - 34, 15),
+            QRectF(10, 5, key_width, 15),
             Qt.AlignVCenter,
-            QFontMetricsF(p.font()).elidedText(key, Qt.ElideRight, CARD_WIDTH - 34),
+            QFontMetricsF(p.font()).elidedText(key, Qt.ElideRight, key_width),
         )
+        if self.code:
+            paint_code_badge(
+                p,
+                self.code_rect,
+                self.view.window.changeset_count(self.ticket["id"]),
+                1.0 if self.badge_hover else 0.0,
+                self.badge_press.level,
+            )
         colors = {"urgent": C["danger"], "high": "#edba71", "medium": "#86c99a", "low": C["muted"]}
         p.setPen(Qt.NoPen)
         p.setBrush(QColor(colors.get(self.ticket["priority"], C["muted"])))
@@ -194,18 +239,48 @@ class TicketNode(QGraphicsObject):
         p.setPen(QColor(C["accent"] if selected else C["muted"]))
         status = "Blocked" if self.view.window.blocked(self.ticket) else D.STATUS_NAMES[self.ticket["status"]]
         footer = status + " · " + str(int(self.ticket["estimate_min"])) + "m"
-        footer_width = min(100, QFontMetricsF(p.font()).horizontalAdvance(footer))
+        footer_width = min(92, QFontMetricsF(p.font()).horizontalAdvance(footer))
         p.drawText(
-            QRectF(10, 55, footer_width, 15),
+            QRectF(27, 55, footer_width, 15),
             Qt.AlignVCenter,
             QFontMetricsF(p.font()).elidedText(footer, Qt.ElideRight, footer_width),
         )
+        paint_status(p, QRectF(10, 56, 13, 13), self.ticket["status"])
         if self.ticket["labels"]:
             paint_label_pills(
-                p, QRectF(18 + footer_width, 54, CARD_WIDTH - 28 - footer_width, 16), self.ticket["labels"], 1
+                p, QRectF(34 + footer_width, 54, CARD_WIDTH - 44 - footer_width, 16), self.ticket["labels"], 1
             )
 
+    def on_badge(self, pos):
+        return self.code and self.code_rect.adjusted(-2, -2, 2, 2).contains(pos)
+
+    def hoverEnterEvent(self, event):
+        self.view.focus_links(self.ticket["id"])
+        super().hoverEnterEvent(event)
+
+    def hoverMoveEvent(self, event):
+        hover = self.on_badge(event.pos())
+        if hover != self.badge_hover:
+            self.badge_hover = hover
+            self.setCursor(Qt.PointingHandCursor if hover else Qt.OpenHandCursor)
+            self.update()
+        super().hoverMoveEvent(event)
+
+    def hoverLeaveEvent(self, event):
+        self.view.focus_links(None)
+        if self.badge_hover:
+            self.badge_hover = False
+            self.setCursor(Qt.OpenHandCursor)
+            self.update()
+        super().hoverLeaveEvent(event)
+
     def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton and self.on_badge(event.pos()):
+            self.badge_pressed = True
+            self.badge_hover = True
+            self.badge_press.press()
+            event.accept()
+            return
         self.origin = QPointF(self.pos())
         self.view.begin_hover("ticket", self.ticket["id"])
         super().mousePressEvent(event)
@@ -213,15 +288,32 @@ class TicketNode(QGraphicsObject):
         self.update()
 
     def mouseMoveEvent(self, event):
+        if self.badge_pressed:
+            self.badge_hover = self.on_badge(event.pos())
+            self.update()
+            return
         super().mouseMoveEvent(event)
         self.view.consider_hover("ticket", self.ticket["id"], event.scenePos())
 
     def itemChange(self, change, value):
-        if change == QGraphicsItem.ItemPositionHasChanged and not self.view.building:
+        if (
+            change == QGraphicsItem.ItemPositionHasChanged
+            and not self.view.building
+            and not self.view.carrying
+        ):
             self.view.redraw_edges()
         return super().itemChange(change, value)
 
     def mouseReleaseEvent(self, event):
+        if self.badge_pressed:
+            self.badge_pressed = False
+            ticket_id = self.ticket["id"]
+            window = self.view.window
+            inside = self.on_badge(event.pos())
+            self.badge_press.release(
+                (lambda: QTimer.singleShot(0, lambda: window.open_code(ticket_id))) if inside else None
+            )
+            return
         super().mouseReleaseEvent(event)
         if (self.pos() - self.origin).manhattanLength() < 4:
             self.view.clear_hover()
@@ -233,6 +325,8 @@ class TicketNode(QGraphicsObject):
         w = self.view.window
         t = self.ticket
         menu.addAction("Open ticket", lambda: w.select_ticket(t["id"]))
+        if self.code:
+            menu.addAction("Open in Code", lambda: QTimer.singleShot(0, lambda: w.open_code(t["id"])))
         menu.addAction(
             "Start timer", lambda: w.execute("timer.action", {"action": "start", "ticket_id": t["id"]})
         )
@@ -266,7 +360,20 @@ class ProjectMap(QGraphicsView):
         self.nodes = {}
         self.headers = {}
         self.edges = []
+        self.edge_records = []
+        self.lanes = {}
+        self.port_use = {}
         self.regions = []
+        self.region_items = {}
+        self.node_sections = {}
+        self.carried = []
+        self.carrying = False
+        self.focus_id = None
+        self.focus_ids = set()
+        self.ant_offset = 0.0
+        self.ant_timer = QTimer(self)
+        self.ant_timer.setInterval(45)
+        self.ant_timer.timeout.connect(self.march)
         self.building = True
         self._first_show = True
         self.hover_source = None
@@ -368,6 +475,7 @@ class ProjectMap(QGraphicsView):
             fill = QColor(C["panel"] if depth % 2 == 0 else C["bg"])
             region = self.scene().addRect(rect, QPen(QColor(C["line"])), QBrush(fill))
             region.setZValue(-8 + depth * 0.1)
+            self.region_items[sid] = region
             header = SectionHeader(self, section, width, len(groups[sid]))
             self.scene().addItem(header)
             header.setPos(x, y)
@@ -378,6 +486,7 @@ class ProjectMap(QGraphicsView):
                 nx, ny = coords[sid][t["id"]]
                 node.setPos(x + CONTENT_X + nx, y + CONTENT_Y + ny)
                 self.nodes[t["id"]] = node
+                self.node_sections[t["id"]] = sid
                 if getattr(window, "selected", None) == t["id"]:
                     node.setSelected(True)
             child_x = x + 12
@@ -419,22 +528,330 @@ class ProjectMap(QGraphicsView):
         if points:
             p.drawPoints(QPolygonF(points))
 
-    def add_edge(self, start, end, color, style, tooltip):
+    def obstacles(self, ends):
+        """Card rectangles a connection should not cross: every card except its own two."""
+        return [
+            node.sceneBoundingRect().adjusted(-3, -3, 3, 3)
+            for tid, node in self.nodes.items()
+            if tid not in ends
+        ]
+
+    @staticmethod
+    def anchor(rect, side, shift=0.0):
+        """A point on one side of a card, moved along that side by shift (kept off the corners)."""
+        if side in ("left", "right"):
+            limit = max(0.0, rect.height() / 2 - 10)
+            y = rect.center().y() + max(-limit, min(limit, shift))
+            return QPointF(rect.right() if side == "right" else rect.left(), y)
+        limit = max(0.0, rect.width() / 2 - 14)
+        x = rect.center().x() + max(-limit, min(limit, shift))
+        return QPointF(x, rect.bottom() if side == "bottom" else rect.top())
+
+    @staticmethod
+    def connector(start, out, end, into, bow=0.0):
+        """A smooth curve that leaves start along out and arrives at end against into.
+
+        out and into are the outward normals of the two card sides, so the line always meets
+        a card at a right angle. bow pushes the middle of the curve sideways to dodge cards
+        without tilting either end.
+        """
+        delta = end - start
+        distance = math.hypot(delta.x(), delta.y())
+        reach = max(22.0, min(110.0, distance * 0.45))
         path = QPainterPath(start)
-        bend = max(34, abs(end.x() - start.x()) / 2)
-        path.cubicTo(start + QPointF(bend, 0), end - QPointF(bend, 0), end)
-        pen = QPen(QColor(color), 1.25, style)
+        if not bow or distance < 1:
+            path.cubicTo(start + out * reach, end + into * reach, end)
+            return path
+        along = delta / distance
+        middle = (start + end) / 2 + QPointF(-along.y(), along.x()) * bow
+        half = max(18.0, distance * 0.22)
+        path.cubicTo(start + out * (reach * 0.7), middle - along * half, middle)
+        path.cubicTo(middle + along * half, end + into * (reach * 0.7), end)
+        return path
+
+    @staticmethod
+    def rounded(points, radius=13.0):
+        """Straight runs through the given points, joined by quarter-circle corners."""
+        path = QPainterPath(points[0])
+        k = 1 - 0.5523  # control distance that makes a cubic follow a quarter circle
+        last = len(points) - 2
+        for index in range(1, len(points) - 1):
+            before = points[index] - points[index - 1]
+            after = points[index + 1] - points[index]
+            run_in = math.hypot(before.x(), before.y())
+            run_out = math.hypot(after.x(), after.y())
+            # Neighbouring corners share a run, so each may use half of it; the first and
+            # last runs belong to one corner only.
+            r = min(radius, run_in if index == 1 else run_in / 2, run_out if index == last else run_out / 2)
+            if r < 0.5:
+                path.lineTo(points[index])
+                continue
+            before, after = before / run_in, after / run_out
+            path.lineTo(points[index] - before * r)
+            path.cubicTo(
+                points[index] - before * (r * k), points[index] + after * (r * k), points[index] + after * r
+            )
+        path.lineTo(points[-1])
+        return path
+
+    @staticmethod
+    def crossings(path, rects, steps=60):
+        """How many path samples land inside an obstacle (fewer is better)."""
+        hits = 0
+        for i in range(1, steps):
+            point = path.pointAtPercent(i / steps)
+            hits += any(rect.contains(point) for rect in rects)
+        return hits
+
+    def port(self, rect, side):
+        """Where the next link on this side of a card attaches.
+
+        Links sharing a side are spread along it (centre first, then alternating either
+        way) so two connections never leave a card on top of each other.
+        """
+        used = self.port_use.get((round(rect.x()), round(rect.y()), side), 0)
+        step = 12 if side in ("left", "right") else 18
+        return self.anchor(rect, side, ((used + 1) // 2) * step * (1 if used % 2 else -1))
+
+    def lane(self, key, base, away, nested=False):
+        """Coordinate of the next free lane in a channel, so parallel links never overlap.
+
+        Lanes step away from the card. The second link of a pair instead takes the lane
+        nearer the card when that lets it run inside the first without crossing it.
+        """
+        used = self.lanes.get(key, 0)
+        if used == 1 and nested:
+            return base - away * 7
+        return base + away * 7 * used
+
+    def best_route(self, source, target, rects):
+        """The clearest route from one card (or header) to another.
+
+        Candidates: side-to-side and top-to-bottom curves with their middle bowed either way,
+        elbows between adjacent sides, a C-curve on one side, and stepped routes that run
+        along the channels between columns and rows or down a gutter beside the column.
+        Fewest cards crossed wins, then the shortest. Returns the line (ending inside the
+        arrowhead), the arrow tip, both outward normals and how many samples still pass
+        under other cards.
+        """
+        candidates = []
+
+        def curve(source_side, target_side, bows=(0,)):
+            start = self.port(source, source_side)
+            tip = self.port(target, target_side)
+            into = NORMALS[target_side]
+            end = tip + into * LINE_INSET
+            for bow in bows:
+                path = self.connector(start, NORMALS[source_side], end, into, bow)
+                candidates.append((path, source_side, target_side, tip, None))
+
+        def step(source_side, target_side, bases):
+            """Out of one side, along a channel at each base coordinate, and into the target."""
+            start = self.port(source, source_side)
+            tip = self.port(target, target_side)
+            end = tip + NORMALS[target_side] * LINE_INSET
+            sideways = source_side in ("left", "right")
+            away = 1 if source_side in ("right", "bottom") else -1
+            same = source_side == target_side
+            for number, base in enumerate(bases):
+                key = ("x" if sideways else "y", round(base))
+                if sideways:
+                    # A link on a lower port heading down (or a higher one heading up) fits inside.
+                    shift = start.y() - source.center().y()
+                    at = self.lane(key, base, away, number == 0 and shift * (end.y() - start.y()) > 0)
+                    leave, arrive = (
+                        (at - start.x()) * away,
+                        ((at - end.x()) if same else (end.x() - at)) * away,
+                    )
+                    points = [start, QPointF(at, start.y()), QPointF(at, end.y()), end]
+                else:
+                    at = self.lane(key, base, away)
+                    leave, arrive = (at - start.y()) * away, (end.y() - at) * away
+                    points = [start, QPointF(start.x(), at), QPointF(end.x(), at), end]
+                if leave >= 5 and arrive >= 5:
+                    candidates.append((self.rounded(points), source_side, target_side, tip, key))
+
+        wide = (0, -60, 60, -120, 120, -200, 200)
+        right = target.left() >= source.right()
+        left = target.right() <= source.left()
+        below = target.top() >= source.bottom()
+        above = target.bottom() <= source.top()
+        if target.left() >= source.left() + 40:
+            curve("right", "left", wide)
+        if target.right() <= source.right() - 40:
+            curve("left", "right", wide)
+        if right:
+            middle = (source.right() + target.left()) / 2
+            step("right", "left", (source.right() + 15, middle, target.left() - 15 - LINE_INSET))
+        if left:
+            middle = (source.left() + target.right()) / 2
+            step("left", "right", (source.left() - 15, middle, target.right() + 15 + LINE_INSET))
+        if below:
+            curve("bottom", "top", (0, -50, 50))
+            gap = target.top() - source.bottom()
+            step("bottom", "top", (source.bottom() + min(15, gap / 3), source.bottom() + gap / 2))
+        if above:
+            curve("top", "bottom", (0, -50, 50))
+            gap = source.top() - target.bottom()
+            step("top", "bottom", (source.top() - min(15, gap / 3), source.top() - gap / 2))
+        for across, side, opposite in ((right, "right", "left"), (left, "left", "right")):
+            if across and below:
+                curve(side, "top")
+                curve("bottom", opposite)
+            if across and above:
+                curve(side, "bottom")
+                curve("top", opposite)
+        band_top = min(source.top(), target.top())
+        band_bottom = max(source.bottom(), target.bottom())
+        band = [r for r in rects if r.bottom() >= band_top and r.top() <= band_bottom]
+        curve("right", "right")
+        step("right", "right", (max([source.right(), target.right()] + [r.right() for r in band]) + 16,))
+        curve("left", "left")
+        step("left", "left", (min([source.left(), target.left()] + [r.left() for r in band]) - 16,))
+        # A route may not cut back through the two cards it joins either.
+        own = [rect.adjusted(6, 6, -6, -6) for rect in (source, target)]
+        index = min(
+            range(len(candidates)),
+            key=lambda i: (self.crossings(candidates[i][0], rects + own), candidates[i][0].length(), i),
+        )
+        path, source_side, target_side, tip, lane_key = candidates[index]
+        for rect, side in ((source, source_side), (target, target_side)):
+            key = (round(rect.x()), round(rect.y()), side)
+            self.port_use[key] = self.port_use.get(key, 0) + 1
+        if lane_key:
+            self.lanes[lane_key] = self.lanes.get(lane_key, 0) + 1
+        return path, tip, NORMALS[source_side], NORMALS[target_side], self.crossings(path, rects)
+
+    def portals(self, path, rects, color):
+        """Rings where a connection dives under a card and where it comes back out."""
+        items = []
+        steps = 160
+        previous = [False] * len(rects)
+        for i in range(steps + 1):
+            point = path.pointAtPercent(i / steps)
+            for index, rect in enumerate(rects):
+                inside = rect.contains(point)
+                if inside != previous[index] and 0 < i < steps:
+                    glow = QColor(color)
+                    glow.setAlpha(60)
+                    halo = self.scene().addEllipse(
+                        QRectF(point.x() - 7, point.y() - 7, 14, 14), QPen(Qt.NoPen), QBrush(glow)
+                    )
+                    ring = self.scene().addEllipse(
+                        QRectF(point.x() - 4, point.y() - 4, 8, 8),
+                        QPen(QColor(color), 1.6),
+                        QBrush(QColor(C["bg"])),
+                    )
+                    for item in (halo, ring):
+                        item.setZValue(11)
+                        item.setToolTip("This link passes under a card it is not connected to")
+                    items += [halo, ring]
+                previous[index] = inside
+        return items
+
+    def add_edge(self, source, target, color, style, tooltip, ends=()):
+        rects = self.obstacles(ends)
+        route, tip, out, into, crossing = self.best_route(source, target, rects)
+        pen = QPen(QColor(color), 1.3)
         pen.setCosmetic(True)
-        edge = self.scene().addPath(path, pen)
+        pen.setCapStyle(Qt.RoundCap)
+        pen.setJoinStyle(Qt.RoundJoin)
+        if style in DASHES:
+            pen.setDashPattern(DASHES[style])
+        # The line is drawn from the arrow back to its source, so the dash pattern starts at
+        # the arrowhead and a dashed link never leaves a gap in front of it.
+        edge = self.scene().addPath(route.toReversed(), pen)
         edge.setZValue(3)
         edge.setToolTip(tooltip)
-        arrow = self.scene().addPolygon(
-            QPolygonF([end, end + QPointF(-7, -3.5), end + QPointF(-7, 3.5)]),
-            QPen(Qt.NoPen),
-            QBrush(QColor(color)),
-        )
+        # Arrowhead and source dot share one item. The head points straight into the card
+        # side it touches; the line ends inside it, so nothing pokes past the tip.
+        side = QPointF(-into.y(), into.x())
+        back = tip + into * ARROW_LENGTH
+        marks = QPainterPath(tip)
+        marks.lineTo(back + side * ARROW_HALF)
+        marks.lineTo(tip + into * (ARROW_LENGTH * 0.72))
+        marks.lineTo(back - side * ARROW_HALF)
+        marks.closeSubpath()
+        if route.length() > 3 * ARROW_LENGTH:
+            # Short hops between neighbouring cards are all arrowhead; a dot would crowd it.
+            marks.addEllipse(route.pointAtPercent(0) + out * 2.6, 2.3, 2.3)
+        arrow = self.scene().addPath(marks, QPen(Qt.NoPen), QBrush(QColor(color)))
         arrow.setZValue(3)
-        self.edges.extend([edge, arrow])
+        arrow.setToolTip(tooltip)
+        extra = self.portals(route, rects, color) if crossing else []
+        self.edges.extend([edge, arrow, *extra])
+        self.edge_records.append(
+            {"ends": set(ends), "path": edge, "items": [edge, arrow, *extra], "pen": QPen(pen)}
+        )
+
+    def focus_links(self, ticket_id):
+        """Highlight one card's connections with marching dashes and fade the others."""
+        self.focus_id = ticket_id
+        self.focus_ids = set()
+        for record in self.edge_records:
+            related = ticket_id is not None and ticket_id in record["ends"]
+            if related:
+                self.focus_ids |= record["ends"]
+            for item in record["items"]:
+                item.setOpacity(1.0 if ticket_id is None or related else 0.18)
+                item.setZValue(12 if related else 3 if item is record["path"] else item.zValue())
+            pen = QPen(record["pen"])
+            if related:
+                pen.setWidthF(2.2)
+                pen.setDashPattern([5, 3])
+            record["path"].setPen(pen)
+        for node in self.nodes.values():
+            node.update()
+        if ticket_id and self.focus_ids:
+            self.ant_timer.start()
+        else:
+            self.ant_timer.stop()
+
+    def march(self):
+        """Move the dashes of highlighted links along, from prerequisite/parent to dependent/child."""
+        # Paths run from the arrow back to the source, so a growing offset walks toward the arrow.
+        self.ant_offset = (self.ant_offset + 1) % 8
+        for record in self.edge_records:
+            if self.focus_id in record["ends"]:
+                pen = record["path"].pen()
+                pen.setDashOffset(self.ant_offset)
+                record["path"].setPen(pen)
+
+    def begin_carry(self, header):
+        """Collect a section's region, nested sections and cards so they move with its header."""
+        sid = header.section["id"]
+        inside = {
+            s["id"] for s in self.sections if sid in [x["id"] for x in D.section_path(self.sections, s["id"])]
+        }
+        items = [self.region_items[s] for s in inside if s in self.region_items]
+        items += [self.headers[s] for s in inside if s in self.headers and s != sid]
+        items += [node for tid, node in self.nodes.items() if self.node_sections.get(tid) in inside]
+        self.carried = [(item, QPointF(item.pos()), item.zValue(), item.opacity()) for item in items]
+        for item, _, z, _ in self.carried:
+            item.setZValue(z + 60)
+            item.setOpacity(0.72)
+        header.setZValue(8 + 60)
+
+    def carry_to(self, delta):
+        if not self.carried:
+            return
+        self.carrying = True
+        for item, origin, _, _ in self.carried:
+            item.setPos(origin + delta)
+        self.carrying = False
+        self.redraw_edges()
+
+    def end_carry(self):
+        self.carrying = True
+        for item, origin, z, opacity in self.carried:
+            item.setPos(origin)
+            item.setZValue(z)
+            item.setOpacity(opacity)
+        for header in self.headers.values():
+            header.setZValue(8)
+        self.carried = []
+        self.carrying = False
+        self.redraw_edges()
 
     def redraw_edges(self):
         if self.building:
@@ -442,6 +859,9 @@ class ProjectMap(QGraphicsView):
         for item in self.edges:
             self.scene().removeItem(item)
         self.edges = []
+        self.edge_records = []
+        self.lanes = {}
+        self.port_use = {}
         for node in self.nodes.values():
             links = [(x, Qt.DashLine, "#dfae65", "Dependency") for x in node.ticket["dependencies"]]
             if node.ticket.get("parent_id"):
@@ -450,11 +870,12 @@ class ProjectMap(QGraphicsView):
                 other = self.nodes.get(target)
                 if other:
                     self.add_edge(
-                        QPointF(other.sceneBoundingRect().right(), other.sceneBoundingRect().center().y()),
-                        QPointF(node.sceneBoundingRect().left(), node.sceneBoundingRect().center().y()),
+                        other.sceneBoundingRect(),
+                        node.sceneBoundingRect(),
                         color,
                         style,
                         name,
+                        (target, node.ticket["id"]),
                     )
         for section in self.sections:
             node = self.headers.get(section["id"])
@@ -464,8 +885,8 @@ class ProjectMap(QGraphicsView):
                 other = self.headers.get(target)
                 if other:
                     self.add_edge(
-                        QPointF(other.sceneBoundingRect().right(), other.sceneBoundingRect().center().y()),
-                        QPointF(node.sceneBoundingRect().left(), node.sceneBoundingRect().center().y()),
+                        other.sceneBoundingRect(),
+                        node.sceneBoundingRect(),
                         "#ba94e5",
                         Qt.DotLine,
                         "Section sequence: before → after",

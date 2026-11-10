@@ -1,30 +1,20 @@
-"""Ticket inspector side panel, draft protection and work scheduling."""
+"""Compact read-only ticket inspector, the Edit dialog and work scheduling."""
 
 from __future__ import annotations
-from PySide6.QtCore import QDate, Qt, QTime
+from PySide6.QtCore import QDate, Qt, QTime, QTimer
 from PySide6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
     QDateEdit,
     QDialog,
     QFormLayout,
-    QLineEdit,
-    QListWidget,
-    QListWidgetItem,
+    QGridLayout,
     QMenu,
-    QPlainTextEdit,
-    QSizePolicy,
-    QSpinBox,
-    QTabWidget,
     QTimeEdit,
-    QToolButton,
-    QWidget,
 )
-from datetime import datetime
 from ...core import domain as D
+from ..status import status_icon
+from ..ticket_editor import TicketEditDialog
 from ..views.kanban import TicketList
-from ..labels import label_choices, LabelsEditor
-from ..widgets import button, column, combo, ElidingLabel, error, FormDialog, label, row, scroll
+from ..widgets import button, column, ElidingLabel, FormDialog, label, row, scroll
 
 
 class InspectorMixin:
@@ -41,267 +31,172 @@ class InspectorMixin:
         self.render_inspector()
 
     def render_inspector(self):
+        """Compact, read-only ticket summary with the everyday actions; Edit opens the full form."""
         self.clear_layout(self.inspect_layout)
         t = self.find_ticket(self.selected) if self.selected else None
         self.inspector.setVisible(bool(t))
         if not t:
             return
-        root, l = column(margins=8, spacing=5)
-        header = row(
-            label(self.ticket_key(t), "section"), None, button("", lambda: self.close_inspector(), "times")
-        )
-        l.addWidget(header)
-        title = QLineEdit(t["title"])
+        root, l = column(margins=8, spacing=6)
+        edit = button("", lambda: self.edit_ticket(t["id"]), "pen")
+        edit.setToolTip("Edit ticket")
+        edit.setAccessibleName("Edit ticket")
+        close = button("", lambda: self.close_inspector(), "times")
+        close.setToolTip("Close")
+        close.setAccessibleName("Close inspector")
+        for small in (edit, close):
+            small.setFixedWidth(30)
+        l.addWidget(row(label(self.ticket_key(t), "section"), None, edit, close))
+        title = label(t["title"], "inspectorTitle")
+        title.setWordWrap(True)
         title.setAccessibleName("Ticket title")
-        title.setObjectName("ticketTitle")
+        title.setTextInteractionFlags(Qt.TextSelectableByMouse)
         l.addWidget(title)
-        status = combo([(s, D.STATUS_NAMES[s]) for s in D.STATUSES], t["status"])
-        status.setToolTip("Workflow status")
-        l.addWidget(status)
+        status = button(D.STATUS_NAMES[t["status"]])
+        status.setIcon(status_icon(t["status"]))
+        status.setObjectName("statusButton")
+        status.setAccessibleName("Ticket status")
+        status.setToolTip("Change status")
+        menu = QMenu(self)
+        for value in D.STATUSES:
+            action = menu.addAction(
+                status_icon(value), D.STATUS_NAMES[value], lambda v=value: self.set_ticket_status(t, v)
+            )
+            action.setCheckable(True)
+            action.setChecked(value == t["status"])
+        status.setMenu(menu)
+        priority = label(t["priority"].title(), "count")
+        priority.setToolTip("Priority")
+        project = ElidingLabel(self.project_name(t["project_id"]), "badge")
+        project.setMaximumWidth(130)
+        l.addWidget(row(status, priority, project, None))
         if self.blocked(t):
             l.addWidget(label("Blocked · unfinished prerequisites", "warning"))
-        tabs = QTabWidget()
-        tabs.setDocumentMode(True)
-        tabs.tabBar().setDrawBase(False)
-        details, dl = column(spacing=5)
-        f = QFormLayout()
-        f.setContentsMargins(0, 0, 0, 0)
-        f.setSpacing(4)
-        dl.addLayout(f)
-        priority = combo([(s, s.title()) for s in D.PRIORITIES], t["priority"])
-        f.addRow("Priority", priority)
-        project_badge = ElidingLabel(self.project_name(t["project_id"]), "badge")
-        project_badge.setMaximumWidth(170)
-        f.addRow("Project", project_badge)
-        candidates = [
-            other
-            for other in self.data["ticket"]
-            if other["project_id"] == t["project_id"] and other["id"] != t["id"] and not other["archived"]
-        ]
-        parent = combo(
-            [("", "No parent")] + [(other["id"], other["title"]) for other in candidates],
-            t.get("parent_id", ""),
-        )
-        f.addRow("Parent", parent)
-        children = [other for other in candidates if other.get("parent_id") == t["id"]]
-        for child in children:
-            child_button = button(
-                "Child · " + child["title"], lambda checked=False, c=child: self.select_ticket(c["id"])
-            )
-            child_button.setObjectName("rowTitle")
-            dl.addWidget(child_button)
-        labels = LabelsEditor(", ".join(t["labels"]), label_choices(self.data))
-        labels.setAccessibleName("Ticket labels")
-        f.addRow("Labels", labels)
-        due = QLineEdit(t["due_date"])
-        due.setPlaceholderText("YYYY-MM-DD")
-        f.addRow("Due", due)
-        estimate = QSpinBox()
-        estimate.setRange(0, 100000)
-        estimate.setValue(int(t["estimate_min"]))
-        estimate.setSuffix(" min")
-        f.addRow("Estimate", estimate)
-        f.addRow("Tracked", label(D.short_time(self.tracked_ms(t["id"])), "muted"))
-        more = QToolButton()
-        more.setText("Component / milestone")
-        more.setArrowType(Qt.RightArrow)
-        more.setCheckable(True)
-        more.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        dl.addWidget(more)
-        extra, exl = column()
-        exf = QFormLayout()
-        exf.setContentsMargins(0, 0, 0, 0)
-        exf.setSpacing(4)
-        exl.addLayout(exf)
-        component = QLineEdit(t["component"])
-        milestone = QLineEdit(t["milestone"])
-        exf.addRow("Component", component)
-        exf.addRow("Milestone", milestone)
-        extra.setVisible(False)
-        more.toggled.connect(
-            lambda checked: (
-                extra.setVisible(checked),
-                more.setArrowType(Qt.DownArrow if checked else Qt.RightArrow),
-            )
-        )
-        dl.addWidget(extra)
-        description = QPlainTextEdit(t["description"])
-        description.setPlaceholderText("Description")
-        description.setMinimumHeight(45)
-        description.setMaximumHeight(64)
-        dl.addWidget(description)
-        pin = QCheckBox("Pin to Today")
-        pin.setChecked(bool(t["pinned"]))
-        dl.addWidget(pin)
+        facts = QGridLayout()
+        facts.setHorizontalSpacing(8)
+        facts.setVerticalSpacing(3)
         done = sum(bool(x["done"]) for x in t["checklist"])
-        dl.addWidget(label("Checklist  " + str(done) + " / " + str(len(t["checklist"])), "section"))
-        checklist = QListWidget()
-        checklist.setObjectName("checklist")
-        for step in t["checklist"]:
-            item = QListWidgetItem(step["text"])
-            item.setFlags(item.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsEditable)
-            item.setCheckState(Qt.Checked if step["done"] else Qt.Unchecked)
-            checklist.addItem(item)
-        checklist.setMinimumHeight(28)
-        checklist.setMaximumHeight(min(90, max(28, len(t["checklist"]) * 23 + 4)))
-        dl.addWidget(checklist)
-        step_edit = QLineEdit()
-        step_edit.setPlaceholderText("Add a step…")
-
-        def add_step():
-            if step_edit.text().strip():
-                item = QListWidgetItem(step_edit.text().strip())
-                item.setFlags(item.flags() | Qt.ItemIsUserCheckable | Qt.ItemIsEditable)
-                item.setCheckState(Qt.Unchecked)
-                checklist.addItem(item)
-                step_edit.clear()
-                checklist.setMaximumHeight(min(90, checklist.count() * 23 + 4))
-
-        step_edit.returnPressed.connect(add_step)
-        dl.addWidget(row(step_edit, button("", add_step, "plus")))
-        dep_ids = list(t["dependencies"])
-        dep_summary = label(
-            "Depends on "
-            + (
-                ", ".join(self.ticket_key(self.find_ticket(x)) for x in dep_ids if self.find_ticket(x)) or "—"
+        children = [o for o in self.data["ticket"] if o.get("parent_id") == t["id"] and not o["archived"]]
+        parent = self.find_ticket(t.get("parent_id")) if t.get("parent_id") else None
+        today = D.day_key(self.data["settings"]["timezone"])
+        blocks = sorted(
+            (b for b in self.data["block"] if b["ticket_id"] == t["id"] and b["date"] >= today),
+            key=lambda b: (b["date"], b["start_time"]),
+        )
+        comments = sum(p["ticket_id"] == t["id"] and not p["archived"] for p in self.data.get("post", []))
+        rows = [
+            (
+                "Due",
+                (t["due_date"] or "—")
+                + (" · overdue" if t["due_date"] and t["due_date"] < today and t["status"] != "done" else ""),
             ),
+            ("Estimate", D.short_time(t["estimate_min"] * 60000)),
+            ("Tracked", D.short_time(self.tracked_ms(t["id"]))),
+            ("Checklist", str(done) + " / " + str(len(t["checklist"])) if t["checklist"] else "—"),
+            ("Parent", self.ticket_key(parent) if parent else "—"),
+            ("Children", str(len(children)) if children else "—"),
+            (
+                "Depends on",
+                ", ".join(
+                    self.ticket_key(self.find_ticket(x)) for x in t["dependencies"] if self.find_ticket(x)
+                )
+                or "—",
+            ),
+            ("Next work", (blocks[0]["date"][5:] + " " + blocks[0]["start_time"]) if blocks else "—"),
+            ("Comments", str(comments) if comments else "—"),
+        ]
+        if self.code_repo(t["project_id"]):
+            rows.append(("Changesets", str(self.changeset_count(t["id"])) or "—"))
+        for index, (name, value) in enumerate(rows):
+            facts.addWidget(label(name, "muted"), index, 0)
+            shown = ElidingLabel(value)
+            shown.setMinimumWidth(0)
+            facts.addWidget(shown, index, 1)
+        facts.setColumnStretch(1, 1)
+        l.addLayout(facts)
+        if t["labels"]:
+            l.addWidget(row(*[label(name, "badge") for name in t["labels"][:4]], None))
+        summary = t["description"].strip()
+        text = label(
+            (summary[:260].rstrip() + "…") if len(summary) > 260 else (summary or "No description yet."),
             "muted",
         )
-        dep_summary.setWordWrap(True)
-
-        def edit_dependencies():
-            d = FormDialog(self, "Ticket prerequisites")
-            d.resize(400, 320)
-            options = QListWidget()
-            options.setMinimumHeight(150)
-            for other in self.data["ticket"]:
-                if other["id"] == t["id"] or other["project_id"] != t["project_id"] or other["archived"]:
-                    continue
-                item = QListWidgetItem(other["title"])
-                item.setData(Qt.UserRole, other["id"])
-                item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-                item.setCheckState(Qt.Checked if other["id"] in dep_ids else Qt.Unchecked)
-                options.addItem(item)
-            d.layout.addWidget(options)
-            d.finish_form()
-            if d.exec() == QDialog.Accepted:
-                dep_ids[:] = [
-                    options.item(i).data(Qt.UserRole)
-                    for i in range(options.count())
-                    if options.item(i).checkState() == Qt.Checked
-                ]
-                dep_summary.setText(
-                    "Depends on "
-                    + (
-                        ", ".join(
-                            self.ticket_key(self.find_ticket(x)) for x in dep_ids if self.find_ticket(x)
-                        )
-                        or "—"
-                    )
-                )
-
-        dl.addWidget(row(dep_summary, None, button("", edit_dependencies, "link")))
-        dl.addStretch()
-        tabs.addTab(scroll(details), "Details")
-        log, ll = column(margins=6)
-        for e in sorted(
-            [e for e in self.data["entry"] if e["ticket_id"] == t["id"]],
-            key=lambda e: e["start_at"],
-            reverse=True,
-        ):
-            ll.addWidget(
-                button(
-                    datetime.fromtimestamp(
-                        e["start_at"] / 1000, D.ZoneInfo(self.data["settings"]["timezone"])
-                    ).strftime("%b %d %H:%M")
-                    + " · "
-                    + D.short_time(e["end_at"] - e["start_at"]),
-                    lambda checked=False, e=e: self.manual_time(e),
-                    "clock",
-                )
-            )
-        ll.addStretch()
-        tabs.addTab(scroll(log), "Time")
-        l.addWidget(tabs, 1)
-
-        def payload():
-            result = {
-                "title": title.text(),
-                "description": description.toPlainText(),
-                "status": status.currentData(),
-                "priority": priority.currentData(),
-                "labels": [s.strip() for s in labels.text().split(",") if s.strip()],
-                "component": component.text(),
-                "milestone": milestone.text(),
-                "due_date": due.text().strip(),
-                "estimate_min": estimate.value(),
-                "pinned": int(pin.isChecked()),
-                "checklist": [
-                    {"text": checklist.item(i).text(), "done": checklist.item(i).checkState() == Qt.Checked}
-                    for i in range(checklist.count())
-                ],
-                "dependencies": list(dep_ids),
-                "parent_id": parent.currentData(),
-            }
-            return D.changes(t, result)
-
-        def save():
-            try:
-                self.store.command("ticket.save", {"id": t["id"], **payload()})
-            except Exception as exc:
-                error(self, exc)
-                return False
-            self.draft_reader = None
-            self.draft_save = None
-            self.refresh()
-            return True
-
-        self.draft_reader = payload
-        self.draft_save = save
-        l.addWidget(
-            row(
-                button("Save ticket", save, "save", True),
-                button(
-                    "Track",
-                    lambda: self.execute("timer.action", {"action": "start", "ticket_id": t["id"]}),
-                    "play",
-                ),
-            )
-        )
-        l.addWidget(
-            row(
-                button("Full details", lambda: self.open_details(t), "external-link-alt"),
-                button("Schedule", lambda: self.schedule_ticket(t), "calendar-plus"),
-            )
-        )
-        menu = QMenu(self)
-        menu.addAction("Archive ticket", lambda: self.archive_ticket(t))
+        text.setWordWrap(True)
+        text.setAccessibleName("Description")
+        l.addWidget(text)
+        if t["checklist"]:
+            steps = [("✓ " if s["done"] else "○ ") + s["text"] for s in t["checklist"][:5]]
+            if len(t["checklist"]) > 5:
+                steps.append("+ " + str(len(t["checklist"]) - 5) + " more")
+            checklist = label("\n".join(steps), "muted")
+            checklist.setWordWrap(True)
+            l.addWidget(checklist)
+        l.addStretch()
+        actions = QGridLayout()
+        actions.setSpacing(5)
+        more = QMenu(self)
+        more.addAction("Archive ticket", lambda: self.archive_ticket(t))
         placement = next((p for p in self.data["placement"] if p["ticket_id"] == t["id"]), None)
         if placement and placement["manual"]:
-            menu.addAction(
+            more.addAction(
                 "Return to automatic placement",
                 lambda: self.execute(
                     "placement.save",
                     {"ticket_id": t["id"], "section_id": placement["section_id"], "manual": 0},
                 ),
             )
-        more_actions = button("More actions")
-        more_actions.setMenu(menu)
-        l.addWidget(more_actions)
-        self.inspect_layout.addWidget(root, 1)
-        for field in details.findChildren(QWidget):
-            if isinstance(field, (QLineEdit, QComboBox, QSpinBox, QPlainTextEdit, QListWidget)):
-                field.setMinimumWidth(0)
-                field.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        more_actions = button("More", None, "ellipsis-h")
+        more_actions.setMenu(more)
+        buttons = [
+            button("Edit", lambda: self.edit_ticket(t["id"]), "pen", True),
+            button(
+                "Track",
+                lambda: self.execute("timer.action", {"action": "start", "ticket_id": t["id"]}),
+                "play",
+            ),
+            button("Details", lambda: self.open_ticket_details(t["id"]), "external-link-alt"),
+            button("Schedule", lambda: self.schedule_ticket(t), "calendar-plus"),
+            button("Code", lambda: self.open_code(t["id"]), "code"),
+            more_actions,
+        ]
+        buttons[4].setToolTip(
+            "Open this ticket's changesets on the Code page"
+            + (" · " + str(self.changeset_count(t["id"])) + " saved" if self.changeset_count(t["id"]) else "")
+        )
+        buttons[2].setToolTip("Open the full ticket page with comments and screenshots")
+        for index, widget in enumerate(buttons):
+            actions.addWidget(widget, index // 2, index % 2)
+        l.addLayout(actions)
+        self.inspect_layout.addWidget(scroll(root), 1)
         for lane in self.findChildren(TicketList):
             lane.viewport().update()
 
-    def open_details(self, t):
-        if not self.leave_editor():
+    def set_ticket_status(self, ticket, status):
+        previous = ticket["status"]
+        if previous == status:
+            return
+        if self.execute("ticket.save", {"id": ticket["id"], "status": status}):
+            self.undo_action = lambda: self.execute("ticket.save", {"id": ticket["id"], "status": previous})
+            self.toast.setText("Moved to " + D.STATUS_NAMES[status] + " · Ctrl+Z to undo")
+
+    def edit_ticket(self, ticket_id):
+        ticket = self.find_ticket(ticket_id)
+        if not ticket or not self.leave_editor():
+            return
+        if TicketEditDialog(self, ticket).exec() == QDialog.Accepted:
+            self.refresh()
+            self.toast.setText("Saved locally")
+
+    def open_ticket(self, ticket_id):
+        """Show a ticket in its project with the inspector open, from any page."""
+        ticket = self.find_ticket(ticket_id)
+        if not ticket or not self.leave_editor():
             return
         self.page = "Projects"
-        self.project_id = t["project_id"]
-        self.project_view = "Details"
+        self.project_id = ticket["project_id"]
+        if self.project_view not in ("Map", "Kanban", "Details"):
+            self.project_view = "Map"
+        self.selected = ticket_id
         self.refresh_page()
 
     def close_inspector(self):
@@ -338,6 +233,22 @@ class InspectorMixin:
         hint = label("Ticket deadline stays " + (ticket["due_date"] or "unset") + ".", "muted")
         hint.setWordWrap(True)
         d.layout.addWidget(hint)
+        if existing:
+            # Calendar and agenda blocks open here, so this is where they link back to the ticket.
+            def jump(target):
+                d.reject()
+                QTimer.singleShot(0, target)
+
+            links = [
+                button(
+                    "Open ticket", lambda: jump(lambda: self.open_ticket(ticket["id"])), "external-link-alt"
+                )
+            ]
+            if self.code_repo(ticket["project_id"]):
+                links.append(
+                    button("Open in Code", lambda: jump(lambda: self.open_code(ticket["id"])), "code")
+                )
+            d.layout.addWidget(row(*links, None))
         d.finish_form()
         if d.exec() == QDialog.Accepted:
             payload = {

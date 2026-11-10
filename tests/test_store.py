@@ -117,6 +117,62 @@ class StoreTests(unittest.TestCase):
         finally:
             imported.close()
 
+    def test_clear_workspace_backs_up_then_empties_and_keeps_the_account(self):
+        ticket = self.ticket(labels=["bug"])
+        other = self.ticket(dependencies=[ticket["id"]])
+        self.store.command("event.save", {"title": "Trip", "date": "2026-07-01"})
+        self.store.command("timer.action", {"action": "start", "ticket_id": other["id"]})
+        self.store.command("post.save", {"ticket_id": ticket["id"], "body": "A comment"})
+        self.store.settings(
+            {
+                "theme": "nord",
+                "syncUrl": "https://hub:47831",
+                "syncEnabled": True,
+                "repoPaths": {"gone": "C:/somewhere"},
+            }
+        )
+        counts = self.store.workspace_counts()
+        self.assertEqual((counts["project"], counts["ticket"], counts["event"]), (1, 2, 1))
+        self.assertGreater(counts["pending"], 0)
+        result = self.store.command("workspace.clear")
+        self.assertEqual(result["removed"], counts)
+        snapshot = self.store.snapshot()
+        for kind in D.DEFINITIONS:
+            self.assertEqual(snapshot[kind], [], kind)
+        self.assertEqual(snapshot["pending"], 0)
+        for table in ("ticket_labels", "ticket_dependencies", "outbox", "sync_meta", "conflicts"):
+            self.assertEqual(self.store.db.execute("SELECT count(*) FROM " + table).fetchone()[0], 0, table)
+        # The account, its password and the look of the app stay; sync and checkout paths go.
+        settings = self.store.settings()
+        self.assertEqual(settings["theme"], "nord")
+        for key in ("syncUrl", "syncEnabled", "repoPaths"):
+            self.assertNotIn(key, settings)
+        self.store.logout()
+        self.store.login("tester", "test-password-123")
+        # The backup holds everything that was removed and opens as a normal database.
+        backup = Path(result["backup"])
+        self.assertEqual(backup.parent, self.store.root / "backups")
+        imported = Store(BASE / uuid.uuid4().hex)
+        try:
+            imported.import_database(backup)
+            imported.login("tester", "test-password-123")
+            self.assertEqual(len(imported.list("ticket")), 2)
+            self.assertEqual(len(imported.list("post")), 1)
+        finally:
+            imported.close()
+        # An empty workspace takes new work and the example data again.
+        self.store.command("examples.load")
+        self.assertTrue(self.store.list("ticket"))
+        again = self.store.command("workspace.clear")
+        self.assertNotEqual(again["backup"], result["backup"])
+
+    def test_clear_workspace_deletes_nothing_when_the_backup_fails(self):
+        self.ticket()
+        (self.store.root / "backups").write_text("not a folder", encoding="utf-8")
+        with self.assertRaises(OSError):
+            self.store.command("workspace.clear")
+        self.assertEqual(len(self.store.list("ticket")), 1)
+
     def test_all_day_event_and_calendar_dst(self):
         self.store.command(
             "event.save",
@@ -168,7 +224,7 @@ class StoreTests(unittest.TestCase):
             old.execute("DELETE FROM schema_migrations WHERE version>=2")
         self.store = Store(root)
         self.assertTrue(self.store.restore_session())
-        self.assertEqual(self.store.db.execute("SELECT max(version) FROM schema_migrations").fetchone()[0], 4)
+        self.assertEqual(self.store.db.execute("SELECT max(version) FROM schema_migrations").fetchone()[0], 6)
         self.assertEqual(self.store.read("ticket", t["id"])["due_date"], "2026-12-20")
         self.assertEqual(self.store.snapshot()["block"], [])
 
@@ -186,7 +242,7 @@ class StoreTests(unittest.TestCase):
             self.assertFalse(imported.restore_session())
             imported.login("tester", "test-password-123")
             self.assertEqual(
-                imported.db.execute("SELECT max(version) FROM schema_migrations").fetchone()[0], 4
+                imported.db.execute("SELECT max(version) FROM schema_migrations").fetchone()[0], 6
             )
             self.assertEqual(imported.read("ticket", t["id"])["due_date"], "2026-12-20")
             imported.command("block.save", {"ticket_id": t["id"], "date": "2026-11-12"})

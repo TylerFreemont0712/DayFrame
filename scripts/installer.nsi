@@ -1,7 +1,7 @@
 Unicode True
 !include "MUI2.nsh"
 Name "DayFrame"
-OutFile "..\dist\DayFrame-Setup-0.6.0.exe"
+OutFile "..\dist\DayFrame-Setup-0.7.0.exe"
 InstallDir "$LOCALAPPDATA\Programs\DayFrame"
 RequestExecutionLevel user
 SetCompressor /SOLID lzma
@@ -22,7 +22,7 @@ Section "DayFrame"
   CreateShortcut "$SMPROGRAMS\DayFrame\DayFrame.lnk" "$INSTDIR\DayFrame.exe"
   CreateShortcut "$SMPROGRAMS\DayFrame\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DayFrame" "DisplayName" "DayFrame"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DayFrame" "DisplayVersion" "0.6.0"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DayFrame" "DisplayVersion" "0.7.0"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DayFrame" "UninstallString" '"$INSTDIR\Uninstall.exe"'
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DayFrame" "NoModify" 1
   WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DayFrame" "NoRepair" 1
