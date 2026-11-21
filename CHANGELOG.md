@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Release the source under the Apache License 2.0 and rewrite the README with install steps and current screenshots.
+
 ## 0.7.0 — 2026-11-10
 
 - Rework Home into a dashboard: the focus timer beside four figures (overdue, due today, in progress, done today) that open the matching Tickets view; compact task rows with stage symbols; a week strip of seven clickable day cards, each filled in with that day's all-day items and a small timeline; a Day Agenda that follows the selected day; major events as countdown tiles; and upcoming events with a symbol for each event type (a cake for birthdays, a plane for trips). The layout uses three columns when wide, two with tabs for Day Agenda and Coming up at medium widths, and Tasks, Week and Coming up tabs when narrow.

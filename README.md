@@ -11,6 +11,7 @@
   <img alt="Version 0.7.0" src="https://img.shields.io/badge/version-0.7.0-2bb3c0">
   <img alt="Python 3.12 to 3.14" src="https://img.shields.io/badge/python-3.12%E2%80%933.14-3776ab">
   <img alt="PySide6 Qt Widgets" src="https://img.shields.io/badge/UI-PySide6%20%2F%20Qt%20Widgets-41cd52">
+  <img alt="License Apache 2.0" src="https://img.shields.io/badge/license-Apache%202.0-blue">
   <img alt="Windows and Linux" src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-555">
 </p>
 
@@ -20,7 +21,7 @@ DayFrame keeps one set of records behind every view. A ticket you capture with Q
 
 It is written in Python with PySide6 (Qt Widgets) and runs on Windows and Linux.
 
-> **Status:** version 0.7.0, a private project in active development. There is no public installer or GitHub Release yet; you run DayFrame from source, or build a portable bundle yourself. See [Download and install](#download-and-install).
+> **Status:** version 0.7.0, an open-source project in active development. There is no public installer or GitHub Release yet; you run DayFrame from source, or build a portable bundle yourself. See [Download and install](#download-and-install).
 
 ## Contents
 
@@ -119,8 +120,6 @@ More reference screenshots are in [docs/screenshots/current/](docs/screenshots/c
 DayFrame is not published as an installer or GitHub Release. Get the source from GitHub and run it with Python; you can also build your own standalone bundle.
 
 ### Get the source
-
-The repository is private, so you need access to it.
 
 ```sh
 git clone https://github.com/TylerFreemont0712/DayFrame.git
@@ -264,4 +263,4 @@ Reminders, richer recurrence, Team features and a mobile companion are future wo
 
 ## License and third-party notices
 
-No open-source license has been selected for this private project, so all rights are reserved. Third-party components keep their own notices; see [THIRD_PARTY.md](docs/operations/THIRD_PARTY.md).
+DayFrame is open source under the [Apache License 2.0](LICENSE). You may use, modify and distribute it under those terms. Third-party components keep their own licenses and notices; see [THIRD_PARTY.md](docs/operations/THIRD_PARTY.md).
